@@ -108,7 +108,7 @@ void saveSettings();
 
 // ==================== WiFi Setup UI =====================
 
-static void showWifiSetupRequired(unsigned long splashStartMs, bool enforceSplashDelay = true) {
+void showWifiSetupRequired(unsigned long splashStartMs, bool enforceSplashDelay = true) {
  // Ensure the splash is visible for at least 3 seconds (first boot only).
   if (enforceSplashDelay) {
     unsigned long elapsed = millis() - splashStartMs;

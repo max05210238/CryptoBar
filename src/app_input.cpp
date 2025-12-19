@@ -21,7 +21,7 @@ extern void handleMenuSelect();
 extern void handleTimezoneSelect();
 extern void handleCoinSelect();
 extern void leaveMenu();
-extern void showWifiSetupRequired(uint32_t splashStartMs, bool rebootOnExit = true);
+extern void showWifiSetupRequired(unsigned long splashStartMs, bool enforceSplashDelay);
 extern void saveSettings();
 
 // ==================== Button Event Handlers =====================

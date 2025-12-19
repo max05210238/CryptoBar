@@ -1,10 +1,10 @@
-// CryptoBar V0.98-rc3 (Refactored: Step 3)
+// CryptoBar V0.98-rc4 (Refactored: Step 4)
 // app_state.cpp - Global application state definitions
 #include "app_state.h"
 #include "day_avg.h"  // for DAYAVG_ROLLING constant
 
 // ==================== Version =====================
-const char* CRYPTOBAR_VERSION = "V0.98-rc3";
+const char* CRYPTOBAR_VERSION = "V0.98-rc4";
 
 // ==================== Constants =====================
 

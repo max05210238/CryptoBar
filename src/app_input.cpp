@@ -11,7 +11,7 @@
 #include "led_status.h"
 #include "maint_mode.h"
 #include "wifi_portal.h"
-#include "draw.h"
+#include "ui.h"
 
 // Forward declarations for UI functions that remain in main.cpp
 extern void enterMenu();

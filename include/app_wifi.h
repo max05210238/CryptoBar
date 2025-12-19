@@ -1,4 +1,4 @@
-// CryptoBar V0.98-rc2 (Refactored: Step 2)
+// CryptoBar V0.98 (Refactored: Step 2)
 // app_wifi.h - WiFi connection and credential management
 #pragma once
 

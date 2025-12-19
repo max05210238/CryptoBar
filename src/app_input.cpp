@@ -1,4 +1,4 @@
-// CryptoBar V0.98-rc5 (Refactored: Step 5)
+// CryptoBar V0.98 (Refactored: Step 5)
 // app_input.cpp - Input handling (encoder/button events)
 
 #include <Arduino.h>

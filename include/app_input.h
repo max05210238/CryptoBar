@@ -1,4 +1,4 @@
-// CryptoBar V0.98-rc4 (Refactored: Step 4)
+// CryptoBar V0.98 (Refactored: Step 4)
 // app_input.h - Input handling (encoder/button events)
 
 #ifndef APP_INPUT_H

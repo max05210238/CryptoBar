@@ -1,4 +1,4 @@
-// CryptoBar V0.98-rc3 (Refactored: Step 3)
+// CryptoBar V0.98 (Refactored: Step 3)
 // app_time.h - Time synchronization and timezone management
 #pragma once
 

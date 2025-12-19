@@ -1,4 +1,4 @@
-// CryptoBar V0.98-rc5 (Refactored: Step 5)
+// CryptoBar V0.98 (Refactored: Step 5)
 // app_menu.h - Menu navigation and settings management
 
 #ifndef APP_MENU_H

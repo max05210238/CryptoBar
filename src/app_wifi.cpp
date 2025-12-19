@@ -1,4 +1,4 @@
-// CryptoBar V0.98-rc2 (Refactored: Step 2)
+// CryptoBar V0.98 (Refactored: Step 2)
 // app_wifi.cpp - WiFi connection and credential management
 #include "app_wifi.h"
 #include "app_state.h"

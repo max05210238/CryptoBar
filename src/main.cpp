@@ -1,4 +1,4 @@
-// CryptoBar V0.98-rc5 (Refactored: Step 5 - Extract menu & settings)
+// CryptoBar V0.98 (Refactored: Step 5 - Extract menu & settings)
 #include <Arduino.h>
 #include <WiFi.h>
 #include <HTTPClient.h>
@@ -37,11 +37,11 @@
 
 #include <string.h> // for strcmp
 
-// ==================== 安全預設（避免 config.h 缺值時編譯失敗） =====================
+// ==================== Safe defaults (prevent compilation failure if config.h is missing) =====================
 
 // (WiFi SSID/PW are no longer hardcoded; they will be provisioned via AP portal and saved to NVS.)
 #ifndef MARKET_GMT_OFFSET_SEC
-// 預設為美東 UTC-5（未處理 DST）
+// Default: US Eastern Time UTC-5 (DST not handled)
 #define MARKET_GMT_OFFSET_SEC (-5 * 3600)
 #endif
 
@@ -56,9 +56,9 @@ GxEPD2_BW<GxEPD2_290_BS, GxEPD2_290_BS::HEIGHT> display(
   GxEPD2_290_BS(EPD_CS, EPD_DC, EPD_RST, EPD_BUSY)
 );
 
-// ==================== 小工具函式 =====================
+// ==================== Helper Functions =====================
 
-// 目前幣別
+// Get current selected coin
 const CoinInfo& currentCoin() {
   int n = coinCount();
   if (g_currentCoinIndex < 0) g_currentCoinIndex = 0;
@@ -232,8 +232,6 @@ static void startNormalOperation(bool enforceSplashDelay, uint32_t splashStartMs
   lastUpdate = millis();
 }
 
-// ==================== 設定 load/save =====================
-
 // ==================== Settings & Menu handlers moved to app_menu.cpp =====================
 
 // ==================== Maintenance mode (firmware update AP) =====================
@@ -314,7 +312,7 @@ void setup() {
   display.setRotation(1);
 
  // ==================== Boot welcome screen =====================
- // 先讓使用者看到版本；同時後續 WiFi/NTP 會花時間，螢幕會停留在這張圖
+ // Show version to user first; screen stays visible while WiFi/NTP connection takes time
   drawSplashScreen(CRYPTOBAR_VERSION);
   uint32_t splashStartMs = millis();
 
@@ -323,8 +321,7 @@ void setup() {
   pinMode(ENC_SW_PIN,  INPUT_PULLUP);
   g_lastEncSw = digitalRead(ENC_SW_PIN);
 
- // ✅ rotation 用中斷抓，不怕被畫面/網路卡住
- // V0.97: use PCNT hardware for encoder rotation (no GPIO interrupt)
+ // Use PCNT hardware for encoder rotation (no GPIO interrupt, won't be blocked by screen/network)
   encoderPcntBegin(ENC_CLK_PIN, ENC_DT_PIN);
 
  // : enter maintenance mode via reboot flag (requested from UI).
@@ -757,9 +754,9 @@ if (doUpdate) {
       updateLedForPrice(g_lastChange24h, g_lastPriceOk);
 
       if (g_uiMode == UI_MODE_NORMAL) {
- // ✅ refresh mode 規則：
- // - Partial：照舊（累積 PARTIAL_REFRESH_LIMIT 後才 full）
- // - Full：主畫面每次都 full
+ // Refresh mode rules:
+ // - Partial mode: accumulate partials, full refresh after PARTIAL_REFRESH_LIMIT
+ // - Full mode: always do full refresh on main screen
         bool doFull = false;
         if (g_refreshMode == 1) {
           doFull = true;

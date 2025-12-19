@@ -1,4 +1,4 @@
-// CryptoBar V0.98-rc3 (Refactored: Step 3)
+// CryptoBar V0.98 (Refactored: Step 3)
 // app_scheduler.cpp - Tick-aligned update scheduler
 #include "app_scheduler.h"
 #include "app_state.h"

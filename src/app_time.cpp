@@ -1,4 +1,4 @@
-// CryptoBar V0.98-rc3 (Refactored: Step 3)
+// CryptoBar V0.98 (Refactored: Step 3)
 // app_time.cpp - Time synchronization and timezone management
 #include "app_time.h"
 #include "app_state.h"

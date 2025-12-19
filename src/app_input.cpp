@@ -1,4 +1,4 @@
-// CryptoBar V0.98-rc4 (Refactored: Step 4)
+// CryptoBar V0.98-rc5 (Refactored: Step 5)
 // app_input.cpp - Input handling (encoder/button events)
 
 #include <Arduino.h>
@@ -7,6 +7,7 @@
 #include "app_state.h"
 #include "app_wifi.h"
 #include "app_time.h"
+#include "app_menu.h"
 #include "day_avg.h"
 #include "coins.h"
 #include "led_status.h"
@@ -16,13 +17,7 @@
 #include "ui.h"
 
 // Forward declarations for UI functions that remain in main.cpp
-extern void enterMenu();
-extern void handleMenuSelect();
-extern void handleTimezoneSelect();
-extern void handleCoinSelect();
-extern void leaveMenu();
 extern void showWifiSetupRequired(unsigned long splashStartMs, bool enforceSplashDelay);
-extern void saveSettings();
 
 // ==================== Button Event Handlers =====================
 

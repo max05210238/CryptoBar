@@ -67,7 +67,7 @@ const CoinInfo& currentCoin() {
 }
 
 
-static const char* dayAvgModeLabel(uint8_t mode) {
+const char* dayAvgModeLabel(uint8_t mode) {
   switch (mode) {
     case DAYAVG_OFF:     return "Off";
     case DAYAVG_ROLLING: return "24h mean";
@@ -76,7 +76,7 @@ static const char* dayAvgModeLabel(uint8_t mode) {
   }
 }
 
-static void updateAvgLineReference(time_t nowUtc) {
+void updateAvgLineReference(time_t nowUtc) {
   if (g_dayAvgMode == DAYAVG_OFF) {
     g_prevDayRefValid = false;
     return;

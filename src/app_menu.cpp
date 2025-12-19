@@ -5,6 +5,7 @@
 #include <WiFi.h>
 #include "app_menu.h"
 #include "app_state.h"
+#include "app_wifi.h"
 #include "app_time.h"
 #include "app_scheduler.h"
 #include "settings_store.h"
@@ -15,6 +16,8 @@
 #include "ui.h"
 
 // Forward declarations for functions that remain in main.cpp
+extern const CoinInfo& currentCoin();
+extern const char* dayAvgModeLabel(uint8_t mode);
 extern void updateAvgLineReference(time_t nowUtc);
 extern void updateEtCycle();
 extern void bootstrapHistoryFromKrakenOHLC();

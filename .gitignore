@@ -1,0 +1,18 @@
+.pio
+.vscode
+*.log
+
+# macOS
+.DS_Store
+
+# build artifacts (optional)
+build/
+dist/
+# Snapshots: ignore whole folder
+Snapshots/
+
+# Accidental junk files
+Agent*
+* 2.*
+* 2
+

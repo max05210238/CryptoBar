@@ -1,4 +1,4 @@
-// CryptoBar V0.98-rc1 (Refactored: Step 1 - Extract app state)
+// CryptoBar V0.98-rc2 (Refactored: Step 2 - Extract WiFi management)
 #include <Arduino.h>
 #include <WiFi.h>
 #include <HTTPClient.h>
@@ -12,6 +12,7 @@
 #include <Fonts/FreeSansBold18pt7b.h>
 
 #include "app_state.h"
+#include "app_wifi.h"
 #include "settings_store.h"
 #include "led_status.h"
 #include "coins.h"
@@ -64,21 +65,6 @@ static inline time_t alignNextTickUtc(time_t nowUtc, uint32_t intervalSec) {
   return ((nowUtc / (time_t)intervalSec) + 1) * (time_t)intervalSec;
 }
 
-static inline uint32_t macLast16bits() {
- // e.g. "AA:BB:CC:DD:EE:FF" -> take last 2 bytes (EEFF)
-  String mac = WiFi.macAddress();
-  mac.replace(":", "");
-  if (mac.length() < 4) return 0;
-  String last4 = mac.substring(mac.length() - 4);
-  char buf[5];
-  last4.toCharArray(buf, sizeof(buf));
-  return (uint32_t)strtoul(buf, nullptr, 16);
-}
-
-static inline void initFetchJitterIfNeeded() {
- // : Disable per-device fetch jitter to maximize multi-unit sync.
-  g_fetchJitterSec = 0;
-}
 static void tickSchedulerReset(const char* reason) {
   time_t nowUtc = time(nullptr);
   if (nowUtc < TIME_VALID_MIN_UTC) {
@@ -102,38 +88,6 @@ static void tickSchedulerReset(const char* reason) {
   Serial.printf("[Sched] Reset(%s): int=%lus nextUpdateUtc=%ld (in %ld s)\n",
                 reason ? reason : "", (unsigned long)sec,
                 (long)g_nextUpdateUtc, (long)(g_nextUpdateUtc - nowUtc));
-}
-
-static void loadWifiCreds() {
-  settingsStoreLoadWifi(g_wifiSsid, g_wifiPass);
-
-  g_wifiSsid.trim();
-  g_wifiPass.trim();
-  g_hasWifiCreds = (g_wifiSsid.length() > 0);
-  Serial.printf("[WiFi] NVS creds: %s\n", g_hasWifiCreds ? "FOUND" : "MISSING");
-}
-
-static void saveWifiCreds(const String& ssid, const String& pass) {
-  settingsStoreSaveWifi(ssid, pass);
-}
-
-static void clearWifiCreds() {
-  settingsStoreClearWifi();
-
-  g_wifiSsid = "";
-  g_wifiPass = "";
-  g_hasWifiCreds = false;
-  Serial.println("[WiFi] Cleared saved credentials (factory reset)");
-}
-
-
-static int rssiToBars(int rssi) {
-  if (rssi >= -55) return 5;
-  if (rssi >= -62) return 4;
-  if (rssi >= -69) return 3;
-  if (rssi >= -76) return 2;
-  if (rssi >= -83) return 1;
-  return 0;
 }
 
 // ==================== e-paper display =====================
@@ -200,88 +154,9 @@ bool getLocalTimeLocal(struct tm* out) {
 }
 
 // LED functions moved to led_status.cpp (setLed*, updateLedForPrice, ledAnimLoop)
+// WiFi functions moved to app_wifi.cpp (loadWifiCreds, connectWiFiSta, etc.)
 
-// ==================== WiFi & Time =====================
-
-bool connectWiFiSta(const char* ssid, const char* pass, uint32_t timeoutMs = 30000) {
-  if (!ssid || !ssid[0]) return false;
-
-  WiFi.mode(WIFI_STA);
- // : disable WiFi power-save to reduce connection instability.
-  WiFi.setSleep(false);
-  WiFi.setAutoReconnect(true);
-  initFetchJitterIfNeeded();
-  if (g_fetchJitterSec == 0) {
-    Serial.printf("[Sched] Fetch jitter DISABLED (MAC tail=0x%04lX)\n", (unsigned long)macLast16bits());
-  } else {
-    Serial.printf("[Sched] Fetch jitter=%lu s (MAC tail=0x%04lX)\n", (unsigned long)g_fetchJitterSec, (unsigned long)macLast16bits());
-  }
-  WiFi.disconnect(true);
-  delay(100);
-
-  Serial.printf("[WiFi] Connecting to %s\n", ssid);
-  WiFi.begin(ssid, (pass ? pass : ""));
-  setLedBlue();
-
-  uint32_t start = millis();
-  int dots = 0;
-  while (WiFi.status() != WL_CONNECTED && (millis() - start) < timeoutMs) {
-    delay(250);
-    Serial.print(".");
-    dots++;
-    if (dots % 40 == 0) Serial.println();
-  }
-  Serial.println();
-
-  if (WiFi.status() == WL_CONNECTED) {
-    Serial.print("[WiFi] Connected, IP: ");
-    Serial.println(WiFi.localIP());
-
- // Mark that we have successfully connected at least once.
-    g_wifiEverConnected = true;
-    g_nextRuntimeReconnectMs = 0;
-    g_runtimeReconnectBatch = 0;
-
-    return true;
-  }
-
-  Serial.println("[WiFi] Connect FAILED (timeout)");
-  WiFi.disconnect(true);
-  return false;
-}
-
-// ==================== WiFi connect retries (V0.97) =====================
-// 需求：如果 NVS 有 SSID/PW，第一次連線 timeout 後不要立刻開 AP；改為多次嘗試。
-// - 每次嘗試前更新畫面：Connecting... (i/N)
-// - 全部失敗後才進入 AP provisioning
-static bool connectWiFiStaWithRetries(const char* ssid, const char* pass,
-                                     int maxAttempts,
-                                     uint32_t perAttemptTimeoutMs,
-                                     bool showUi)
-{
-  if (!ssid || !ssid[0]) return false;
-  if (maxAttempts < 1) maxAttempts = 1;
-
-  for (int i = 1; i <= maxAttempts; i++) {
-    if (showUi) {
- // 在 SSID 後面附上 (i/N) 讓 UI 顯示嘗試次數（不改 UI 函式簽名）
-      String label = String(ssid) + " (" + String(i) + "/" + String(maxAttempts) + ")";
-      drawWifiConnectingScreen(CRYPTOBAR_VERSION, label.c_str());
-    }
-
-    Serial.printf("[WiFi] STA attempt %d/%d (timeout=%lums)\n",
-                  i, maxAttempts, (unsigned long)perAttemptTimeoutMs);
-
-    if (connectWiFiSta(ssid, pass, perAttemptTimeoutMs)) {
-      return true;
-    }
-
- // 小延遲，避免太快重複 begin() 造成掃描/連線不穩
-    delay(300);
-  }
-
-  return false;
-}
+// ==================== Time & Timezone =====================
 
 // Forward declarations (needed because auto TZ helpers are defined before these functions).
 void applyTimezone();

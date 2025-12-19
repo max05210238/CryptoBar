@@ -1,4 +1,4 @@
-// CryptoBar V0.98-rc1 (Refactored: Step 1)
+// CryptoBar V0.98-rc2 (Refactored: Step 2)
 // app_state.h - Global application state (extracted from main.cpp)
 #pragma once
 

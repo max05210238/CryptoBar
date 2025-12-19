@@ -41,12 +41,14 @@ extern const char* NTP_SERVER_1;
 extern const char* NTP_SERVER_2;
 
 // LED brightness presets
-extern const float BRIGHTNESS_PRESETS[];
-extern const char* BRIGHTNESS_LABELS[];
+#define BRIGHTNESS_PRESETS_COUNT 3
+extern const float BRIGHTNESS_PRESETS[BRIGHTNESS_PRESETS_COUNT];
+extern const char* BRIGHTNESS_LABELS[BRIGHTNESS_PRESETS_COUNT];
 
 // Update frequency presets
-extern const uint32_t UPDATE_PRESETS_MS[];
-extern const char* UPDATE_PRESET_LABELS[];
+#define UPDATE_PRESETS_COUNT 4
+extern const uint32_t UPDATE_PRESETS_MS[UPDATE_PRESETS_COUNT];
+extern const char* UPDATE_PRESET_LABELS[UPDATE_PRESETS_COUNT];
 
 // Date format labels
 extern const char* DATE_FORMAT_LABELS[DATE_FORMAT_COUNT];

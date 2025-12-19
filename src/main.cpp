@@ -659,8 +659,8 @@ void loadSettings() {
   int dayLn = st.dayAvg;
   int rf    = st.rfMode;
 
-  int updCount   = sizeof(UPDATE_PRESETS_MS) / sizeof(UPDATE_PRESETS_MS[0]);
-  int briCount   = sizeof(BRIGHTNESS_PRESETS) / sizeof(BRIGHTNESS_PRESETS[0]);
+  int updCount   = UPDATE_PRESETS_COUNT;
+  int briCount   = BRIGHTNESS_PRESETS_COUNT;
 
   if (upd < 0 || upd >= updCount) upd = 0;
   if (bri < 0 || bri >= briCount) bri = 1;
@@ -857,7 +857,7 @@ void handleMenuSelect() {
     }
 
     case MENU_UPDATE_INTERVAL: {
-      int presetCount = sizeof(UPDATE_PRESETS_MS) / sizeof(UPDATE_PRESETS_MS[0]);
+      int presetCount = UPDATE_PRESETS_COUNT;
       g_updatePresetIndex = (g_updatePresetIndex + 1) % presetCount;
       g_updateIntervalMs  = UPDATE_PRESETS_MS[g_updatePresetIndex];
       Serial.printf("[Menu] Update interval -> %s\n",
@@ -870,7 +870,7 @@ void handleMenuSelect() {
     }
 
     case MENU_LED_BRIGHTNESS: {
-      int presetCount = sizeof(BRIGHTNESS_PRESETS) / sizeof(BRIGHTNESS_PRESETS[0]);
+      int presetCount = BRIGHTNESS_PRESETS_COUNT;
       g_brightnessPresetIndex = (g_brightnessPresetIndex + 1) % presetCount;
       g_ledBrightness         = BRIGHTNESS_PRESETS[g_brightnessPresetIndex];
       ledStatusSetMasterBrightness(g_ledBrightness);

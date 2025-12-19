@@ -1,5 +1,6 @@
 // app_state.cpp - Global application state definitions
 #include "app_state.h"
+#include <GxEPD2_BW.h>
 #include <GxEPD2_290_BS.h>
 
 // ==================== Version =====================

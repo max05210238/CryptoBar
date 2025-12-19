@@ -21,23 +21,23 @@
 static const pcnt_unit_t    ENC_PCNT_UNIT = PCNT_UNIT_0;
 static const pcnt_channel_t ENC_PCNT_CH   = PCNT_CHANNEL_0;
 
-// V0.99: Reduced from 1023 to 200 APB cycles (~2.5us @80MHz)
+// V0.99: Reduced from 1023 to 100 APB cycles - VERY responsive for cheap encoders
 // Lower value captures more signals from cheap encoders while still filtering noise
-static const uint16_t ENC_PCNT_FILTER_VAL = 200;
+static const uint16_t ENC_PCNT_FILTER_VAL = 100;
 
 // Usually 2 counts per detent when counting both edges on CLK only.
-// If your encoder feels too slow or too fast, try 1 or 4.
-static const int ENC_COUNTS_PER_DETENT = 2;
+// Set to 1 for maximum responsiveness with cheap encoders
+static const int ENC_COUNTS_PER_DETENT = 1;
 
 // If direction is reversed, set to 1.
 static const int ENC_DIR_INVERT = 1;
 
-// V0.99: Reduced from 150ms to 30ms - only filter very fast accidental reversals
+// V0.99: Disabled direction lock (0ms) for maximum responsiveness
 // Setting to 0 disables direction lock entirely (most responsive but may allow some bounce)
-static const uint32_t ENC_DIR_LOCK_MS = 30;
+static const uint32_t ENC_DIR_LOCK_MS = 0;
 
 // V0.99: Enable debug output (set to 1 to see encoder diagnostics in Serial)
-static const int ENC_DEBUG = 0;
+static const int ENC_DEBUG = 1;
 
 static int      s_lastEncDir     = 0;
 static uint32_t s_lastEncStepMs  = 0;

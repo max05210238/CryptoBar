@@ -1,4 +1,4 @@
-// CryptoBar V0.97 (Maintenance boot flag + WiFi sleep off)
+// CryptoBar V0.98-rc1 (Refactored: Step 1 - Extract app state)
 #include <Arduino.h>
 #include <WiFi.h>
 #include <HTTPClient.h>

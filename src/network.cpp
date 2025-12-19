@@ -1,0 +1,649 @@
+#include <Arduino.h>
+#include <WiFi.h>
+#include <HTTPClient.h>
+#include <ArduinoJson.h>
+#include <time.h>
+#include <string.h>
+
+#include "coins.h"
+#include "chart.h"
+#include "day_avg.h"
+#include "network.h"
+
+// 有些值你原本是用 config.h 帶進來，這裡做防呆 fallback
+#ifndef MARKET_GMT_OFFSET_SEC
+// 預設為美東 UTC-5（未處理 DST）
+#define MARKET_GMT_OFFSET_SEC (-5 * 3600)
+#endif
+
+#ifndef MARKET_ANCHOR_HOUR_ET
+// 7pm ET
+#define MARKET_ANCHOR_HOUR_ET 19
+#endif
+
+// 由 main.cpp 提供的 helper（只宣告，定義在 main.cpp）
+const CoinInfo& currentCoin();
+
+// ==================== 7pm ET cycle & chart samples =====================
+
+void updateEtCycle() {
+  time_t nowUtc = time(nullptr);
+  if (nowUtc <= 0) {
+    Serial.println("[Cycle] time(nullptr) failed.");
+    return;
+  }
+
+ // 換算成交易所時間（預設 ET）
+  time_t nowEt = nowUtc + MARKET_GMT_OFFSET_SEC;
+
+  time_t dayStartEt = nowEt - (nowEt % 86400);                   // 今天 00:00 ET
+  time_t anchorEt   = dayStartEt + MARKET_ANCHOR_HOUR_ET * 3600; // 7pm ET
+
+  if (nowEt < anchorEt) {
+ // 還沒到今天 7pm → 用昨天 7pm 做 anchor
+    anchorEt -= 86400;
+  }
+
+  time_t startUtc = anchorEt - MARKET_GMT_OFFSET_SEC;
+  time_t endUtc   = startUtc + 24 * 3600;
+
+  if (!g_cycleInit || startUtc != g_cycleStartUtc) {
+    g_cycleInit        = true;
+    g_cycleStartUtc    = startUtc;
+    g_cycleEndUtc      = endUtc;
+    g_chartSampleCount = 0;
+  dayAvgRollingReset();
+    Serial.printf("[Cycle] New ET day: startUtc=%ld, endUtc=%ld\n",
+                  (long)g_cycleStartUtc, (long)g_cycleEndUtc);
+  }
+}
+
+// 內部用：以「指定 UTC 時間」塞一個 sample 進 chart buffer
+static void addChartSampleUtc(time_t sampleUtc, float price) {
+  if (!g_cycleInit) {
+    updateEtCycle();
+    if (!g_cycleInit) return;
+  }
+
+  if (sampleUtc < g_cycleStartUtc) return;
+  if (sampleUtc > g_cycleEndUtc)   sampleUtc = g_cycleEndUtc;
+
+  float pos = float(sampleUtc - g_cycleStartUtc) /
+              float(g_cycleEndUtc - g_cycleStartUtc);
+  if (pos < 0.0f) pos = 0.0f;
+  if (pos > 1.0f) pos = 1.0f;
+
+  if (g_chartSampleCount < MAX_CHART_SAMPLES) {
+    g_chartSamples[g_chartSampleCount].pos   = pos;
+    g_chartSamples[g_chartSampleCount].price = price;
+    g_chartSampleCount++;
+  } else {
+ // 滾動 buffer：丟掉最舊
+    for (int i = 1; i < MAX_CHART_SAMPLES; ++i) {
+      g_chartSamples[i - 1] = g_chartSamples[i];
+    }
+    g_chartSamples[MAX_CHART_SAMPLES - 1].pos   = pos;
+    g_chartSamples[MAX_CHART_SAMPLES - 1].price = price;
+  }
+}
+
+// 對外 API：用「現在時間」加一個 sample
+// ✅ 修正：不要每 30 秒新增一點，改為 5 分鐘一桶（跟 Kraken OHLC interval=5 一致）
+// - 同一個 5 分鐘 bucket 內只更新最後一筆 price
+// - 跨 bucket 才 append 新 sample
+void addChartSampleForNow(float price) {
+  time_t nowUtc = time(nullptr);
+  if (nowUtc <= 0) {
+    Serial.println("[Chart] time(nullptr) failed in addChartSampleForNow().");
+    return;
+  }
+
+  updateEtCycle();
+  if (!g_cycleInit) return;
+
+  const int BUCKET_SEC = 5 * 60; // 5 minutes
+  int bucket = (int)((nowUtc - g_cycleStartUtc) / BUCKET_SEC);
+  if (bucket < 0) return;
+
+ // cycle 換日時重置 bucket 記憶
+  static time_t s_lastCycleStart = 0;
+  static int    s_lastBucket     = -1;
+  if (s_lastCycleStart != g_cycleStartUtc) {
+    s_lastCycleStart = g_cycleStartUtc;
+    s_lastBucket = -1;
+  }
+
+ // 同一桶：更新最後一點，不新增（避免 300 sample 很快塞爆）
+  if (bucket == s_lastBucket && g_chartSampleCount > 0) {
+    g_chartSamples[g_chartSampleCount - 1].price = price;
+    return;
+  }
+
+ // 新桶：新增一點（用 bucket 起點時間）
+  s_lastBucket = bucket;
+  time_t bucketUtc = g_cycleStartUtc + (time_t)bucket * BUCKET_SEC;
+  addChartSampleUtc(bucketUtc, price);
+}
+
+// ==================== 價格抓取 =====================
+
+static bool fetchPriceFromPaprika(float& priceUsd, float& change24h) {
+  const CoinInfo& coin = currentCoin();
+
+  if (!coin.paprikaId || coin.paprikaId[0] == '\0') {
+    Serial.println("[CP] No paprikaId configured for this coin.");
+    return false;
+  }
+  if (WiFi.status() != WL_CONNECTED) {
+    Serial.println("[CP] WiFi not connected.");
+    return false;
+  }
+
+  HTTPClient http;
+  String url = "https://api.coinpaprika.com/v1/tickers/";
+  url += coin.paprikaId;
+
+  Serial.print("[CP] GET ");
+  Serial.println(url);
+
+  http.begin(url);
+  http.setFollowRedirects(HTTPC_STRICT_FOLLOW_REDIRECTS);
+  http.setTimeout(8000);
+
+  int code = http.GET();
+  if (code != 200) {
+    Serial.printf("[CP] HTTP error: %d\n", code);
+    http.end();
+    return false;
+  }
+
+  String payload = http.getString();
+  http.end();
+
+ // Parse only the fields we need to keep memory usage low.
+  StaticJsonDocument<128> filter;
+  filter["quotes"]["USD"]["price"] = true;
+  filter["quotes"]["USD"]["percent_change_24h"] = true;
+
+  DynamicJsonDocument doc(1024);
+  DeserializationError err = deserializeJson(doc, payload, DeserializationOption::Filter(filter));
+  if (err) {
+    Serial.printf("[CP] JSON parse error: %s\n", err.c_str());
+    return false;
+  }
+
+  JsonObject usd = doc["quotes"]["USD"].as<JsonObject>();
+  if (usd.isNull()) {
+    Serial.println("[CP] quotes.USD missing.");
+    return false;
+  }
+
+  priceUsd  = usd["price"].as<float>();
+  change24h = usd["percent_change_24h"].as<float>();
+
+  Serial.printf("[CP] %s: $%.6f (24h: %.2f%%)\n",
+                coin.ticker, priceUsd, change24h);
+
+  return (priceUsd > 0.0f);
+}
+
+static bool fetchPriceFromKraken(float& priceUsd, float& change24h) {
+  const CoinInfo& coin = currentCoin();
+
+  if (!coin.krakenPair || coin.krakenPair[0] == '\0') {
+    Serial.println("[Kraken] No krakenPair configured for this coin.");
+    return false;
+  }
+  if (WiFi.status() != WL_CONNECTED) {
+    Serial.println("[Kraken] WiFi not connected.");
+    return false;
+  }
+
+  HTTPClient http;
+  String url = "https://api.kraken.com/0/public/Ticker?pair=";
+  url += coin.krakenPair;
+
+  Serial.print("[Kraken] GET ");
+  Serial.println(url);
+
+  http.begin(url);
+  http.setFollowRedirects(HTTPC_STRICT_FOLLOW_REDIRECTS);
+  http.setTimeout(8000);
+
+  int code = http.GET();
+  if (code != 200) {
+    Serial.printf("[Kraken] HTTP error: %d\n", code);
+    http.end();
+    return false;
+  }
+
+  String payload = http.getString();
+  http.end();
+
+  StaticJsonDocument<4096> doc;
+  DeserializationError err = deserializeJson(doc, payload);
+  if (err) {
+    Serial.printf("[Kraken] JSON parse error: %s\n", err.c_str());
+    return false;
+  }
+
+  if (doc["error"].size() > 0) {
+    Serial.print("[Kraken] API error: ");
+    serializeJson(doc["error"], Serial);
+    Serial.println();
+    return false;
+  }
+
+  JsonObject result = doc["result"];
+  if (result.isNull()) {
+    Serial.println("[Kraken] result is null.");
+    return false;
+  }
+
+  JsonObject ticker;
+  for (JsonPair kv : result) {
+    ticker = kv.value().as<JsonObject>();
+    break;   // 只抓第一個 key
+  }
+  if (ticker.isNull()) {
+    Serial.println("[Kraken] ticker missing.");
+    return false;
+  }
+
+  const char* lastStr = ticker["c"][0] | "0";
+  const char* openStr = ticker["o"]    | "0";
+
+  priceUsd = atof(lastStr);
+  float open = atof(openStr);
+  if (open <= 0.0f) {
+    change24h = 0.0f;
+  } else {
+    change24h = (priceUsd - open) / open * 100.0f;
+  }
+
+  Serial.printf("[Kraken] %s: $%.6f (24h: %.2f%%)\n",
+                coin.ticker, priceUsd, change24h);
+
+  return true;
+}
+
+static bool fetchPriceFromCoingecko(float& priceUsd, float& change24h) {
+  const CoinInfo& coin = currentCoin();
+
+  if (WiFi.status() != WL_CONNECTED) {
+    Serial.println("[CG] WiFi not connected.");
+    return false;
+  }
+
+ // Use registry-provided CoinGecko id when available.
+  if (!coin.geckoId || coin.geckoId[0] == '\0') {
+    Serial.println("[CG] No geckoId configured for this coin.");
+    return false;
+  }
+  String cgId = String(coin.geckoId);
+
+  HTTPClient http;
+  String url =
+      "https://api.coingecko.com/api/v3/simple/price?ids=" +
+      cgId +
+      "&vs_currencies=usd&include_24hr_change=true";
+
+  Serial.print("[CG] GET ");
+  Serial.println(url);
+
+  http.begin(url);
+  http.setFollowRedirects(HTTPC_STRICT_FOLLOW_REDIRECTS);
+  http.setTimeout(8000);
+
+  int code = http.GET();
+  if (code != 200) {
+    Serial.printf("[CG] HTTP error: %d\n", code);
+    http.end();
+    return false;
+  }
+
+  String payload = http.getString();
+  http.end();
+
+  StaticJsonDocument<512> doc;
+  DeserializationError err = deserializeJson(doc, payload);
+  if (err) {
+    Serial.printf("[CG] JSON parse error: %s\n", err.c_str());
+    return false;
+  }
+
+  JsonObject coinObj = doc[cgId.c_str()];
+  if (coinObj.isNull()) {
+    Serial.println("[CG] Coin id missing.");
+    return false;
+  }
+
+  priceUsd  = coinObj["usd"].as<float>();
+  change24h = coinObj["usd_24h_change"].as<float>();
+
+  Serial.printf("[CG] %s: $%.6f (24h: %.2f%%)\n",
+                coin.ticker, priceUsd, change24h);
+
+  return true;
+}
+
+bool fetchPrice(float& priceUsd, float& change24h) {
+  if (WiFi.status() != WL_CONNECTED) {
+    Serial.println("[Price] WiFi not connected.");
+    return false;
+  }
+
+  if (fetchPriceFromPaprika(priceUsd, change24h)) {
+    return true;
+  }
+  Serial.println("[Price] CoinPaprika failed, falling back to CoinGecko...");
+
+  if (fetchPriceFromCoingecko(priceUsd, change24h)) {
+    return true;
+  }
+
+  Serial.println("[Price] CoinGecko failed, falling back to Kraken...");
+
+  if (fetchPriceFromKraken(priceUsd, change24h)) {
+    return true;
+  }
+
+  Serial.println("[Price] All providers failed.");
+  return false;
+}
+
+// ==================== 歷史 OHLC bootstrap =====================
+
+static bool bootstrapHistoryFromCoingeckoMarketChart() {
+  const CoinInfo& coin = currentCoin();
+
+  if (!coin.geckoId || coin.geckoId[0] == '\0') {
+    Serial.println("[History][CG] No geckoId configured for this coin.");
+    return false;
+  }
+  if (WiFi.status() != WL_CONNECTED) {
+    Serial.println("[History][CG] WiFi not connected.");
+    return false;
+  }
+
+ // Ensure 7pm ET cycle exists.
+  updateEtCycle();
+  if (!g_cycleInit) {
+    Serial.println("[History][CG] cycle not initialized.");
+    return false;
+  }
+
+  time_t nowUtc = time(nullptr);
+  if (nowUtc <= 0) {
+    Serial.println("[History][CG] time(nullptr) failed.");
+    return false;
+  }
+
+  time_t windowStartUtc = g_cycleStartUtc;
+  time_t windowEndUtc   = g_cycleEndUtc;
+  if (nowUtc < windowEndUtc) windowEndUtc = nowUtc;
+
+  HTTPClient http;
+  String cgId = String(coin.geckoId);
+  String url = "https://api.coingecko.com/api/v3/coins/" + cgId +
+               "/market_chart?vs_currency=usd&days=1";
+
+  Serial.print("[History][CG] GET ");
+  Serial.println(url);
+
+  http.begin(url);
+  http.setFollowRedirects(HTTPC_STRICT_FOLLOW_REDIRECTS);
+  http.setTimeout(8000);
+
+  int code = http.GET();
+  if (code != 200) {
+    Serial.printf("[History][CG] HTTP error: %d\n", code);
+    http.end();
+    return false;
+  }
+
+  String payload = http.getString();
+  http.end();
+
+ // Only keep the 'prices' array to reduce memory usage.
+  StaticJsonDocument<64> filter;
+  filter["prices"] = true;
+
+  DynamicJsonDocument doc(24576);
+  DeserializationError err = deserializeJson(doc, payload, DeserializationOption::Filter(filter));
+  if (err) {
+    Serial.printf("[History][CG] JSON parse error: %s\n", err.c_str());
+    return false;
+  }
+
+  JsonArray prices = doc["prices"].as<JsonArray>();
+  if (prices.isNull()) {
+    Serial.println("[History][CG] prices missing.");
+    return false;
+  }
+
+  g_chartSampleCount = 0;
+  dayAvgRollingReset();
+  int kept = 0;
+
+  for (JsonVariant v : prices) {
+    JsonArray row = v.as<JsonArray>();
+    if (row.isNull() || row.size() < 2) continue;
+
+ // CoinGecko timestamps are milliseconds.
+    long long tMs = row[0].as<long long>();
+    time_t tUtc = (time_t)(tMs / 1000LL);
+    float price = row[1].as<float>();
+    if (price <= 0.0f) continue;
+
+ // Rolling 24h mean uses full last-day window (seeded from CoinGecko)
+    dayAvgRollingAdd(tUtc, price);
+    if (tUtc < windowStartUtc || tUtc > windowEndUtc) continue;
+    addChartSampleUtc(tUtc, price);
+    kept++;
+  }
+
+  Serial.printf("[History][CG] Kept %d samples into chart.\n", kept);
+  return (kept > 0);
+}
+
+void bootstrapHistoryFromKrakenOHLC() {
+  const CoinInfo& coin = currentCoin();
+  if (WiFi.status() != WL_CONNECTED) {
+    Serial.println("[History] WiFi not connected, skip.");
+    return;
+  }
+
+ // 先確保 7pm ET cycle 已建立
+  updateEtCycle();
+  if (!g_cycleInit) {
+    Serial.println("[History] cycle not initialized, abort.");
+    return;
+  }
+
+  time_t nowUtc = time(nullptr);
+  if (nowUtc <= 0) {
+    Serial.println("[History] time(nullptr) failed.");
+    return;
+  }
+
+ // 這一個 7pm ET 週期的 UTC 視窗
+  time_t windowStartUtc = g_cycleStartUtc;
+  time_t windowEndUtc   = g_cycleEndUtc;
+  if (nowUtc < windowEndUtc) {
+    windowEndUtc = nowUtc;
+  }
+
+  Serial.printf("[History] cycle UTC window: %ld .. %ld\n",
+                (long)windowStartUtc, (long)windowEndUtc);
+
+  if (!coin.krakenPair || coin.krakenPair[0] == '\0') {
+    Serial.println("[History] No Kraken pair configured, trying CoinGecko...");
+    if (!bootstrapHistoryFromCoingeckoMarketChart()) {
+      Serial.println("[History] CoinGecko history failed.");
+    }
+    return;
+  }
+
+ // Seed rolling 24h mean buffer (independent of chart window)
+  dayAvgRollingReset();
+  time_t sinceUtc = windowStartUtc;
+  if (nowUtc > 100000) {
+    time_t rollSince = nowUtc - (24 * 3600);
+    if (rollSince < sinceUtc) sinceUtc = rollSince;
+  }
+
+  HTTPClient http;
+  String url = "https://api.kraken.com/0/public/OHLC?pair=";
+  url += coin.krakenPair;
+  url += "&interval=5&since=";
+ // 只要從這個週期開始的 timestamp 之後的資料，避免 JSON 太大
+  url += String((long)sinceUtc);
+
+  Serial.print("[History] GET ");
+  Serial.println(url);
+
+  http.begin(url);
+  http.setFollowRedirects(HTTPC_STRICT_FOLLOW_REDIRECTS);
+  http.setTimeout(8000);
+
+  int code = http.GET();
+  if (code != 200) {
+    Serial.printf("[History] HTTP error: %d\n", code);
+    http.end();
+    return;
+  }
+
+  String payload = http.getString();
+  http.end();
+
+  Serial.printf("[History] Payload length: %d bytes\n", payload.length());
+
+ // 原本是 32768，稍微加大一點，配合 since= 應該就很安全
+  DynamicJsonDocument doc(49152);
+  DeserializationError err = deserializeJson(doc, payload);
+  if (err) {
+    Serial.printf("[History] JSON parse error: %s\n", err.c_str());
+    return;
+  }
+
+  if (doc["error"].size() > 0) {
+    Serial.print("[History] API error: ");
+    serializeJson(doc["error"], Serial);
+    Serial.println();
+    return;
+  }
+
+  JsonObject result = doc["result"];
+  if (result.isNull()) {
+    Serial.println("[History] result is null.");
+    return;
+  }
+
+ // Kraken returns dynamic keys (pair name) + a 'last' field.
+  JsonArray ohlcArr;
+  for (JsonPair kv : result) {
+    if (strcmp(kv.key().c_str(), "last") == 0) continue;
+    ohlcArr = kv.value().as<JsonArray>();
+    break;
+  }
+  if (ohlcArr.isNull()) {
+    Serial.println("[History] OHLC array missing or wrong type.");
+    Serial.println("[History] Trying CoinGecko...");
+    if (!bootstrapHistoryFromCoingeckoMarketChart()) {
+      Serial.println("[History] CoinGecko history failed.");
+    }
+    return;
+  }
+
+  Serial.printf("[History] OHLC raw size: %u\n", (unsigned)ohlcArr.size());
+
+  g_chartSampleCount = 0;
+  dayAvgRollingReset();
+  long minT = LONG_MAX;
+  long maxT = LONG_MIN;
+  int  kept = 0;
+
+  for (JsonVariant v : ohlcArr) {
+    JsonArray row = v.as<JsonArray>();
+    if (row.isNull() || row.size() < 5) continue;
+
+    long tUtc = row[0].as<long>();
+    const char* closeStr = row[4] | "0";
+
+    if (tUtc < minT) minT = tUtc;
+    if (tUtc > maxT) maxT = tUtc;
+
+ // 只把這個週期內的點塞進 chart
+    if (tUtc < windowStartUtc || tUtc > windowEndUtc) continue;
+
+    float closePrice = atof(closeStr);
+    dayAvgRollingAdd((time_t)tUtc, closePrice);
+    addChartSampleUtc((time_t)tUtc, closePrice);
+    kept++;
+  }
+
+  Serial.printf("[History] OHLC timestamp range UTC: %ld .. %ld\n",
+                (minT == LONG_MAX ? 0 : minT),
+                (maxT == LONG_MIN ? 0 : maxT));
+  Serial.printf("[History] Kept %d samples into chart.\n", kept);
+  Serial.printf("[History] g_chartSampleCount = %d\n", g_chartSampleCount);
+}
+
+
+// ------------------------------
+// FX: USD -> TWD (NTD)
+// ------------------------------
+bool fetchUsdToTwdRate(float& outRate) {
+  if (WiFi.status() != WL_CONNECTED) {
+    Serial.println("[FX] WiFi not connected; skip");
+    return false;
+  }
+
+  const char* urls[] = {
+    "https://open.er-api.com/v6/latest/USD",
+    "https://api.frankfurter.app/latest?from=USD&to=TWD",
+    "https://api.exchangerate.host/latest?base=USD&symbols=TWD",
+  };
+
+  for (size_t i = 0; i < sizeof(urls) / sizeof(urls[0]); i++) {
+    const char* url = urls[i];
+    HTTPClient http;
+    http.setTimeout(6000);
+    http.begin(url);
+
+    Serial.printf("[FX] GET %s\n", url);
+    int httpCode = http.GET();
+    if (httpCode != HTTP_CODE_OK) {
+      Serial.printf("[FX] HTTP %d\n", httpCode);
+      http.end();
+      continue;
+    }
+
+    String payload = http.getString();
+    http.end();
+
+ // 只取 rates.TWD 這個欄位
+    StaticJsonDocument<64> filter;
+    filter["rates"]["TWD"] = true;
+
+    DynamicJsonDocument doc(4096);
+    DeserializationError err = deserializeJson(doc, payload, DeserializationOption::Filter(filter));
+    if (err) {
+      Serial.printf("[FX] JSON error: %s\n", err.c_str());
+      continue;
+    }
+
+    float rate = doc["rates"]["TWD"] | 0.0f;
+    if (rate > 0.1f && rate < 500.0f) {
+      outRate = rate;
+      Serial.printf("[FX] USD->TWD: %.4f\n", outRate);
+      return true;
+    }
+
+    Serial.println("[FX] Missing/invalid rates.TWD");
+  }
+
+  Serial.println("[FX] All endpoints failed");
+  return false;
+}

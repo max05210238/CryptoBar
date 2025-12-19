@@ -1,31 +1,43 @@
-// CryptoBar V0.97 (refactor-only)
-// Move PCNT rotary encoder decode out of main.cpp (no behavior change).
+// CryptoBar V0.99
+// Encoder performance optimization: fix slow response, direction issues, and erratic behavior.
 
 #include "encoder_pcnt.h"
 
 // ==================== Encoder (PCNT hardware decode) =====================
-// V0.97: PCNT hardware decoder for encoder rotation (baseline).
+// V0.99: Optimized PCNT hardware decoder for better response with cheap encoders.
 //
 // Implementation notes:
 // - Use CLK as PCNT pulse input, DT as PCNT control input (direction).
 // - Count BOTH edges of CLK (pos/neg = INC) and reverse direction when DT is LOW.
 // - Convert raw counts into "detents" (typically 2 counts per detent when counting CLK edges only).
 // - Rate-limit emitted steps per loop so UI won't "jump" after long blocking ops.
+//
+// V0.99 improvements:
+// - Reduced filter value (1023→200) for better signal capture with noisy cheap encoders
+// - Relaxed direction lock (150ms→30ms) to prevent legitimate movements from being dropped
+// - Smarter debounce logic that doesn't aggressively clear all accumulated values
+// - Added debug mode for diagnostics
 
 static const pcnt_unit_t    ENC_PCNT_UNIT = PCNT_UNIT_0;
 static const pcnt_channel_t ENC_PCNT_CH   = PCNT_CHANNEL_0;
 
-// Max PCNT filter is 1023 APB cycles (~12.8us @80MHz). Helps with short glitches/EMI.
-static const uint16_t ENC_PCNT_FILTER_VAL = 1023;
+// V0.99: Reduced from 1023 to 200 APB cycles (~2.5us @80MHz)
+// Lower value captures more signals from cheap encoders while still filtering noise
+static const uint16_t ENC_PCNT_FILTER_VAL = 200;
 
 // Usually 2 counts per detent when counting both edges on CLK only.
+// If your encoder feels too slow or too fast, try 1 or 4.
 static const int ENC_COUNTS_PER_DETENT = 2;
 
 // If direction is reversed, set to 1.
 static const int ENC_DIR_INVERT = 1;
 
-// Ignore quick reversal as bounce.
-static const uint32_t ENC_DIR_LOCK_MS = 150;
+// V0.99: Reduced from 150ms to 30ms - only filter very fast accidental reversals
+// Setting to 0 disables direction lock entirely (most responsive but may allow some bounce)
+static const uint32_t ENC_DIR_LOCK_MS = 30;
+
+// V0.99: Enable debug output (set to 1 to see encoder diagnostics in Serial)
+static const int ENC_DEBUG = 0;
 
 static int      s_lastEncDir     = 0;
 static uint32_t s_lastEncStepMs  = 0;
@@ -74,7 +86,12 @@ void encoderPcntBegin(int clkPin, int dtPin) {
   s_lastEncDir     = 0;
   s_lastEncStepMs  = 0;
 
-  Serial.println("[ENC] PCNT enabled");
+  Serial.println("[ENC] V0.99 PCNT enabled");
+  Serial.printf("[ENC] Config: Filter=%d APB, Counts/Detent=%d, DirInvert=%d, DirLock=%dms\n",
+                ENC_PCNT_FILTER_VAL, ENC_COUNTS_PER_DETENT, ENC_DIR_INVERT, ENC_DIR_LOCK_MS);
+  if (ENC_DEBUG) {
+    Serial.println("[ENC] DEBUG MODE ENABLED - will output encoder events");
+  }
 }
 
 void encoderPcntPoll(bool appRunning, volatile int* stepAccum, portMUX_TYPE* mux) {
@@ -101,6 +118,10 @@ void encoderPcntPoll(bool appRunning, volatile int* stepAccum, portMUX_TYPE* mux
   int delta = (int)cnt;
   if (ENC_DIR_INVERT) delta = -delta;
 
+  if (ENC_DEBUG && delta != 0) {
+    Serial.printf("[ENC] Raw PCNT: %d (inverted: %d)\n", cnt, delta);
+  }
+
   s_encDetentAccum += delta;
 
   int steps = 0;
@@ -113,7 +134,13 @@ void encoderPcntPoll(bool appRunning, volatile int* stepAccum, portMUX_TYPE* mux
     s_encDetentAccum += ENC_COUNTS_PER_DETENT;
   }
 
-  if (steps != 0) s_encBacklog += steps;
+  if (steps != 0) {
+    s_encBacklog += steps;
+    if (ENC_DEBUG) {
+      Serial.printf("[ENC] Detent steps: %d, Backlog: %d, Accum: %d\n",
+                    steps, s_encBacklog, s_encDetentAccum);
+    }
+  }
 
  // Rate limit so menus don't "teleport" after a long blocking call.
   int emit = s_encBacklog;
@@ -121,17 +148,31 @@ void encoderPcntPoll(bool appRunning, volatile int* stepAccum, portMUX_TYPE* mux
   if (emit > MAX_EMIT) emit = MAX_EMIT;
   if (emit < -MAX_EMIT) emit = -MAX_EMIT;
 
- // Bounce guard: ignore a quick single-step reversal caused by encoder chatter.
+ // V0.99: Improved bounce guard - less aggressive to allow legitimate quick direction changes
+  // Only filter very fast reversals (< 30ms) with single step
   if (emit != 0) {
     int dir = (emit > 0) ? 1 : -1;
     uint32_t nowMs = millis();
 
-    if (s_lastEncDir != 0 && dir != s_lastEncDir && (nowMs - s_lastEncStepMs) < ENC_DIR_LOCK_MS && abs(emit) <= 2) {
- // Treat as bounce.
- // IMPORTANT: also discard the pending opposite-direction backlog.
+    // V0.99: Only filter if ALL conditions met:
+    // 1. We have previous direction (not first movement)
+    // 2. Direction changed
+    // 3. Time since last < ENC_DIR_LOCK_MS (now 30ms instead of 150ms)
+    // 4. Movement is single step (abs(emit) == 1, not <= 2)
+    if (ENC_DIR_LOCK_MS > 0 &&  // Allow disabling lock by setting to 0
+        s_lastEncDir != 0 &&
+        dir != s_lastEncDir &&
+        (nowMs - s_lastEncStepMs) < ENC_DIR_LOCK_MS &&
+        abs(emit) == 1) {  // V0.99: Only filter single-step reversals, not 2 steps
+
+      // V0.99: Only discard current emit, keep backlog for next poll
+      // This is less aggressive than clearing everything
+      if (ENC_DEBUG) {
+        Serial.printf("[ENC] Bounce filter: quick reversal ignored (dir %d->%d, %dms)\n",
+                      s_lastEncDir, dir, (int)(nowMs - s_lastEncStepMs));
+      }
       emit = 0;
-      s_encBacklog = 0;
-      s_encDetentAccum = 0;
+      // V0.99: Don't clear s_encBacklog and s_encDetentAccum here - they might be legitimate
     } else {
       s_lastEncDir = dir;
       s_lastEncStepMs = nowMs;
@@ -140,6 +181,11 @@ void encoderPcntPoll(bool appRunning, volatile int* stepAccum, portMUX_TYPE* mux
 
   if (emit != 0) {
     s_encBacklog -= emit;
+
+    if (ENC_DEBUG) {
+      Serial.printf("[ENC] Emitting %d steps to UI (backlog remaining: %d)\n",
+                    emit, s_encBacklog);
+    }
 
     portENTER_CRITICAL(mux);
  *stepAccum += emit;

@@ -1,4 +1,4 @@
-// CryptoBar V0.98 (Refactored: Step 5 - Extract menu & settings)
+// CryptoBar V0.99 (Encoder Performance Optimization)
 #include <Arduino.h>
 #include <WiFi.h>
 #include <HTTPClient.h>

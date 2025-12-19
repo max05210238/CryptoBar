@@ -136,6 +136,12 @@ static int rssiToBars(int rssi) {
   return 0;
 }
 
+// ==================== e-paper display =====================
+
+GxEPD2_BW<GxEPD2_290_BS, GxEPD2_290_BS::HEIGHT> display(
+  GxEPD2_290_BS(EPD_CS, EPD_DC, EPD_RST, EPD_BUSY)
+);
+
 // ==================== 小工具函式 =====================
 
 // 目前幣別

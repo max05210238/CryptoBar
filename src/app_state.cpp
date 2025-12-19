@@ -1,7 +1,5 @@
 // app_state.cpp - Global application state definitions
 #include "app_state.h"
-#include <GxEPD2_BW.h>
-#include <GxEPD2_290_BS.h>
 
 // ==================== Version =====================
 const char* CRYPTOBAR_VERSION = "V0.97";
@@ -138,10 +136,7 @@ int32_t g_localUtcOffsetSec = 0;
 ChartSample g_chartSamples[MAX_CHART_SAMPLES];
 int         g_chartSampleCount = 0;
 
-// e-paper display
-GxEPD2_BW<GxEPD2_290_BS, GxEPD2_290_BS::HEIGHT> display(
-  GxEPD2_290_BS(EPD_CS, EPD_DC, EPD_RST, EPD_BUSY)
-);
+// e-paper display (defined in main.cpp)
 
 // ==================== WiFi credentials (stored in NVS) =====================
 String g_wifiSsid;

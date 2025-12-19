@@ -11,6 +11,7 @@
 #include <Fonts/FreeSansBold12pt7b.h>
 #include <Fonts/FreeSansBold18pt7b.h>
 
+#include "app_state.h"
 #include "settings_store.h"
 #include "led_status.h"
 #include "coins.h"
@@ -31,11 +32,6 @@
 
 #include <string.h> // for strcmp
 
-// ==================== Version =====================
-// 右下角顯示用（歡迎畫面）
-// Hotfix: default timezone fallback to Seattle when tzIndex key is missing.
-static const char* CRYPTOBAR_VERSION = "V0.97";
-
 // ==================== 安全預設（避免 config.h 缺值時編譯失敗） =====================
 
 // (WiFi SSID/PW are no longer hardcoded; they will be provisioned via AP portal and saved to NVS.)
@@ -49,159 +45,7 @@ static const char* CRYPTOBAR_VERSION = "V0.97";
 #define MARKET_ANCHOR_HOUR_ET 19
 #endif
 
-// ==================== 常數與結構 =====================
-
-// 畫面佈局
-extern const int SYMBOL_PANEL_WIDTH = 90;
-
-// e-paper pins (ESP32-S3-DevKitC-1)
-#define EPD_BUSY 4
-#define EPD_RST 16
-#define EPD_DC 17
-#define EPD_CS 10
-#define EPD_SCK 12
-#define EPD_MOSI 11
-
-// 外接 WS2812
-#define NEOPIXEL_PIN 15
-#define NEOPIXEL_COUNT 1
-
-// 板載 WS2812（只用來關閉）
-#define BOARD_RGB_PIN 48
-#define BOARD_RGB_COUNT 1
-
-// Rotary encoder pins
-#define ENC_CLK_PIN 5
-#define ENC_DT_PIN 6
-#define ENC_SW_PIN 21
-
-// NTP
-const char* NTP_SERVER_1 = "pool.ntp.org";
-const char* NTP_SERVER_2 = "time.nist.gov";
-
-// LED 亮度 presets
-const float BRIGHTNESS_PRESETS[] = { 0.2f, 0.5f, 1.0f };
-const char* BRIGHTNESS_LABELS[]  = { "Low", "Med", "High" };
-
-// 更新頻率 presets
-const uint32_t UPDATE_PRESETS_MS[] = {
-  30UL * 1000UL,
-  60UL * 1000UL,
-  180UL * 1000UL,
-  300UL * 1000UL
-};
-const char* UPDATE_PRESET_LABELS[] = { "30s", "60s", "3m", "5m" };
-
-// 日期格式 label（enum DateFormat 在 ui.h）
-const char* DATE_FORMAT_LABELS[DATE_FORMAT_COUNT] = {
-  "MM/DD/YYYY",
-  "DD/MM/YYYY",
-  "YYYY-MM-DD"
-};
-
-// Date/Time size label (V0.97)
-const char* DTSIZE_LABELS[] = { "Small", "Large" };
-
-// ==================== ✅ Refresh Mode (給 ui.cpp 用的全域符號) =====================
-// 0 = Partial refresh rules（原本規則）
-// 1 = Full refresh rules（主畫面每次更新都 full refresh）
-int g_refreshMode = 1;
-const char* REFRESH_MODE_LABELS[] = { "Partial", "Full" };
-
-
-// ==================== ✅ Display Currency (USD/NTD) =====================
-// NOTE: Prices & chart samples are stored in USD; UI converts at draw time when NTD is selected.
-int   g_displayCurrency = (int)CURR_USD;
-float g_usdToTwd        = 32.0f;   // fallback default
-bool  g_fxValid         = false;
-static time_t g_nextFxUpdateUtc = 0;
-
-// ==================== 全域變數 =====================
-
-// 從 config.h 來的預設更新間隔；實際使用 g_updateIntervalMs
-uint32_t g_updateIntervalMs = UPDATE_INTERVAL_MS;
-
-// 刷新統計
-uint16_t g_partialRefreshCount = 0;
-
-// LED / 更新 / 幣別設定 index
-int   g_brightnessPresetIndex = 1;                      // default: Med
-float g_ledBrightness         = BRIGHTNESS_PRESETS[1];
-
-int g_updatePresetIndex  = 0;                           // 30s
-int g_currentCoinIndex   = 0;                           // set during loadSettings()
-int g_dateFormatIndex    = DATE_MM_DD_YYYY;
-int g_timeFormat         = TIME_12H;
-// Date/Time size: 0=Small, 1=Large (V0.97 default: Large)
-int g_dtSize             = 1;
-int g_timezoneIndex      = DEFAULT_TIMEZONE_INDEX;
-uint8_t g_dayAvgMode = DAYAVG_ROLLING;
-
-// True if tzIndex exists in NVS (i.e., user/device has an explicit timezone setting).
-// When false (fresh device / after clear), we will attempt one-time auto timezone detection
-// after WiFi connects (V0.97).
-static bool g_tzIndexKeyPresent = false;
-static bool g_tzIndexKeyPresentAtBoot = false;
-static bool g_bootFlagsInit = false;
-static bool g_tzAutoAttempted   = false;
-
-// UI 狀態
-enum UiMode {
-  UI_MODE_NORMAL    = 0,
-  UI_MODE_MENU      = 1,
-  UI_MODE_TZ_SUB    = 2,
-  UI_MODE_WIFI_INFO = 3,
-  UI_MODE_COIN_SUB  = 4,
-  UI_MODE_FW_CONFIRM = 5,
-  UI_MODE_MAINT      = 6
-};
-UiMode g_uiMode = UI_MODE_NORMAL;
-
-// 主選單 & 時區子選單 index（enum MenuItem 在 ui.h）
-int g_menuIndex    = 0;
-int g_menuTopIndex = 0;
-
-int g_tzMenuIndex    = DEFAULT_TIMEZONE_INDEX;
-int g_tzMenuTopIndex = 0;
-
-// Coin submenu state
-int g_coinMenuIndex    = 0;
-int g_coinMenuTopIndex = 0;
-
-// Encoder button 狀態
-bool          g_lastEncSw       = HIGH;
-unsigned long g_encPressStart   = 0;
-
-// ===== Encoder ISR capture (avoid missing steps during blocking ops) =====
-volatile int g_encStepAccum = 0;
-portMUX_TYPE g_encMux = portMUX_INITIALIZER_UNLOCKED;
-
-
-// UI redraw throttling (menu feels smoother)
-static bool g_menuDirty = false;
-static bool g_tzDirty   = false;
-static bool g_coinDirty = false;
-static uint32_t g_lastUiDrawMs = 0;
-static const uint32_t UI_DRAW_MIN_MS = 120;          // 每 120ms 最多畫一次 menu
-
-// 時間 / 價格狀態
-unsigned long lastUpdate = 0;
-
-// ==================== Tick-aligned update scheduler (V0.97) ====================
-static const time_t TIME_VALID_MIN_UTC = 1600000000;
-static bool   g_timeValid      = false;
-static time_t g_nextUpdateUtc  = 0;
-
-// Prefetch-to-tick: fetch a bit early, then "commit" draw at the exact tick.
-// This reduces visible drift between multiple units without using a master device.
-static const uint32_t PREFETCH_WINDOW_SEC   = 6;   // fetch window length before tick (seconds)
-static const uint32_t PREFETCH_MIN_LEAD_SEC = 2;   // latest fetch time: tick - 2s
-static const uint32_t PREFETCH_FIXED_LEAD_SEC = 4;   // Step 9: no jitter; fetch at fixed lead time
-static uint32_t g_fetchJitterSec = 0;              // 0..(window-minLead), derived from MAC
-static bool   g_prefetchValid  = false;
-static time_t g_prefetchForUtc = 0;
-static float  g_prefetchPrice  = 0.0f;
-static float  g_prefetchChange = 0.0f;
+// ==================== Helper functions for scheduler =====================
 
 static inline uint32_t updateIntervalSec() {
   uint32_t sec = (uint32_t)(g_updateIntervalMs / 1000UL);
@@ -260,66 +104,6 @@ static void tickSchedulerReset(const char* reason) {
                 (long)g_nextUpdateUtc, (long)(g_nextUpdateUtc - nowUtc));
 }
 
-float g_lastPriceUsd   = 0.0f;
-float g_lastChange24h  = 0.0f;
-bool  g_lastPriceOk    = false;
-
-// 昨日均線參考價（用 24h change 反算）
-float g_prevDayRefPrice   = 0.0f;
-bool  g_prevDayRefValid   = false;
-
-// 7pm ET cycle 狀態（實際計算在 network.cpp）
-bool   g_cycleInit     = false;
-time_t g_cycleStartUtc = 0;
-time_t g_cycleEndUtc   = 0;
-
-// 本地時區 offset（秒）— 實際值由 applyTimezone() 設定
-int32_t g_localUtcOffsetSec = 0;
-
-// 圖表 samples（實際使用在 network.cpp / ui.cpp）
-ChartSample g_chartSamples[MAX_CHART_SAMPLES];
-int         g_chartSampleCount = 0;
-
-// e-paper
-GxEPD2_BW<GxEPD2_290_BS, GxEPD2_290_BS::HEIGHT> display(
-  GxEPD2_290_BS(EPD_CS, EPD_DC, EPD_RST, EPD_BUSY)
-);
-
-// LEDs are handled by led_status.cpp
-
-// ==================== WiFi credentials (stored in NVS) =====================
-// Keys live in the same "cryptobar" namespace as other settings.
-static String g_wifiSsid;
-static String g_wifiPass;
-static bool   g_hasWifiCreds = false;
-
-// ==================== WiFi runtime reconnect guards (V0.97) =====================
-// Requirement: if WiFi drops during normal use, DO NOT automatically start AP.
-// Instead: retry STA in batches with backoff, keep UI responsive, and let user
-// manually trigger AP provisioning (long-press) if they want to change credentials.
-static bool     g_wifiEverConnected = false;
-static uint32_t g_nextRuntimeReconnectMs = 0;
-static uint8_t  g_runtimeReconnectBatch = 0;
-static const uint8_t  RUNTIME_RECONNECT_ATTEMPTS = 3;
-static const uint32_t RUNTIME_RECONNECT_TIMEOUT_MS = 10000;
-static const uint32_t RUNTIME_RECONNECT_BACKOFF_MS = 30000;
-
-enum AppState : uint8_t {
-  APP_STATE_NEED_WIFI  = 0,
-  APP_STATE_CONNECTING = 1,
-  APP_STATE_RUNNING    = 2,
-  APP_STATE_MAINT      = 3
-};
-static AppState g_appState = APP_STATE_RUNNING;
-
-// Tracks how long we've been trying to connect in APP_STATE_CONNECTING
-// (kept in main for refactor parity with V0.97)
-static uint32_t g_staConnectStartMs = 0;
-
-// Timeout for STA connection attempt while portal stays up.
-// Must match V0.97 behavior.
-static const uint32_t STA_CONNECT_TIMEOUT_MS = 30000;
-
 static void loadWifiCreds() {
   settingsStoreLoadWifi(g_wifiSsid, g_wifiPass);
 
@@ -351,11 +135,6 @@ static int rssiToBars(int rssi) {
   if (rssi >= -83) return 1;
   return 0;
 }
-
-
-
-// 部分刷新次數上限（Partial refresh 規則用）
-static const uint16_t PARTIAL_REFRESH_LIMIT = 20;
 
 // ==================== 小工具函式 =====================
 
@@ -692,10 +471,6 @@ static void logTickInfo(const char* tag, uint32_t intervalSec) {
 }
 
 // ==================== Periodic NTP resync (V0.97) =====================
-static const uint32_t NTP_RESYNC_INTERVAL_SEC = 10UL * 60UL;   // 10 minutes
-static volatile bool   g_ntpEventPending = false;
-static volatile int64_t g_ntpEventUtc = 0;
-static portMUX_TYPE    g_ntpMux = portMUX_INITIALIZER_UNLOCKED;
 
 static void ntpTimeSyncCb(struct timeval* tv) {
   int64_t utc = 0;
@@ -707,8 +482,6 @@ static void ntpTimeSyncCb(struct timeval* tv) {
   g_ntpEventPending = true;
   portEXIT_CRITICAL(&g_ntpMux);
 }
-
-static time_t g_nextNtpResyncUtc = 0;
 
 // Apply SNTP config (mode/callback/interval). Call once after initial NTP sync,
 // and again after any configTime() restart.

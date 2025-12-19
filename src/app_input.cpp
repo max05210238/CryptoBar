@@ -2,6 +2,7 @@
 // app_input.cpp - Input handling (encoder/button events)
 
 #include <Arduino.h>
+#include <WiFi.h>
 #include "app_input.h"
 #include "app_state.h"
 #include "app_wifi.h"
@@ -10,6 +11,7 @@
 #include "coins.h"
 #include "led_status.h"
 #include "maint_mode.h"
+#include "maint_boot.h"
 #include "wifi_portal.h"
 #include "ui.h"
 
@@ -20,6 +22,7 @@ extern void handleTimezoneSelect();
 extern void handleCoinSelect();
 extern void leaveMenu();
 extern void showWifiSetupRequired(uint32_t splashStartMs, bool rebootOnExit = true);
+extern void saveSettings();
 
 // ==================== Button Event Handlers =====================
 
@@ -63,8 +66,10 @@ void handleLongPress() {
  // More robust: reboot into maintenance mode using an NVS boot flag.
  // (Avoids switching WiFi modes while other work may be in progress.)
     drawFirmwareUpdateApScreen(CRYPTOBAR_VERSION, "Rebooting to Update AP...", "");
-    requestMaintenanceModeReboot();
-    return;
+    Serial.println("[MAINT] Request (reboot into update AP)");
+    maintBootRequest();
+    delay(80);
+    ESP.restart();
   }
 
  // Maintenance mode: long press also exits

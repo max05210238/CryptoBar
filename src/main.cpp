@@ -1,4 +1,4 @@
-// CryptoBar V0.99b (Memory & Performance Optimization)
+// CryptoBar V0.99c (UI Performance Optimization)
 #include <Arduino.h>
 #include <WiFi.h>
 #include <HTTPClient.h>

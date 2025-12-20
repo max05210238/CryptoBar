@@ -25,12 +25,13 @@ static const pcnt_channel_t ENC_PCNT_CH   = PCNT_CHANNEL_0;
 // Reduced filter for better responsiveness on smooth encoder
 static const uint16_t ENC_PCNT_FILTER_VAL = 150;
 
-// V0.99: Set to 1 for smooth encoder (no mechanical detents)
-// Every PCNT count produces immediate UI response for smooth rotation feel
-static const int ENC_COUNTS_PER_DETENT = 1;
+// V0.99: Set to 6 for smooth encoder (1/8 revolution = 1 step)
+// Bourns PEC11R: 24 pulses/rev × 2 edges (X2 mode) = 48 counts/rev
+// 48 counts/rev ÷ 8 = 6 counts per 1/8 revolution
+static const int ENC_COUNTS_PER_DETENT = 6;
 
-// If direction is reversed, set to 1.
-static const int ENC_DIR_INVERT = 1;
+// Direction inverted: 0 = normal (CW = positive), 1 = reversed
+static const int ENC_DIR_INVERT = 0;
 
 // V0.99: Minimal direction lock for smooth encoder
 // Smooth encoders need fast direction changes during slow rotation

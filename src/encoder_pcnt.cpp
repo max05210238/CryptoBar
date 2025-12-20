@@ -21,20 +21,20 @@
 static const pcnt_unit_t    ENC_PCNT_UNIT = PCNT_UNIT_0;
 static const pcnt_channel_t ENC_PCNT_CH   = PCNT_CHANNEL_0;
 
-// V0.99: EMI-hardened configuration for E-ink display interference
-// Increased filter to reject high-frequency EMI spikes from display
-static const uint16_t ENC_PCNT_FILTER_VAL = 500;
+// V0.99: Configuration for SMOOTH (no-detent) Bourns PEC11R-S0024
+// Reduced filter for better responsiveness on smooth encoder
+static const uint16_t ENC_PCNT_FILTER_VAL = 150;
 
-// V0.99: Increased to 4 for better EMI noise rejection
-// Bourns PEC11R has 24 pulses/rev = 4 counts per detent with quadrature
-static const int ENC_COUNTS_PER_DETENT = 4;
+// V0.99: Set to 1 for smooth encoder (no mechanical detents)
+// Every PCNT count produces immediate UI response for smooth rotation feel
+static const int ENC_COUNTS_PER_DETENT = 1;
 
 // If direction is reversed, set to 1.
 static const int ENC_DIR_INVERT = 1;
 
-// V0.99: Moderate direction lock to filter EMI-induced reversals
-// Helps reject spurious direction changes from display noise
-static const uint32_t ENC_DIR_LOCK_MS = 50;
+// V0.99: Minimal direction lock for smooth encoder
+// Smooth encoders need fast direction changes during slow rotation
+static const uint32_t ENC_DIR_LOCK_MS = 10;
 
 // V0.99: Debug enabled for diagnostics
 // Set to 1 to enable basic debug, 2 for verbose mode

@@ -150,10 +150,6 @@ static void drawHeaderDateTimeSmall() {
 
 // Centered large date/time (Large mode)
 // Goal: equal spacing between date/time ↔ price ↔ chart; date/time can be slightly compressed near top edge of white panel
-// V0.99c: Pre-calculated font metrics to avoid redundant getTextBounds() calls
-static const int16_t PRICE_FONT_HEIGHT = 26;      // FreeSansBold18pt7b "88888" height (measured offline)
-static const int16_t PRICE_FONT_Y_OFFSET = -19;   // FreeSansBold18pt7b "88888" y1 offset
-
 static void drawHeaderDateTimeLarge() {
   const int16_t yOff = largeContentYOffset();
   char dateBuf[20] = "--/--/----";
@@ -184,7 +180,7 @@ static void drawHeaderDateTimeLarge() {
   display.setFont(dtFont);
   display.setTextColor(GxEPD_BLACK);
 
-  // V0.99c: Get date/time text bounds once (was called twice: line 185 and 216)
+  // V0.99c: Get date/time text bounds once (will reuse later, avoiding duplicate call)
   int16_t dtX1, dtY1;
   uint16_t dtW, dtH;
   display.getTextBounds(dtBuf, 0, 0, &dtX1, &dtY1, &dtW, &dtH);
@@ -200,9 +196,15 @@ static void drawHeaderDateTimeLarge() {
   const int16_t PRICE_Y_BASE = 52 + yOff;
   const int16_t CHART_TOP    = 70 + yOff;
 
- // V0.99c: Use pre-calculated price font metrics instead of getTextBounds() call
-  int16_t priceTop    = PRICE_Y_BASE + PRICE_FONT_Y_OFFSET;
-  int16_t priceBottom = priceTop + PRICE_FONT_HEIGHT;
+ // Calculate price text area height (use large font bbox only, avoid modifying drawPriceCenter itself)
+  display.setFont(&FreeSansBold18pt7b);
+  int16_t px1, py1;
+  uint16_t pw, ph;
+ // Use full-width characters to estimate price font height, making dt↔price↔chart spacing visually accurate
+  display.getTextBounds("88888", 0, 0, &px1, &py1, &pw, &ph);
+
+  int16_t priceTop    = PRICE_Y_BASE + py1;
+  int16_t priceBottom = priceTop + (int16_t)ph;
 
   int16_t gap = CHART_TOP - priceBottom;  // Price area bottom → chart top
   if (gap < 2) gap = 2;

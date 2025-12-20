@@ -33,8 +33,10 @@ extern const int SYMBOL_PANEL_WIDTH;
 #define BOARD_RGB_COUNT 1
 
 // Rotary encoder pins
-#define ENC_CLK_PIN 5
-#define ENC_DT_PIN 6
+// V0.99: Changed from GPIO 5/6 to 9/10 for ESP32-S3 PCNT compatibility
+// GPIO 5/6 may be reserved for SPI Flash on some ESP32-S3 boards
+#define ENC_CLK_PIN 9
+#define ENC_DT_PIN 10
 #define ENC_SW_PIN 21
 
 // NTP

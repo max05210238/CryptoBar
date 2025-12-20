@@ -1,31 +1,33 @@
-// CryptoBar V0.99
+// CryptoBar V0.99a
 // Encoder performance optimization: fix slow response, direction issues, and erratic behavior.
 
 #include "encoder_pcnt.h"
 
 // ==================== Encoder (PCNT hardware decode) =====================
-// V0.99: Optimized PCNT hardware decoder for better response with cheap encoders.
+// V0.99a: Optimized PCNT hardware decoder for smooth Bourns PEC11R-S0024 encoder.
 //
 // Implementation notes:
-// - Use CLK as PCNT pulse input, DT as PCNT control input (direction).
-// - Count BOTH edges of CLK (pos/neg = INC) and reverse direction when DT is LOW.
-// - Convert raw counts into "detents" (typically 2 counts per detent when counting CLK edges only).
+// - Use proper quadrature decoding (X2 mode: CLK rising/falling edges)
+// - GPIO 1 (CLK) and GPIO 2 (DT) - GPIO 5/6 don't support PCNT on ESP32-S3
+// - Bourns PEC11R-S0024: 24 PPR, smooth (no detents)
 // - Rate-limit emitted steps per loop so UI won't "jump" after long blocking ops.
 //
-// V0.99 improvements:
-// - Reduced filter value (1023→200) for better signal capture with noisy cheap encoders
-// - Relaxed direction lock (150ms→30ms) to prevent legitimate movements from being dropped
-// - Smarter debounce logic that doesn't aggressively clear all accumulated values
-// - Added debug mode for diagnostics
+// V0.99a improvements from V0.98:
+// - Fixed GPIO pins: 5/6 → 1/2 (ESP32-S3 PCNT compatibility)
+// - Fixed quadrature mode: PCNT_COUNT_INC → PCNT_COUNT_DEC (proper phase detection)
+// - Swapped CLK/DT for correct direction
+// - Optimized for smooth encoder: COUNTS=6 (1/8 rev = 1 step), FILTER=150, DIR_LOCK=10ms
+// - Added EMI spike rejection for E-ink display interference
+// - Added verbose debug mode for diagnostics
 
 static const pcnt_unit_t    ENC_PCNT_UNIT = PCNT_UNIT_0;
 static const pcnt_channel_t ENC_PCNT_CH   = PCNT_CHANNEL_0;
 
-// V0.99: Configuration for SMOOTH (no-detent) Bourns PEC11R-S0024
+// V0.99a: Configuration for SMOOTH (no-detent) Bourns PEC11R-S0024
 // Reduced filter for better responsiveness on smooth encoder
 static const uint16_t ENC_PCNT_FILTER_VAL = 150;
 
-// V0.99: Set to 6 for smooth encoder (1/8 revolution = 1 step)
+// V0.99a: Set to 6 for smooth encoder (1/8 revolution = 1 step)
 // Bourns PEC11R: 24 pulses/rev × 2 edges (X2 mode) = 48 counts/rev
 // 48 counts/rev ÷ 8 = 6 counts per 1/8 revolution
 static const int ENC_COUNTS_PER_DETENT = 6;
@@ -33,11 +35,11 @@ static const int ENC_COUNTS_PER_DETENT = 6;
 // Direction inverted: 0 = normal (CW = positive), 1 = reversed
 static const int ENC_DIR_INVERT = 0;
 
-// V0.99: Minimal direction lock for smooth encoder
+// V0.99a: Minimal direction lock for smooth encoder
 // Smooth encoders need fast direction changes during slow rotation
 static const uint32_t ENC_DIR_LOCK_MS = 10;
 
-// V0.99: Debug enabled for diagnostics
+// V0.99a: Debug enabled for diagnostics
 // Set to 1 to enable basic debug, 2 for verbose mode
 static const int ENC_DEBUG = 2;
 
@@ -90,7 +92,7 @@ void encoderPcntBegin(int clkPin, int dtPin) {
   s_lastEncDir     = 0;
   s_lastEncStepMs  = 0;
 
-  Serial.println("[ENC] V0.99 PCNT enabled");
+  Serial.println("[ENC] V0.99a PCNT enabled");
   Serial.printf("[ENC] Config: Filter=%d APB, Counts/Detent=%d, DirInvert=%d, DirLock=%dms\n",
                 ENC_PCNT_FILTER_VAL, ENC_COUNTS_PER_DETENT, ENC_DIR_INVERT, ENC_DIR_LOCK_MS);
   if (ENC_DEBUG >= 2) {
@@ -137,7 +139,7 @@ void encoderPcntPoll(bool appRunning, volatile int* stepAccum, portMUX_TYPE* mux
 
   if (cnt == 0) return;
 
-  // V0.99: EMI spike rejection - discard unrealistically large jumps
+  // V0.99a: EMI spike rejection - discard unrealistically large jumps
   // Bourns PEC11R at 30 RPM = ~10ms per detent, poll rate ~10ms
   // Maximum plausible counts per poll: ~16 (very fast rotation)
   // Anything larger is likely EMI from E-ink display
@@ -187,13 +189,13 @@ void encoderPcntPoll(bool appRunning, volatile int* stepAccum, portMUX_TYPE* mux
   if (emit > MAX_EMIT) emit = MAX_EMIT;
   if (emit < -MAX_EMIT) emit = -MAX_EMIT;
 
- // V0.99: Improved bounce guard - less aggressive to allow legitimate quick direction changes
+ // V0.99a: Improved bounce guard - less aggressive to allow legitimate quick direction changes
   // Only filter very fast reversals (< 30ms) with single step
   if (emit != 0) {
     int dir = (emit > 0) ? 1 : -1;
     uint32_t nowMs = millis();
 
-    // V0.99: Only filter if ALL conditions met:
+    // V0.99a: Only filter if ALL conditions met:
     // 1. We have previous direction (not first movement)
     // 2. Direction changed
     // 3. Time since last < ENC_DIR_LOCK_MS (now 30ms instead of 150ms)
@@ -202,16 +204,16 @@ void encoderPcntPoll(bool appRunning, volatile int* stepAccum, portMUX_TYPE* mux
         s_lastEncDir != 0 &&
         dir != s_lastEncDir &&
         (nowMs - s_lastEncStepMs) < ENC_DIR_LOCK_MS &&
-        abs(emit) == 1) {  // V0.99: Only filter single-step reversals, not 2 steps
+        abs(emit) == 1) {  // V0.99a: Only filter single-step reversals, not 2 steps
 
-      // V0.99: Only discard current emit, keep backlog for next poll
+      // V0.99a: Only discard current emit, keep backlog for next poll
       // This is less aggressive than clearing everything
       if (ENC_DEBUG) {
         Serial.printf("[ENC] Bounce filter: quick reversal ignored (dir %d->%d, %dms)\n",
                       s_lastEncDir, dir, (int)(nowMs - s_lastEncStepMs));
       }
       emit = 0;
-      // V0.99: Don't clear s_encBacklog and s_encDetentAccum here - they might be legitimate
+      // V0.99a: Don't clear s_encBacklog and s_encDetentAccum here - they might be legitimate
     } else {
       s_lastEncDir = dir;
       s_lastEncStepMs = nowMs;

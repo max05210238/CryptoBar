@@ -3,44 +3,51 @@
 #include <Arduino.h>
 #include <driver/pcnt.h>
 
-// ==================== CryptoBar V0.99 Encoder Configuration ====================
+// ==================== CryptoBar V0.99a Encoder Configuration ====================
 //
-// PCNT-based rotary encoder with optimized performance for cheap/noisy encoders.
+// PCNT-based rotary encoder optimized for Bourns PEC11R-S0024 (smooth, 24 PPR).
 //
-// V0.99 IMPROVEMENTS:
-// - Reduced hardware filter (1023→200 APB cycles) for better signal capture
-// - Relaxed direction lock (150ms→30ms) to prevent dropping legitimate movements
-// - Smarter debounce that only filters single-step reversals
-// - Debug mode for diagnostics
+// HARDWARE SETUP:
+// - Encoder: Bourns PEC11R-S0024 (24 pulses/rev, smooth/no detents)
+// - GPIO Pins: CLK=GPIO2, DT=GPIO1 (ESP32-S3 compatible)
+// - Note: GPIO 5/6 don't support PCNT on ESP32-S3
+//
+// V0.99a IMPROVEMENTS FROM V0.98:
+// - Fixed GPIO pins: 5/6 → 1/2 (ESP32-S3 PCNT compatibility)
+// - Fixed quadrature decoding: proper X2 mode (pos_mode=DEC, neg_mode=INC)
+// - Swapped CLK/DT assignment for correct direction
+// - Optimized for smooth encoder: COUNTS=6 (1/8 rev = 1 step)
+// - Added EMI spike rejection (threshold=16) for E-ink display interference
+// - Reduced filter to 150 APB cycles for better responsiveness
+// - Minimal direction lock (10ms) for smooth rotation
+// - Verbose debug mode (ENC_DEBUG=2) for diagnostics
 //
 // CONFIGURATION GUIDE (edit encoder_pcnt.cpp):
 //
-// 1. ENC_PCNT_FILTER_VAL (default: 200)
+// 1. ENC_PCNT_FILTER_VAL (current: 150)
 //    - Hardware noise filter in APB cycles (~2.5μs @ 80MHz)
-//    - Lower = more responsive but more noise
-//    - Higher = less noise but may miss signals
+//    - Lower = more responsive, higher = more noise rejection
 //    - Range: 0-1023
-//    - Try: 100 (very responsive), 200 (balanced), 500 (very noisy encoder)
+//    - Try: 100 (very responsive), 150 (current), 300 (EMI environment)
 //
-// 2. ENC_COUNTS_PER_DETENT (default: 2)
-//    - How many PCNT counts = 1 click/detent
-//    - Depends on your encoder hardware
-//    - Try: 1 (fast response), 2 (standard), 4 (high-resolution encoder)
+// 2. ENC_COUNTS_PER_DETENT (current: 6)
+//    - How many PCNT counts = 1 UI step
+//    - Current: 1/8 revolution = 1 step (48 counts/rev ÷ 8 = 6)
+//    - For Bourns PEC11R-S0024: X2 mode gives 48 counts/revolution
+//    - Try: 3 (1/16 rev), 6 (1/8 rev), 12 (1/4 rev)
 //
-// 3. ENC_DIR_INVERT (default: 1)
-//    - Set to 1 if direction is reversed, 0 for normal
+// 3. ENC_DIR_INVERT (current: 0)
+//    - Direction: 0 = CW is positive (up), 1 = reversed
 //
-// 4. ENC_DIR_LOCK_MS (default: 30)
+// 4. ENC_DIR_LOCK_MS (current: 10)
 //    - Time window to filter accidental direction reversals
-//    - Lower = more responsive but may allow some bounce
-//    - Higher = filters more bounce but may feel sluggish
-//    - Range: 0-150ms
-//    - Try: 0 (no filtering, most responsive), 30 (balanced), 50 (noisy encoder)
+//    - Smooth encoders need minimal filtering
+//    - Range: 0-50ms
+//    - Try: 0 (no filtering), 10 (current), 30 (more filtering)
 //
-// 5. ENC_DEBUG (default: 0)
-//    - Set to 1 to enable Serial debug output
-//    - Shows raw PCNT counts, steps, and filtering events
-//    - Useful for diagnosing encoder issues
+// 5. ENC_DEBUG (current: 2)
+//    - 0 = disabled, 1 = basic debug, 2 = verbose (every 100ms poll)
+//    - Verbose mode shows PCNT values and GPIO levels for diagnostics
 //
 // ==================== API Functions ====================
 

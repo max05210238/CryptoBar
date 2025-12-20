@@ -58,7 +58,12 @@ bool settingsStoreLoad(StoredSettings& out) {
   out.dayAvg    = prefs.getInt("dayAvg",    out.dayAvg);
   out.rfMode    = prefs.getInt("rfMode",    out.rfMode);
 
+  // V0.99f: Multi-currency support - validate range
   out.dispCur   = prefs.getInt("dispCur",   (int)CURR_USD);
+  if (out.dispCur < 0 || out.dispCur >= (int)CURR_COUNT) {
+    out.dispCur = (int)CURR_USD;
+  }
+
   prefs.end();
   return true;
 }

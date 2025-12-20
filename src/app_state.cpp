@@ -4,7 +4,7 @@
 #include "day_avg.h"  // for DAYAVG_ROLLING constant
 
 // ==================== Version =====================
-const char* CRYPTOBAR_VERSION = "V0.99e";
+const char* CRYPTOBAR_VERSION = "V0.99f";
 
 // ==================== Constants =====================
 
@@ -42,11 +42,29 @@ const char* DTSIZE_LABELS[] = { "Small", "Large" };
 int g_refreshMode = 1;
 const char* REFRESH_MODE_LABELS[] = { "Partial", "Full" };
 
-// ==================== Display Currency (USD/NTD) =====================
+// ==================== Display Currency (Multi-currency) =====================
+// V0.99f: Extended to support 9 currencies
 int   g_displayCurrency = (int)CURR_USD;
-float g_usdToTwd        = 32.0f;
+
+// Exchange rates: USD -> other currencies
+// Index matches DisplayCurrency enum (0=USD, 1=TWD, 2=EUR, ...)
+float g_usdToRate[CURR_COUNT] = {
+  1.0f,   // USD (always 1.0)
+  32.0f,  // TWD (default fallback)
+  0.95f,  // EUR (default fallback)
+  0.79f,  // GBP (default fallback)
+  1.38f,  // CAD (default fallback)
+  149.0f, // JPY (default fallback)
+  1350.0f,// KRW (default fallback)
+  1.35f,  // SGD (default fallback)
+  1.54f   // AUD (default fallback)
+};
+
 bool  g_fxValid         = false;
 time_t g_nextFxUpdateUtc = 0;
+
+// Backward compatibility: g_usdToTwd points to TWD rate
+float& g_usdToTwd = g_usdToRate[CURR_TWD];
 
 // ==================== Global Variables =====================
 

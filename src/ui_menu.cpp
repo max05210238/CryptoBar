@@ -36,7 +36,10 @@ extern const char* REFRESH_MODE_LABELS[];
 // Helper (implemented in main.cpp)
 const CoinInfo& currentCoin();
 
-static const char* CURRENCY_LABELS[] = {"USD", "NTD"};
+// V0.99f: Multi-currency labels (matches DisplayCurrency enum order)
+static const char* CURRENCY_LABELS[] = {
+  "USD", "TWD", "EUR", "GBP", "CAD", "JPY", "KRW", "SGD", "AUD"
+};
 
 static const int VISIBLE_MENU_LINES = 5;
 static const int MENU_X             = 8;

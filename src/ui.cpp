@@ -283,21 +283,30 @@ static void drawSymbolPanel(const char* symbol, float change24h) {
   display.setTextColor(GxEPD_BLACK);
 }
 
-// Center price display
+// V0.99f: Center price display with multi-currency support
 static void drawPriceCenter(float priceUsd) {
   int panelLeft  = SYMBOL_PANEL_WIDTH;
   int panelWidth = display.width() - panelLeft;
 
- // Convert for display if needed
+  // Convert for display if needed
   float fx = 1.0f;
-  if (g_displayCurrency == (int)CURR_NTD && g_usdToTwd > 0.1f) fx = g_usdToTwd;
+  if (g_displayCurrency != (int)CURR_USD && g_displayCurrency < (int)CURR_COUNT) {
+    fx = g_usdToRate[g_displayCurrency];
+  }
   float price = priceUsd * fx;
 
- // Big font for number
-  display.setFont(&FreeSansBold18pt7b);
+  // Get currency metadata
+  const CurrencyInfo& curr = CURRENCY_INFO[g_displayCurrency];
+
+  // Determine max decimals based on currency type
+  int maxDecimals = curr.noDecimals ? 0 : 4;
+
+  // Big font for number (may downgrade to 12pt if needed)
+  const GFXfont* numFont = &FreeSansBold18pt7b;
+  display.setFont(numFont);
   display.setTextColor(GxEPD_BLACK);
 
- // Reserve a prefix slot equal to '$' width (big font)
+  // Reserve a prefix slot equal to '$' width (big font)
   int16_t x1, y1;
   uint16_t wDollar, hDollar;
   display.getTextBounds("$", 0, 0, &x1, &y1, &wDollar, &hDollar);
@@ -306,61 +315,77 @@ static void drawPriceCenter(float priceUsd) {
   int maxNumberW = panelWidth - (int)wDollar - gap;
   if (maxNumberW < 10) maxNumberW = 10;
 
- // Adaptive decimals: start at 4, reduce until it fits
+  // Adaptive decimals: start at maxDecimals, reduce until it fits
   char numBuf[32];
   uint16_t wNum = 0, hNum = 0;
-  for (int dec = 4; dec >= 0; --dec) {
+  bool needDowngrade = false;
+
+  for (int dec = maxDecimals; dec >= 0; --dec) {
     snprintf(numBuf, sizeof(numBuf), "%.*f", dec, price);
     display.getTextBounds(numBuf, 0, 0, &x1, &y1, &wNum, &hNum);
     if ((int)wNum <= maxNumberW) break;
+
+    // If we've reached 0 decimals and still doesn't fit, need to downgrade font
+    if (dec == 0 && (int)wNum > maxNumberW) {
+      needDowngrade = true;
+    }
   }
+
+  // V0.99f: Downgrade to 12pt font only if necessary (>9 digits with 0 decimals)
+  if (needDowngrade) {
+    numFont = &FreeSansBold12pt7b;
+    display.setFont(numFont);
+
+    // Retry formatting with smaller font
+    for (int dec = maxDecimals; dec >= 0; --dec) {
+      snprintf(numBuf, sizeof(numBuf), "%.*f", dec, price);
+      display.getTextBounds(numBuf, 0, 0, &x1, &y1, &wNum, &hNum);
+      if ((int)wNum <= maxNumberW) break;
+    }
+    Serial.printf("[UI] Price downgraded to 12pt font: %s\n", numBuf);
+  }
+
+  // Reset to 18pt for symbol measurement
+  display.setFont(&FreeSansBold18pt7b);
 
   int totalW = (int)wDollar + gap + (int)wNum;
   int16_t xStart = panelLeft + (panelWidth - totalW) / 2;
   int16_t yBase  = 52 + largeContentYOffset();
 
- // Prefix
-  if (g_displayCurrency == (int)CURR_NTD) {
- // Draw "NT" smaller but squeezed into the '$' slot
+  // Draw currency symbol/prefix
+  if (curr.twoCharSym) {
+    // Two-character symbols: NT, C$, S$, A$ (use 12pt, compressed)
     display.setFont(&FreeSansBold12pt7b);
 
-    // V0.99c: Cache NT glyph widths (FreeSansBold12pt7b, calculated once)
-    static uint16_t s_ntGlyphN = 0;
-    static uint16_t s_ntGlyphT = 0;
-    uint16_t wN, wT;
+    const char* sym = curr.symbol;
+    char ch1[2] = {sym[0], '\0'};
+    char ch2[2] = {sym[1], '\0'};
 
-    if (s_ntGlyphN == 0) {
-      // First call: measure and cache
-      uint16_t hN, hT;
-      display.getTextBounds("N", 0, 0, &x1, &y1, &wN, &hN);
-      display.getTextBounds("T", 0, 0, &x1, &y1, &wT, &hT);
-      s_ntGlyphN = wN;
-      s_ntGlyphT = wT;
-    } else {
-      // Reuse cached values
-      wN = s_ntGlyphN;
-      wT = s_ntGlyphT;
-    }
+    uint16_t w1, w2, h1, h2;
+    display.getTextBounds(ch1, 0, 0, &x1, &y1, &w1, &h1);
+    display.getTextBounds(ch2, 0, 0, &x1, &y1, &w2, &h2);
 
     int overlap = 2;
-    int ntW = (int)wN + (int)wT - overlap;
-    if (ntW > (int)wDollar) overlap += (ntW - (int)wDollar);
-    if (overlap > (int)wN - 1) overlap = (int)wN - 1;
-    ntW = (int)wN + (int)wT - overlap;
+    int symW = (int)w1 + (int)w2 - overlap;
+    if (symW > (int)wDollar) overlap += (symW - (int)wDollar);
+    if (overlap > (int)w1 - 1) overlap = (int)w1 - 1;
+    symW = (int)w1 + (int)w2 - overlap;
 
-    int16_t ntX = xStart + ((int)wDollar - ntW) / 2;
-    display.setCursor(ntX, yBase);
-    display.print("N");
-    display.setCursor(ntX + (int)wN - overlap, yBase);
-    display.print("T");
+    int16_t symX = xStart + ((int)wDollar - symW) / 2;
+    display.setCursor(symX, yBase);
+    display.print(ch1);
+    display.setCursor(symX + (int)w1 - overlap, yBase);
+    display.print(ch2);
 
   } else {
+    // Single-character symbols: $, €, £, ¥, ₩ (use 18pt)
+    display.setFont(&FreeSansBold18pt7b);
     display.setCursor(xStart, yBase);
-    display.print("$");
+    display.print(curr.symbol);
   }
 
- // Number
-  display.setFont(&FreeSansBold18pt7b);
+  // Draw number
+  display.setFont(numFont);  // Use potentially downgraded font
   display.setCursor(xStart + (int)wDollar + gap, yBase);
   display.print(numBuf);
 }

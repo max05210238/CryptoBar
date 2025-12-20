@@ -178,18 +178,17 @@ static void startNormalOperation(bool enforceSplashDelay, uint32_t splashStartMs
   setupTime();
 
 
- // V0.97: If display currency is NTD, fetch FX once after WiFi+NTP is ready.
-  if (g_displayCurrency == (int)CURR_NTD && WiFi.status() == WL_CONNECTED) {
-    float rate = 0.0f;
-    if (fetchUsdToTwdRate(rate)) {
-      g_usdToTwd = rate;
-      g_fxValid  = true;
-      Serial.printf("[FX] USD->TWD=%.4f\n", g_usdToTwd);
+ // V0.99f: Fetch FX rates for all currencies (except USD) after WiFi+NTP ready
+  if (g_displayCurrency != (int)CURR_USD && WiFi.status() == WL_CONNECTED) {
+    if (fetchExchangeRates()) {
+      g_fxValid = true;
+      Serial.printf("[FX] Multi-currency rates fetched (display: %s)\n",
+                    CURRENCY_INFO[g_displayCurrency].code);
     } else {
       g_fxValid = false;
-      Serial.println("[FX] USD->TWD fetch failed");
+      Serial.println("[FX] Multi-currency fetch failed");
     }
-    g_nextFxUpdateUtc = time(nullptr) + 300;  // 5 min
+    g_nextFxUpdateUtc = time(nullptr) + 3600;  // 1 hour (V0.99f: reduced API load)
   }
   updateEtCycle();
   bootstrapHistoryFromKrakenOHLC();
@@ -685,22 +684,22 @@ String apIp = WiFi.softAPIP().toString();
     }
   }
 
- // -------------------- Periodic FX update (USD->TWD) --------------------
-if (!doUpdate && g_timeValid && WiFi.status() == WL_CONNECTED && g_displayCurrency == (int)CURR_NTD) {
-  time_t nowFxUtc = time(nullptr);
-  if (g_nextFxUpdateUtc == 0 || nowFxUtc >= g_nextFxUpdateUtc) {
-    float rate = 0.0f;
-    if (fetchUsdToTwdRate(rate)) {
-      g_usdToTwd = rate;
-      g_fxValid  = true;
-      Serial.printf("[FX] USD->TWD=%.4f\n", g_usdToTwd);
-} else {
-      g_fxValid = false;
-      Serial.println("[FX] USD->TWD fetch failed");
+ // -------------------- Periodic FX update (Multi-currency) --------------------
+  // V0.99f: Update FX rates hourly for all non-USD currencies
+  if (!doUpdate && g_timeValid && WiFi.status() == WL_CONNECTED && g_displayCurrency != (int)CURR_USD) {
+    time_t nowFxUtc = time(nullptr);
+    if (g_nextFxUpdateUtc == 0 || nowFxUtc >= g_nextFxUpdateUtc) {
+      if (fetchExchangeRates()) {
+        g_fxValid = true;
+        Serial.printf("[FX] Multi-currency rates updated (display: %s, rate: %.4f)\n",
+                      CURRENCY_INFO[g_displayCurrency].code, g_usdToRate[g_displayCurrency]);
+      } else {
+        g_fxValid = false;
+        Serial.println("[FX] Multi-currency update failed");
+      }
+      g_nextFxUpdateUtc = nowFxUtc + 3600; // 1 hour (V0.99f: reduced API load)
     }
-    g_nextFxUpdateUtc = nowFxUtc + 300; // 5 min
   }
-}
 
 if (doUpdate) {
     lastUpdate = now;

@@ -611,24 +611,31 @@ void bootstrapHistoryFromKrakenOHLC() {
 
 
 // ------------------------------
-// FX: USD -> TWD (NTD)
+// FX: USD -> Multi-currency (V0.99f)
 // ------------------------------
-bool fetchUsdToTwdRate(float& outRate) {
+// Fetches exchange rates for all supported currencies
+// Returns: true if at least one rate was successfully fetched
+bool fetchExchangeRates() {
   if (WiFi.status() != WL_CONNECTED) {
     Serial.println("[FX] WiFi not connected; skip");
     return false;
   }
 
+  // V0.99f: Primary API with fallback
   const char* urls[] = {
-    "https://open.er-api.com/v6/latest/USD",
-    "https://api.frankfurter.app/latest?from=USD&to=TWD",
-    "https://api.exchangerate.host/latest?base=USD&symbols=TWD",
+    "https://open.er-api.com/v6/latest/USD",        // Primary: 1500/month, 160+ currencies
+    "https://api.fxratesapi.com/latest?base=USD",   // Fallback: unlimited, 170+ currencies
+  };
+
+  // Currency codes to extract
+  const char* currCodes[CURR_COUNT] = {
+    "USD", "TWD", "EUR", "GBP", "CAD", "JPY", "KRW", "SGD", "AUD"
   };
 
   for (size_t i = 0; i < sizeof(urls) / sizeof(urls[0]); i++) {
     const char* url = urls[i];
     HTTPClient http;
-    http.setTimeout(6000);
+    http.setTimeout(8000);
     http.begin(url);
 
     Serial.printf("[FX] GET %s\n", url);
@@ -642,27 +649,54 @@ bool fetchUsdToTwdRate(float& outRate) {
     String payload = http.getString();
     http.end();
 
- // Only extract the rates.TWD field
-    StaticJsonDocument<64> filter;
-    filter["rates"]["TWD"] = true;
-
-    DynamicJsonDocument doc(4096);
-    DeserializationError err = deserializeJson(doc, payload, DeserializationOption::Filter(filter));
+    // Parse full rates object
+    DynamicJsonDocument doc(8192);
+    DeserializationError err = deserializeJson(doc, payload);
     if (err) {
       Serial.printf("[FX] JSON error: %s\n", err.c_str());
       continue;
     }
 
-    float rate = doc["rates"]["TWD"] | 0.0f;
-    if (rate > 0.1f && rate < 500.0f) {
-      outRate = rate;
-      Serial.printf("[FX] USD->TWD: %.4f\n", outRate);
-      return true;
+    JsonObject rates = doc["rates"].as<JsonObject>();
+    if (rates.isNull()) {
+      Serial.println("[FX] Missing rates object");
+      continue;
     }
 
-    Serial.println("[FX] Missing/invalid rates.TWD");
+    // Extract all currency rates
+    int successCount = 0;
+    for (int c = 0; c < (int)CURR_COUNT; c++) {
+      if (c == CURR_USD) {
+        g_usdToRate[c] = 1.0f;  // USD is always 1.0
+        successCount++;
+        continue;
+      }
+
+      float rate = rates[currCodes[c]] | 0.0f;
+      if (rate > 0.001f && rate < 1000000.0f) {
+        g_usdToRate[c] = rate;
+        successCount++;
+        Serial.printf("[FX] USD->%s: %.4f\n", currCodes[c], rate);
+      } else {
+        Serial.printf("[FX] Invalid/missing rate for %s\n", currCodes[c]);
+      }
+    }
+
+    if (successCount >= (int)CURR_COUNT / 2) {
+      Serial.printf("[FX] Success: %d/%d rates fetched\n", successCount, (int)CURR_COUNT);
+      return true;
+    }
   }
 
-  Serial.println("[FX] All endpoints failed");
+  Serial.println("[FX] All FX endpoints failed");
   return false;
+}
+
+// Backward compatibility wrapper: USD -> TWD only
+bool fetchUsdToTwdRate(float& outRate) {
+  bool success = fetchExchangeRates();
+  if (success) {
+    outRate = g_usdToRate[CURR_TWD];
+  }
+  return success;
 }

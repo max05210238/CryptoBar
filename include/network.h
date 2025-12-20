@@ -13,6 +13,11 @@ bool fetchPrice(float& priceUsd, float& change24h);
 // - Otherwise: use CoinGecko market_chart (days=1)
 void bootstrapHistoryFromKrakenOHLC();
 
-// USD -> TWD exchange rate (NTD)
+// V0.99f: Fetch exchange rates for all supported currencies
+// Updates g_usdToRate[] array
+// Returns: true = success (at least 50% of rates fetched)
+bool fetchExchangeRates();
+
+// USD -> TWD exchange rate (backward compatibility wrapper)
 // Returns: true = success, outRate is populated
 bool fetchUsdToTwdRate(float& outRate);

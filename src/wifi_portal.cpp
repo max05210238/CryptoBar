@@ -49,7 +49,7 @@ static int s_defBri      = 1; // brightness preset index
 static int s_defTimeFmt  = 1; // 0=24h, 1=12h
 static int s_defDateFmt  = 0; // 0=MM/DD, 1=DD/MM, 2=YYYY-MM-DD
 static int s_defDtSize   = 1; // 0=Small, 1=Large
-static int s_defCur      = 0; // 0=USD, 1=NTD
+static int s_defCur      = 0; // V0.99f: 0=USD, 1=TWD, 2=EUR, etc. (see CURR_COUNT)
 static int s_defTz       = DEFAULT_TIMEZONE_INDEX;
 static int s_defDayAvg   = 1; // 0=Off, 1=Rolling 24h, 2=ET 7pm cycle
 
@@ -78,7 +78,8 @@ void wifiPortalSetDefaultAdvanced(int rfMode, int updPreset, int briPreset,
   s_defTimeFmt = (timeFmt == 0 || timeFmt == 1) ? timeFmt : -1;
   s_defDateFmt = (dateFmt >= 0 && dateFmt <= 2) ? dateFmt : -1;
   s_defDtSize  = (dtSize == 0 || dtSize == 1) ? dtSize : -1;
-  s_defCur     = (dispCur == 0 || dispCur == 1) ? dispCur : -1;
+  // V0.99f: Support all currencies (0 to CURR_COUNT-1)
+  s_defCur     = (dispCur >= 0 && dispCur < (int)CURR_COUNT) ? dispCur : -1;
   s_defTz      = (tzIndex >= 0 && tzIndex < TIMEZONE_COUNT) ? tzIndex : -1;
   s_defDayAvg  = (dayAvg >= 0 && dayAvg <= 2) ? dayAvg : -1;
 }
@@ -363,11 +364,14 @@ appendOption(page, "0", "0 = Small", s_defDtSize == 0);
 appendOption(page, "1", "1 = Large (recommended)", s_defDtSize == 1);
 page += "</select>";
 
-// Currency
+// Currency (V0.99f: Multi-currency support)
 page += "<label>Currency (cur)</label><select name='cur'>";
 appendOption(page, "", "Keep current", s_defCur < 0);
-appendOption(page, "0", "0 = USD", s_defCur == 0);
-appendOption(page, "1", "1 = NTD", s_defCur == 1);
+// Generate options for all supported currencies with "Symbol-Code" format
+for (int i = 0; i < (int)CURR_COUNT; i++) {
+  String label = String(i) + " = " + CURRENCY_INFO[i].symbol + "-" + CURRENCY_INFO[i].code;
+  appendOption(page, String(i), label, s_defCur == i);
+}
 page += "</select>";
 
 // Timezone

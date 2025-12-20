@@ -64,11 +64,15 @@ extern const char* DTSIZE_LABELS[];
 extern int g_refreshMode;
 extern const char* REFRESH_MODE_LABELS[];
 
-// ==================== Display Currency (USD/NTD) =====================
+// ==================== Display Currency (Multi-currency) =====================
+// V0.99f: Extended to support 9 currencies
 extern int   g_displayCurrency;
-extern float g_usdToTwd;
+extern float g_usdToRate[CURR_COUNT];  // Exchange rates: USD -> other currencies
 extern bool  g_fxValid;
 extern time_t g_nextFxUpdateUtc;
+
+// Backward compatibility: g_usdToTwd is a reference to g_usdToRate[CURR_TWD]
+extern float& g_usdToTwd;
 
 // ==================== Global Variables =====================
 

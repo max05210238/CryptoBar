@@ -75,9 +75,39 @@ static inline int tzDisplayPosFromTzIndex(int tzIdx) {
 }
 
 // ----------------- Display Currency -----------------
-// 0 = USD, 1 = NTD (TWD)
+// V0.99f: Multi-currency support (USD, TWD, EUR, GBP, CAD, JPY, KRW, SGD, AUD)
 enum DisplayCurrency : uint8_t {
-  CURR_USD = 0,
-  CURR_NTD = 1,
+  CURR_USD = 0,  // US Dollar ($)
+  CURR_TWD = 1,  // Taiwan Dollar (NT) - formerly CURR_NTD
+  CURR_EUR = 2,  // Euro (€)
+  CURR_GBP = 3,  // British Pound (£)
+  CURR_CAD = 4,  // Canadian Dollar (C$)
+  CURR_JPY = 5,  // Japanese Yen (¥) - no decimals
+  CURR_KRW = 6,  // Korean Won (₩) - no decimals
+  CURR_SGD = 7,  // Singapore Dollar (S$)
+  CURR_AUD = 8,  // Australian Dollar (A$)
   CURR_COUNT
+};
+
+// For backward compatibility: CURR_NTD is an alias for CURR_TWD
+static const uint8_t CURR_NTD = CURR_TWD;
+
+// Currency metadata
+struct CurrencyInfo {
+  const char* code;        // 3-letter ISO code
+  const char* symbol;      // Display symbol (UTF-8)
+  bool        noDecimals;  // true for JPY, KRW (no fractional units)
+  bool        twoCharSym;  // true for NT, C$, S$, A$ (use smaller font)
+};
+
+static const CurrencyInfo CURRENCY_INFO[CURR_COUNT] = {
+  { "USD", "$",  false, false },  // US Dollar
+  { "TWD", "NT", false, true  },  // Taiwan Dollar (NT compressed)
+  { "EUR", "€",  false, false },  // Euro
+  { "GBP", "£",  false, false },  // British Pound
+  { "CAD", "C$", false, true  },  // Canadian Dollar
+  { "JPY", "¥",  true,  false },  // Japanese Yen (no decimals)
+  { "KRW", "₩",  true,  false },  // Korean Won (no decimals)
+  { "SGD", "S$", false, true  },  // Singapore Dollar
+  { "AUD", "A$", false, true  },  // Australian Dollar
 };

@@ -86,7 +86,8 @@ void loadSettings() {
                 DTSIZE_LABELS[g_dtSize],
                 TIMEZONES[g_timezoneIndex].label,
                 dayAvgModeLabel(g_dayAvgMode),
-                REFRESH_MODE_LABELS[g_refreshMode], (g_displayCurrency==CURR_NTD?"NTD":"USD"));
+                REFRESH_MODE_LABELS[g_refreshMode],
+                CURRENCY_INFO[g_displayCurrency].code);
 }
 
 void saveSettings() {
@@ -113,7 +114,8 @@ void saveSettings() {
                 DTSIZE_LABELS[g_dtSize],
                 TIMEZONES[g_timezoneIndex].label,
                 dayAvgModeLabel(g_dayAvgMode),
-                REFRESH_MODE_LABELS[g_refreshMode], (g_displayCurrency==CURR_NTD?"NTD":"USD"));
+                REFRESH_MODE_LABELS[g_refreshMode],
+                CURRENCY_INFO[g_displayCurrency].code);
 }
 
 // ==================== Menu Navigation =====================
@@ -267,12 +269,13 @@ void handleMenuSelect() {
     }
 
     case MENU_CURRENCY: {
+      // V0.99f: Cycle through all supported currencies
       g_displayCurrency = (g_displayCurrency + 1) % (int)CURR_COUNT;
       if (g_displayCurrency < 0 || g_displayCurrency >= (int)CURR_COUNT) g_displayCurrency = (int)CURR_USD;
-      Serial.printf("[Menu] Currency -> %s\n", (g_displayCurrency == (int)CURR_NTD) ? "NTD" : "USD");
+      Serial.printf("[Menu] Currency -> %s\n", CURRENCY_INFO[g_displayCurrency].code);
 
- // If switching to NTD, refresh FX soon.
-      if (g_displayCurrency == (int)CURR_NTD) g_nextFxUpdateUtc = 0;
+      // If switching to non-USD currency, refresh FX soon
+      if (g_displayCurrency != (int)CURR_USD) g_nextFxUpdateUtc = 0;
 
       saveSettings();
       drawMenuScreen(false);

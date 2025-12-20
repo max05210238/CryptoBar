@@ -314,7 +314,8 @@ static bool fetchPriceFromCoingecko(float& priceUsd, float& change24h) {
     return false;
   }
 
-  JsonObject coinObj = doc[cgId.c_str()];
+  // V0.99b: Use coin.geckoId directly instead of String temporary
+  JsonObject coinObj = doc[coin.geckoId];
   if (coinObj.isNull()) {
     Serial.println("[CG] Coin id missing.");
     return false;

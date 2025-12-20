@@ -39,9 +39,9 @@ static const int ENC_DIR_INVERT = 0;
 // Smooth encoders need fast direction changes during slow rotation
 static const uint32_t ENC_DIR_LOCK_MS = 10;
 
-// V0.99a: Debug enabled for diagnostics
+// V0.99a: Debug mode disabled for production
 // Set to 1 to enable basic debug, 2 for verbose mode
-static const int ENC_DEBUG = 2;
+static const int ENC_DEBUG = 0;
 
 static int      s_lastEncDir     = 0;
 static uint32_t s_lastEncStepMs  = 0;

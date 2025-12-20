@@ -1,4 +1,4 @@
-// CryptoBar V0.99d (Welcome Screen Font Update)
+// CryptoBar V0.99e (Bolder Welcome Font)
 #include <Arduino.h>
 #include <WiFi.h>
 #include <HTTPClient.h>

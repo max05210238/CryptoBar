@@ -206,6 +206,9 @@ static void drawHeaderDateTimeLarge() {
   int16_t priceTop    = PRICE_Y_BASE + py1;
   int16_t priceBottom = priceTop + (int16_t)ph;
 
+ // Restore to 9pt font for date/time rendering (V0.99c: reuse cached dtBuf bounds from line 186)
+  display.setFont(dtFont);
+
   int16_t gap = CHART_TOP - priceBottom;  // Price area bottom → chart top
   if (gap < 2) gap = 2;
 

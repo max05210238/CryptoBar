@@ -8,6 +8,8 @@
 
 #include "SpaceGroteskBold24pt7b.h"
 
+#include "config.h"
+#include "app_state.h"
 #include "coins.h"
 #include "chart.h"
 #include "ui.h"

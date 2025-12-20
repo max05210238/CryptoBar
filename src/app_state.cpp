@@ -1,4 +1,4 @@
-// CryptoBar V0.99e (Bolder Welcome Font)
+// CryptoBar V0.99f (Multi-Currency Support)
 // app_state.cpp - Global application state definitions
 #include "app_state.h"
 #include "day_avg.h"  // for DAYAVG_ROLLING constant

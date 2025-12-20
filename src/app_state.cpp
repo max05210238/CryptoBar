@@ -103,6 +103,10 @@ int g_tzMenuTopIndex = 0;
 int g_coinMenuIndex    = 0;
 int g_coinMenuTopIndex = 0;
 
+// Currency submenu state (V0.99f)
+int g_currencyMenuIndex    = 0;
+int g_currencyMenuTopIndex = 0;
+
 // Encoder button state
 bool          g_lastEncSw       = HIGH;
 unsigned long g_encPressStart   = 0;
@@ -115,6 +119,7 @@ portMUX_TYPE g_encMux = portMUX_INITIALIZER_UNLOCKED;
 bool g_menuDirty = false;
 bool g_tzDirty   = false;
 bool g_coinDirty = false;
+bool g_currencyDirty = false;  // V0.99f
 uint32_t g_lastUiDrawMs = 0;
 const uint32_t UI_DRAW_MIN_MS = 120;
 

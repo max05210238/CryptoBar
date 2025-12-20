@@ -100,13 +100,14 @@ extern bool g_tzAutoAttempted;
 
 // UI state
 enum UiMode {
-  UI_MODE_NORMAL    = 0,
-  UI_MODE_MENU      = 1,
-  UI_MODE_TZ_SUB    = 2,
-  UI_MODE_WIFI_INFO = 3,
-  UI_MODE_COIN_SUB  = 4,
-  UI_MODE_FW_CONFIRM = 5,
-  UI_MODE_MAINT      = 6
+  UI_MODE_NORMAL      = 0,
+  UI_MODE_MENU        = 1,
+  UI_MODE_TZ_SUB      = 2,
+  UI_MODE_WIFI_INFO   = 3,
+  UI_MODE_COIN_SUB    = 4,
+  UI_MODE_FW_CONFIRM  = 5,
+  UI_MODE_MAINT       = 6,
+  UI_MODE_CURRENCY_SUB = 7  // V0.99f: Currency submenu
 };
 extern UiMode g_uiMode;
 
@@ -120,6 +121,10 @@ extern int g_tzMenuTopIndex;
 extern int g_coinMenuIndex;
 extern int g_coinMenuTopIndex;
 
+// Currency submenu state (V0.99f)
+extern int g_currencyMenuIndex;
+extern int g_currencyMenuTopIndex;
+
 // Encoder button state
 extern bool          g_lastEncSw;
 extern unsigned long g_encPressStart;
@@ -132,6 +137,7 @@ extern portMUX_TYPE g_encMux;
 extern bool g_menuDirty;
 extern bool g_tzDirty;
 extern bool g_coinDirty;
+extern bool g_currencyDirty;  // V0.99f
 extern uint32_t g_lastUiDrawMs;
 extern const uint32_t UI_DRAW_MIN_MS;
 

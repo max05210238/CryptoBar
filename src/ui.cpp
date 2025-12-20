@@ -252,11 +252,13 @@ static void drawSymbolPanel(const char* symbol, float change24h) {
   const GFXfont* bigFont   = &FreeSansBold18pt7b;
   const GFXfont* smallFont = &FreeSansBold9pt7b;
 
+  // Coin symbol bounds
   display.setFont(bigFont);
   int16_t sx1, sy1;
   uint16_t sW, sH;
   display.getTextBounds(symbol, 0, 0, &sx1, &sy1, &sW, &sH);
 
+  // Change percentage bounds
   char changeBuf[24];
   snprintf(changeBuf, sizeof(changeBuf), "%+.2f%%", change24h);
 
@@ -265,20 +267,38 @@ static void drawSymbolPanel(const char* symbol, float change24h) {
   uint16_t cW, cH;
   display.getTextBounds(changeBuf, 0, 0, &cx1, &cy1, &cW, &cH);
 
-  int totalH = sH + 4 + cH;
+  // Currency symbol bounds (V0.99f)
+  const CurrencyInfo& curr = CURRENCY_INFO[g_displayCurrency];
+  char currBuf[16];
+  snprintf(currBuf, sizeof(currBuf), "%s-%s", curr.symbol, curr.code);
+
+  int16_t currX1, currY1;
+  uint16_t currW, currH;
+  display.getTextBounds(currBuf, 0, 0, &currX1, &currY1, &currW, &currH);
+
+  // Calculate vertical layout: [Symbol] [Change] [Currency]
+  int totalH = sH + 4 + cH + 4 + currH;
   int topY   = (display.height() - totalH) / 2;
 
+  // Draw coin symbol
   int16_t sy = topY + sH;
   int16_t sx = (panelWidth - sW) / 2;
   display.setFont(bigFont);
   display.setCursor(sx, sy);
   display.print(symbol);
 
+  // Draw change percentage
   int16_t cy = sy + 4 + cH;
   int16_t cx = (panelWidth - cW) / 2;
   display.setFont(smallFont);
   display.setCursor(cx, cy);
   display.print(changeBuf);
+
+  // Draw currency symbol (V0.99f)
+  int16_t currY = cy + 4 + currH;
+  int16_t currX = (panelWidth - currW) / 2;
+  display.setCursor(currX, currY);
+  display.print(currBuf);
 
   display.setTextColor(GxEPD_BLACK);
 }

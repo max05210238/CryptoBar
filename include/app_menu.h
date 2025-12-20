@@ -34,4 +34,7 @@ void handleTimezoneSelect();
 // Handle coin selection and refresh data
 void handleCoinSelect();
 
+// Handle currency selection and apply changes (V0.99f)
+void handleCurrencySelect();
+
 #endif // APP_MENU_H

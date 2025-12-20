@@ -69,10 +69,15 @@ static void printMenuItem(int i) {
       display.print("Refresh: ");
       display.print(REFRESH_MODE_LABELS[g_refreshMode]);
       break;
-    case MENU_CURRENCY:
+    case MENU_CURRENCY: {
       display.print("Currency: ");
-      display.print(CURRENCY_LABELS[(g_displayCurrency>=0 && g_displayCurrency < (int)CURR_COUNT) ? g_displayCurrency : 0]);
+      int idx = (g_displayCurrency>=0 && g_displayCurrency < (int)CURR_COUNT) ? g_displayCurrency : 0;
+      // V0.99f: Display format "Symbol-Code" (e.g., "$-USD", "NT-TWD")
+      display.print(CURRENCY_INFO[idx].symbol);
+      display.print("-");
+      display.print(CURRENCY_INFO[idx].code);
       break;
+    }
     case MENU_LED_BRIGHTNESS:
       display.print("LED: ");
       display.print(BRIGHTNESS_LABELS[g_brightnessPresetIndex]);

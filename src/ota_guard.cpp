@@ -48,7 +48,10 @@ static void markAppValidBestEffort(Preferences* pref, const String& tag) {
   if (err != ESP_OK) {
  // Not fatal; rollback may not be enabled in this build.
     if (pref) {
-      pref->putString(kLastMsg, tag + String(" mark_valid err=") + String((int)err));
+      // V0.99b: Avoid String concatenation (heap fragmentation)
+      char msg[96];
+      snprintf(msg, sizeof(msg), "%s mark_valid err=%d", tag.c_str(), (int)err);
+      pref->putString(kLastMsg, msg);
     }
   }
 }
@@ -112,7 +115,10 @@ void otaGuardBootBegin() {
 
   pref.putUChar(kAttempts, attempts);
   pref.putBool(kInProg, true);
-  pref.putString(kLastMsg, String("boot attempt ") + String(attempts));
+  // V0.99b: Avoid String concatenation
+  char attemptMsg[32];
+  snprintf(attemptMsg, sizeof(attemptMsg), "boot attempt %u", attempts);
+  pref.putString(kLastMsg, attemptMsg);
 
  // Roll back after N failed boots.
   if (inprog && attempts >= kMaxAttemptsBeforeRollback) {
@@ -120,7 +126,10 @@ void otaGuardBootBegin() {
     if (prev) {
       const esp_err_t err = esp_ota_set_boot_partition(prev);
       if (err == ESP_OK) {
-        clearPending(pref, String("rollback to ") + prevLabel);
+        // V0.99b: Avoid String concatenation
+        char rollbackMsg[64];
+        snprintf(rollbackMsg, sizeof(rollbackMsg), "rollback to %s", prevLabel.c_str());
+        clearPending(pref, rollbackMsg);
  // Also try to let bootloader know this app is not valid (best-effort).
  // If rollback is not enabled, this returns an error and is ignored.
         esp_ota_mark_app_invalid_rollback_and_reboot();
@@ -129,7 +138,10 @@ void otaGuardBootBegin() {
         ESP.restart();
         return;
       } else {
-        pref.putString(kLastMsg, String("rollback failed err=") + String((int)err));
+        // V0.99b: Avoid String concatenation
+        char errMsg[48];
+        snprintf(errMsg, sizeof(errMsg), "rollback failed err=%d", (int)err);
+        pref.putString(kLastMsg, errMsg);
       }
     } else {
       pref.putString(kLastMsg, "rollback failed: prev slot not found");
@@ -158,8 +170,11 @@ void otaGuardLoop() {
   const String nextLabel = pref.getString(kNewLabel, "");
   if (run.length() > 0 && nextLabel.length() > 0 && run == nextLabel) {
  // Mark valid for both our NVS guard and (if enabled) ESP-IDF rollback.
-    markAppValidBestEffort(&pref, String("verified ") + run);
-    clearPending(pref, String("verified ") + run);
+    // V0.99b: Avoid String concatenation
+    char verifyMsg[64];
+    snprintf(verifyMsg, sizeof(verifyMsg), "verified %s", run.c_str());
+    markAppValidBestEffort(&pref, verifyMsg);
+    clearPending(pref, verifyMsg);
   }
 
   pref.end();

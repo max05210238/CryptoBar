@@ -140,8 +140,9 @@ static bool fetchPriceFromPaprika(float& priceUsd, float& change24h) {
   }
 
   HTTPClient http;
-  String url = "https://api.coinpaprika.com/v1/tickers/";
-  url += coin.paprikaId;
+  // V0.99b: Avoid String concatenation (heap fragmentation)
+  char url[128];
+  snprintf(url, sizeof(url), "https://api.coinpaprika.com/v1/tickers/%s", coin.paprikaId);
 
   Serial.print("[CP] GET ");
   Serial.println(url);
@@ -200,8 +201,9 @@ static bool fetchPriceFromKraken(float& priceUsd, float& change24h) {
   }
 
   HTTPClient http;
-  String url = "https://api.kraken.com/0/public/Ticker?pair=";
-  url += coin.krakenPair;
+  // V0.99b: Avoid String concatenation (heap fragmentation)
+  char url[128];
+  snprintf(url, sizeof(url), "https://api.kraken.com/0/public/Ticker?pair=%s", coin.krakenPair);
 
   Serial.print("[Kraken] GET ");
   Serial.println(url);
@@ -280,13 +282,13 @@ static bool fetchPriceFromCoingecko(float& priceUsd, float& change24h) {
     Serial.println("[CG] No geckoId configured for this coin.");
     return false;
   }
-  String cgId = String(coin.geckoId);
 
   HTTPClient http;
-  String url =
-      "https://api.coingecko.com/api/v3/simple/price?ids=" +
-      cgId +
-      "&vs_currencies=usd&include_24hr_change=true";
+  // V0.99b: Avoid String concatenation (heap fragmentation)
+  char url[192];
+  snprintf(url, sizeof(url),
+           "https://api.coingecko.com/api/v3/simple/price?ids=%s&vs_currencies=usd&include_24hr_change=true",
+           coin.geckoId);
 
   Serial.print("[CG] GET ");
   Serial.println(url);
@@ -384,9 +386,11 @@ static bool bootstrapHistoryFromCoingeckoMarketChart() {
   if (nowUtc < windowEndUtc) windowEndUtc = nowUtc;
 
   HTTPClient http;
-  String cgId = String(coin.geckoId);
-  String url = "https://api.coingecko.com/api/v3/coins/" + cgId +
-               "/market_chart?vs_currency=usd&days=1";
+  // V0.99b: Avoid String concatenation (heap fragmentation)
+  char url[192];
+  snprintf(url, sizeof(url),
+           "https://api.coingecko.com/api/v3/coins/%s/market_chart?vs_currency=usd&days=1",
+           coin.geckoId);
 
   Serial.print("[History][CG] GET ");
   Serial.println(url);
@@ -409,10 +413,17 @@ static bool bootstrapHistoryFromCoingeckoMarketChart() {
   StaticJsonDocument<64> filter;
   filter["prices"] = true;
 
-  DynamicJsonDocument doc(24576);
+ // V0.99b: Reduced from 24576 to 16384 (33% reduction) to save heap
+ // Filter extracts only "prices" array, reducing memory footprint
+  DynamicJsonDocument doc(16384);
   DeserializationError err = deserializeJson(doc, payload, DeserializationOption::Filter(filter));
   if (err) {
-    Serial.printf("[History][CG] JSON parse error: %s\n", err.c_str());
+    if (err == DeserializationError::NoMemory) {
+      Serial.printf("[History][CG] Insufficient memory for parsing (need >16KB)\n");
+      Serial.printf("[History][CG] Free heap: %u bytes\n", ESP.getFreeHeap());
+    } else {
+      Serial.printf("[History][CG] JSON parse error: %s\n", err.c_str());
+    }
     return false;
   }
 
@@ -494,11 +505,12 @@ void bootstrapHistoryFromKrakenOHLC() {
   }
 
   HTTPClient http;
-  String url = "https://api.kraken.com/0/public/OHLC?pair=";
-  url += coin.krakenPair;
-  url += "&interval=5&since=";
- // Only fetch data after this cycle's start timestamp to avoid oversized JSON
-  url += String((long)sinceUtc);
+  // V0.99b: Avoid String concatenation (heap fragmentation)
+  // Only fetch data after this cycle's start timestamp to avoid oversized JSON
+  char url[192];
+  snprintf(url, sizeof(url),
+           "https://api.kraken.com/0/public/OHLC?pair=%s&interval=5&since=%ld",
+           coin.krakenPair, (long)sinceUtc);
 
   Serial.print("[History] GET ");
   Serial.println(url);
@@ -519,11 +531,17 @@ void bootstrapHistoryFromKrakenOHLC() {
 
   Serial.printf("[History] Payload length: %d bytes\n", payload.length());
 
- // Originally 32768, increased slightly; should be safe with since= parameter
-  DynamicJsonDocument doc(49152);
+ // V0.99b: Reduced from 49152 to 32768 (33% reduction) to save heap
+ // With since= parameter, payload is filtered to current cycle only
+  DynamicJsonDocument doc(32768);
   DeserializationError err = deserializeJson(doc, payload);
   if (err) {
-    Serial.printf("[History] JSON parse error: %s\n", err.c_str());
+    if (err == DeserializationError::NoMemory) {
+      Serial.printf("[History] Insufficient memory for OHLC parsing (need >32KB)\n");
+      Serial.printf("[History] Free heap: %u bytes\n", ESP.getFreeHeap());
+    } else {
+      Serial.printf("[History] JSON parse error: %s\n", err.c_str());
+    }
     return;
   }
 

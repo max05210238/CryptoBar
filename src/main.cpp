@@ -1,4 +1,4 @@
-// CryptoBar V0.99a (Encoder Performance Optimization - Final)
+// CryptoBar V0.99b (Memory & Performance Optimization)
 #include <Arduino.h>
 #include <WiFi.h>
 #include <HTTPClient.h>

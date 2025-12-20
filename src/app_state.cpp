@@ -1,10 +1,10 @@
-// CryptoBar V0.99a (Encoder Performance Optimization - Final)
+// CryptoBar V0.99b (Memory & Performance Optimization)
 // app_state.cpp - Global application state definitions
 #include "app_state.h"
 #include "day_avg.h"  // for DAYAVG_ROLLING constant
 
 // ==================== Version =====================
-const char* CRYPTOBAR_VERSION = "V0.99a";
+const char* CRYPTOBAR_VERSION = "V0.99b";
 
 // ==================== Constants =====================
 

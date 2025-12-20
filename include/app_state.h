@@ -33,11 +33,10 @@ extern const int SYMBOL_PANEL_WIDTH;
 #define BOARD_RGB_COUNT 1
 
 // Rotary encoder pins
-// V0.99: Changed to GPIO 1/2 for ESP32-S3 PCNT compatibility
-// GPIO 1/2 are the safest general-purpose pins for PCNT on ESP32-S3
-// (GPIO 5/6 may be reserved for SPI Flash on some boards)
-#define ENC_CLK_PIN 1
-#define ENC_DT_PIN 2
+// V0.99: Swapped CLK/DT to fix direction confusion
+// If encoder jumps erratically, CLK and DT may be swapped in PCNT logic
+#define ENC_CLK_PIN 2  // Swapped: was 1
+#define ENC_DT_PIN 1   // Swapped: was 2
 #define ENC_SW_PIN 21
 
 // NTP

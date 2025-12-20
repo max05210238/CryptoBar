@@ -36,9 +36,7 @@ void ensureCurrencyMenuVisible() {
 static void printCurrencyItem(int i) {
   if (i >= 0 && i < (int)CURR_COUNT) {
     const CurrencyInfo& curr = CURRENCY_INFO[i];
-    // Display format: "Symbol-Code" (e.g., "$-USD", "¥-JPY")
-    display.print(curr.symbol);
-    display.print("-");
+    // Display currency code only (e.g., "USD", "JPY")
     display.print(curr.code);
   }
 }

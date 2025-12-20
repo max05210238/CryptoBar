@@ -117,11 +117,19 @@ void encoderPcntPoll(bool appRunning, volatile int* stepAccum, portMUX_TYPE* mux
   int16_t cnt = 0;
   pcnt_get_counter_value(ENC_PCNT_UNIT, &cnt);
 
-  // Verbose debug mode: print every poll
+  // Verbose debug mode: print every poll + GPIO raw values
   if (ENC_DEBUG >= 2) {
+    static uint32_t lastDebugMs = 0;
     uint32_t nowMs = millis();
-    Serial.printf("[ENC] Poll #%lu @ %lums: PCNT=%d, Accum=%d, Backlog=%d\n",
-                  pollCount, nowMs, cnt, s_encDetentAccum, s_encBacklog);
+
+    // Print detailed info every 100ms to avoid flooding
+    if (nowMs - lastDebugMs >= 100) {
+      int clkLevel = digitalRead(s_clkPin);
+      int dtLevel = digitalRead(s_dtPin);
+      Serial.printf("[ENC] Poll #%lu @ %lums: PCNT=%d, CLK=%d, DT=%d, Accum=%d, Backlog=%d\n",
+                    pollCount, nowMs, cnt, clkLevel, dtLevel, s_encDetentAccum, s_encBacklog);
+      lastDebugMs = nowMs;
+    }
   }
 
   if (cnt == 0) return;

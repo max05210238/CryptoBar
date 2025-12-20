@@ -1,4 +1,4 @@
-// CryptoBar V0.99c (UI Performance Optimization)
+// CryptoBar V0.99d (Welcome Screen Font Update)
 #include <Arduino.h>
 #include <WiFi.h>
 #include <HTTPClient.h>

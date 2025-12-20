@@ -1,10 +1,10 @@
-// CryptoBar V0.99c (UI Performance Optimization)
+// CryptoBar V0.99d (Welcome Screen Font Update)
 // app_state.cpp - Global application state definitions
 #include "app_state.h"
 #include "day_avg.h"  // for DAYAVG_ROLLING constant
 
 // ==================== Version =====================
-const char* CRYPTOBAR_VERSION = "V0.99c";
+const char* CRYPTOBAR_VERSION = "V0.99d";
 
 // ==================== Constants =====================
 

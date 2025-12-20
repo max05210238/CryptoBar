@@ -21,24 +21,24 @@
 static const pcnt_unit_t    ENC_PCNT_UNIT = PCNT_UNIT_0;
 static const pcnt_channel_t ENC_PCNT_CH   = PCNT_CHANNEL_0;
 
-// V0.99: Reduced from 1023 to 100 APB cycles - VERY responsive for cheap encoders
-// Lower value captures more signals from cheap encoders while still filtering noise
-static const uint16_t ENC_PCNT_FILTER_VAL = 100;
+// V0.99: Balanced configuration for cheap/noisy encoders
+// Increased from 100 to 300 APB cycles for better noise rejection
+static const uint16_t ENC_PCNT_FILTER_VAL = 300;
 
-// Usually 2 counts per detent when counting both edges on CLK only.
-// Set to 1 for maximum responsiveness with cheap encoders
-static const int ENC_COUNTS_PER_DETENT = 1;
+// V0.99: Changed from 1 to 2 for better stability
+// Requires 2 PCNT counts per step - filters small bounces/noise
+static const int ENC_COUNTS_PER_DETENT = 2;
 
 // If direction is reversed, set to 1.
 static const int ENC_DIR_INVERT = 1;
 
-// V0.99: Disabled direction lock (0ms) for maximum responsiveness
-// Setting to 0 disables direction lock entirely (most responsive but may allow some bounce)
-static const uint32_t ENC_DIR_LOCK_MS = 0;
+// V0.99: Light direction lock (30ms) to filter accidental reversals
+// Prevents quick bounce-induced direction changes
+static const uint32_t ENC_DIR_LOCK_MS = 30;
 
-// V0.99: Enable debug output (set to 1 to see encoder diagnostics in Serial)
-// Set to 2 for VERBOSE mode - prints every poll including zero counts
-static const int ENC_DEBUG = 2;
+// V0.99: Debug disabled for production use
+// Set to 1 to enable basic debug, 2 for verbose mode
+static const int ENC_DEBUG = 0;
 
 static int      s_lastEncDir     = 0;
 static uint32_t s_lastEncStepMs  = 0;

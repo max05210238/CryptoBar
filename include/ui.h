@@ -66,3 +66,7 @@ void ensureTzMenuVisible();
 // Coin selection submenu
 void drawCoinMenu(bool fullRefresh);
 void ensureCoinMenuVisible();
+
+// Currency selection submenu (V0.99f)
+void drawCurrencyMenu(bool fullRefresh);
+void ensureCurrencyMenuVisible();

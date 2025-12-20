@@ -101,13 +101,13 @@ struct CurrencyInfo {
 };
 
 static const CurrencyInfo CURRENCY_INFO[CURR_COUNT] = {
-  { "USD", "$",  false, false },  // US Dollar
-  { "TWD", "NT", false, true  },  // Taiwan Dollar (NT compressed)
-  { "EUR", "€",  false, false },  // Euro
-  { "GBP", "£",  false, false },  // British Pound
-  { "CAD", "C$", false, true  },  // Canadian Dollar
-  { "JPY", "¥",  true,  false },  // Japanese Yen (no decimals)
-  { "KRW", "₩",  true,  false },  // Korean Won (no decimals)
-  { "SGD", "S$", false, true  },  // Singapore Dollar
-  { "AUD", "A$", false, true  },  // Australian Dollar
+  { "USD", "$",   false, false },  // US Dollar
+  { "TWD", "NT",  false, true  },  // Taiwan Dollar (NT compressed)
+  { "EUR", "EUR", false, true  },  // Euro (ASCII-safe, compressed)
+  { "GBP", "GBP", false, true  },  // British Pound (ASCII-safe, compressed)
+  { "CAD", "C$",  false, true  },  // Canadian Dollar
+  { "JPY", "JPY", true,  true  },  // Japanese Yen (no decimals, ASCII-safe)
+  { "KRW", "KRW", true,  true  },  // Korean Won (no decimals, ASCII-safe)
+  { "SGD", "S$",  false, true  },  // Singapore Dollar
+  { "AUD", "A$",  false, true  },  // Australian Dollar
 };

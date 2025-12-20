@@ -187,6 +187,31 @@ void handleCoinSelect() {
   drawMenuScreen(true);
 }
 
+void handleCurrencySelect() {
+  // V0.99f: Apply selected currency and trigger FX update if needed
+  g_displayCurrency = g_currencyMenuIndex;
+
+  // Validate range
+  if (g_displayCurrency < 0 || g_displayCurrency >= (int)CURR_COUNT) {
+    g_displayCurrency = (int)CURR_USD;
+  }
+
+  Serial.printf("[Menu] Currency -> %s-%s\n",
+                CURRENCY_INFO[g_displayCurrency].symbol,
+                CURRENCY_INFO[g_displayCurrency].code);
+
+  // If switching to non-USD currency, trigger immediate FX update
+  if (g_displayCurrency != (int)CURR_USD) {
+    g_nextFxUpdateUtc = 0;
+  }
+
+  saveSettings();
+
+  // Return to main menu
+  g_uiMode = UI_MODE_MENU;
+  drawMenuScreen(false);
+}
+
 void handleMenuSelect() {
   switch (g_menuIndex) {
     case MENU_COIN: {
@@ -269,16 +294,10 @@ void handleMenuSelect() {
     }
 
     case MENU_CURRENCY: {
-      // V0.99f: Cycle through all supported currencies
-      g_displayCurrency = (g_displayCurrency + 1) % (int)CURR_COUNT;
-      if (g_displayCurrency < 0 || g_displayCurrency >= (int)CURR_COUNT) g_displayCurrency = (int)CURR_USD;
-      Serial.printf("[Menu] Currency -> %s\n", CURRENCY_INFO[g_displayCurrency].code);
-
-      // If switching to non-USD currency, refresh FX soon
-      if (g_displayCurrency != (int)CURR_USD) g_nextFxUpdateUtc = 0;
-
-      saveSettings();
-      drawMenuScreen(false);
+      // V0.99f: Enter currency submenu
+      g_currencyMenuIndex = g_displayCurrency;  // Start at current currency
+      g_uiMode = UI_MODE_CURRENCY_SUB;
+      drawCurrencyMenu(false);
       break;
     }
 

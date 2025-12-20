@@ -52,6 +52,8 @@ void handleShortPress() {
     handleTimezoneSelect();
   } else if (g_uiMode == UI_MODE_COIN_SUB) {
     handleCoinSelect();
+  } else if (g_uiMode == UI_MODE_CURRENCY_SUB) {
+    handleCurrencySelect();
   }
 }
 
@@ -83,7 +85,7 @@ void handleLongPress() {
   }
   if (g_appState == APP_STATE_NEED_WIFI) return;
 
-  if (g_uiMode == UI_MODE_MENU || g_uiMode == UI_MODE_TZ_SUB || g_uiMode == UI_MODE_COIN_SUB || g_uiMode == UI_MODE_WIFI_INFO) {
+  if (g_uiMode == UI_MODE_MENU || g_uiMode == UI_MODE_TZ_SUB || g_uiMode == UI_MODE_COIN_SUB || g_uiMode == UI_MODE_CURRENCY_SUB || g_uiMode == UI_MODE_WIFI_INFO) {
     leaveMenu();
   }
 }

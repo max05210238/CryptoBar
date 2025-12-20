@@ -531,6 +531,12 @@ String apIp = WiFi.softAPIP().toString();
       while (g_coinMenuIndex >= n) g_coinMenuIndex -= n;
       ensureCoinMenuVisible();
       g_coinDirty = true;
+    } else if (g_uiMode == UI_MODE_CURRENCY_SUB) {
+      g_currencyMenuIndex += steps;
+      while (g_currencyMenuIndex < 0) g_currencyMenuIndex += (int)CURR_COUNT;
+      while (g_currencyMenuIndex >= (int)CURR_COUNT) g_currencyMenuIndex -= (int)CURR_COUNT;
+      ensureCurrencyMenuVisible();
+      g_currencyDirty = true;
     }
   }
 
@@ -548,6 +554,10 @@ String apIp = WiFi.softAPIP().toString();
     } else if (g_uiMode == UI_MODE_COIN_SUB && g_coinDirty) {
       drawCoinMenu(false);
       g_coinDirty = false;
+      g_lastUiDrawMs = ms;
+    } else if (g_uiMode == UI_MODE_CURRENCY_SUB && g_currencyDirty) {
+      drawCurrencyMenu(false);
+      g_currencyDirty = false;
       g_lastUiDrawMs = ms;
     }
   }

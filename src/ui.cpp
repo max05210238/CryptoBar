@@ -37,10 +37,8 @@ extern int   g_timezoneIndex;
 extern uint8_t g_dayAvgMode;
 
 // ✅ NEW: refresh mode
+// Note: g_refreshMode, g_displayCurrency, g_usdToTwd, g_fxValid are declared in app_state.h
 extern int g_refreshMode;
-extern int g_displayCurrency;
-extern float g_usdToTwd;
-extern bool g_fxValid;
 extern const char* REFRESH_MODE_LABELS[];
 
 // Previous day average reference line

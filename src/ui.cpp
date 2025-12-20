@@ -6,6 +6,8 @@
 #include <Fonts/FreeSansBold12pt7b.h>
 #include <Fonts/FreeSansBold18pt7b.h>
 
+#include "SpaceGroteskBold24pt7b.h"
+
 #include "coins.h"
 #include "chart.h"
 #include "ui.h"
@@ -463,8 +465,8 @@ void drawSplashScreen(const char* version) {
   do {
     display.fillScreen(GxEPD_WHITE);
 
- // --- Center title ---
-    display.setFont(&FreeSansBold18pt7b);
+ // --- Center title (V0.99d: Space Grotesk 24pt) ---
+    display.setFont(&SpaceGrotesk_VariableFont_wght24pt7b);
     display.setTextColor(GxEPD_BLACK);
 
     int16_t x1, y1;

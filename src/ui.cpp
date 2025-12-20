@@ -10,21 +10,21 @@
 #include "chart.h"
 #include "ui.h"
 
-// ===== 來自 main.cpp 的全域物件與變數（這裡只宣告 extern）=====
+// ===== Global objects and variables from main.cpp (extern declarations) =====
 
-// e-paper 顯示物件
+// e-paper display object
 extern GxEPD2_BW<GxEPD2_290_BS, GxEPD2_290_BS::HEIGHT> display;
 
-// 版面：左側 symbol panel 寬度
+// Layout: left symbol panel width
 extern const int SYMBOL_PANEL_WIDTH;
 
-// 設定狀態
+// Settings state
 extern int   g_dateFormatIndex;
 extern int   g_timeFormat;
 extern int   g_dtSize; // 0=Small, 1=Large
 
-// Large 模式：把右側內容整體往下挪一點，讓日期時間離上緣更舒適。
-// 注意：這個 offset 會同時影響 dt/price/chart，維持三段間距的相對一致。
+// Large mode: shift right-side content down slightly for comfortable date/time spacing.
+// Note: This offset affects dt/price/chart together to maintain consistent spacing.
 static inline int16_t largeContentYOffset() {
   return (g_dtSize == 1) ? 8 : 0;
 }
@@ -39,21 +39,21 @@ extern float g_usdToTwd;
 extern bool g_fxValid;
 extern const char* REFRESH_MODE_LABELS[];
 
-// 昨日均價線參考
+// Previous day average reference line
 extern float g_prevDayRefPrice;
 extern bool  g_prevDayRefValid;
 
-// 圖表 samples
+// Chart samples
 extern ChartSample g_chartSamples[MAX_CHART_SAMPLES];
 extern int         g_chartSampleCount;
 
-// Menu / 時區選單 index
+// Menu / timezone submenu index
 extern int g_menuIndex;
 extern int g_menuTopIndex;
 extern int g_tzMenuIndex;
 extern int g_tzMenuTopIndex;
 
-// 其它設定 label / index
+// Other settings labels / indices
 extern int   g_brightnessPresetIndex;
 extern int   g_updatePresetIndex;
 extern int   g_currentCoinIndex;
@@ -61,13 +61,13 @@ extern const char* BRIGHTNESS_LABELS[];
 extern const char* UPDATE_PRESET_LABELS[];
 extern const char* DATE_FORMAT_LABELS[];
 
-// 由 main.cpp 實作的 helper 函式
+// Helper functions implemented in main.cpp
 bool getLocalTimeLocal(struct tm* out);
 const CoinInfo& currentCoin();
 
-// ===== 本檔案內用的常數 =====
+// ===== Constants used in this file =====
 
-// ===== 日期／時間格式化 =====
+// ===== Date/Time formatting =====
 
 static void formatDateString(char* buf, size_t bufSize, const struct tm& local) {
   switch (g_dateFormatIndex) {
@@ -100,8 +100,8 @@ static void formatTimeString(char* timeBuf, size_t timeSize,
   }
 }
 
-// 左上小字日期時間（Small）
-// 注意：Small/Large 共同遵守 dfmt/tfmt，差別只在字體與位置
+// Small date/time display (top-left small text)
+// Note: Small/Large both respect date/time format settings; differ only in font and position
 static void drawHeaderDateTimeSmall() {
   char dateBuf[20] = "--/--/----";
   char timeBuf[16] = "--:--";
@@ -114,7 +114,7 @@ static void drawHeaderDateTimeSmall() {
     formatTimeString(timeBuf, sizeof(timeBuf), ampmBuf, sizeof(ampmBuf), local);
   }
 
- // 組合成完整時間字串（含 AM/PM）
+ // Combine time string with AM/PM
   if (ampmBuf[0]) {
     snprintf(fullTimeBuf, sizeof(fullTimeBuf), "%s %s", timeBuf, ampmBuf);
   } else {
@@ -131,25 +131,25 @@ static void drawHeaderDateTimeSmall() {
   int16_t x1, y1;
   uint16_t w, h;
 
-  const int16_t yBase       = 2;   // 你之前指定的 yBase=2
+  const int16_t yBase       = 2;   // yBase=2 as previously specified
   const int16_t leftMargin  = 2;
   const int16_t rightMargin = 2;
 
- // 日期：左上
+ // Date: top-left
   display.getTextBounds(dateBuf, 0, 0, &x1, &y1, &w, &h);
   int16_t xDate = panelLeft + leftMargin;
   display.setCursor(xDate, yBase);
   display.print(dateBuf);
 
- // 時間：右上（含 AM/PM）
+ // Time: top-right (includes AM/PM)
   display.getTextBounds(fullTimeBuf, 0, 0, &x1, &y1, &w, &h);
   int16_t xTime = panelRight - rightMargin - w;
   display.setCursor(xTime, yBase);
   display.print(fullTimeBuf);
 }
 
-// 置中大字日期時間（Large）
-// 目標：日期時間 ↔ 價格 ↔ 圖表 等距；白框上緣 → 日期時間可略縮
+// Centered large date/time (Large mode)
+// Goal: equal spacing between date/time ↔ price ↔ chart; date/time can be slightly compressed near top edge of white panel
 static void drawHeaderDateTimeLarge() {
   const int16_t yOff = largeContentYOffset();
   char dateBuf[20] = "--/--/----";
@@ -175,7 +175,7 @@ static void drawHeaderDateTimeLarge() {
   const int panelRight = display.width();
   const int panelWidth = panelRight - panelLeft;
 
- // Large 模式：固定用 9pt（你指定 12pt 太大）
+ // Large mode: fixed 9pt font (12pt would be too large)
   const GFXfont* dtFont = &FreeSansBold9pt7b;
   display.setFont(dtFont);
   display.setTextColor(GxEPD_BLACK);
@@ -184,53 +184,53 @@ static void drawHeaderDateTimeLarge() {
   uint16_t dtW, dtH;
   display.getTextBounds(dtBuf, 0, 0, &dtX1, &dtY1, &dtW, &dtH);
 
- // 9pt 仍需完整置中顯示；若未來字串超寬（罕見），就以左右 margin 方式保底。
+ // 9pt still needs full centering; if string becomes too wide (rare), fall back to side margins
   const int minSideMargin = 2;
   if ((int)dtW > (panelWidth - minSideMargin * 2)) {
- // 不降字體，只把可用寬度當作置中計算的基準（避免超出白框）
- // （x 仍會在後面重新算）
+ // Don't reduce font size; use available width as centering baseline (prevent overflow from white panel)
+ // (x will be recalculated later)
   }
 
- // 這兩個數值必須與 drawPriceCenter / drawHistoryChart 的 layout 一致
+ // These two values must match the layout in drawPriceCenter / drawHistoryChart
   const int16_t PRICE_Y_BASE = 52 + yOff;
   const int16_t CHART_TOP    = 70 + yOff;
 
- // 計算價格文字區高度（只取大字 font 的 bbox，避免動 drawPriceCenter 本體）
+ // Calculate price text area height (use large font bbox only, avoid modifying drawPriceCenter itself)
   display.setFont(&FreeSansBold18pt7b);
   int16_t px1, py1;
   uint16_t pw, ph;
- // 用較「滿版」的字元估算價格字體高度，讓 dt↔price↔chart 的等距更接近實際視覺。
+ // Use full-width characters to estimate price font height, making dt↔price↔chart spacing visually accurate
   display.getTextBounds("88888", 0, 0, &px1, &py1, &pw, &ph);
 
   int16_t priceTop    = PRICE_Y_BASE + py1;
   int16_t priceBottom = priceTop + (int16_t)ph;
 
-  int16_t gap = CHART_TOP - priceBottom;  // 價格區底部 → 圖表頂部
+  int16_t gap = CHART_TOP - priceBottom;  // Price area bottom → chart top
   if (gap < 2) gap = 2;
 
- // 日期時間區底部 → 價格區頂部 的距離要等於 gap
+ // Distance from date/time bottom → price top should equal gap
   int16_t dtBottom = priceTop - gap;
 
- // 用選定的 dtFont 計算 baseline
+ // Calculate baseline using selected dtFont
   display.setFont(dtFont);
   display.getTextBounds(dtBuf, 0, 0, &dtX1, &dtY1, &dtW, &dtH);
 
   int16_t dtBaseline = dtBottom - (dtY1 + (int16_t)dtH);
 
- // 上緣允許略縮，但不要出界
+ // Allow slight compression at top edge, but stay within bounds
   const int16_t minTopMargin = 2;
   int16_t dtTop = dtBaseline + dtY1;
   if (dtTop < minTopMargin) {
     dtBaseline += (minTopMargin - dtTop);
   }
 
- // 水平置中（只在白色 panel 區內置中）
+ // Horizontal centering (centered within white panel area only)
   int16_t x = panelLeft + (panelWidth - (int)dtW) / 2 - dtX1;
   display.setCursor(x, dtBaseline);
   display.print(dtBuf);
 }
 
-// Header wrapper：依 dtSize 切換 Small / Large
+// Header wrapper: switch between Small / Large based on dtSize
 static void drawHeaderDateTime() {
   if (g_dtSize == 1) {
     drawHeaderDateTimeLarge();
@@ -239,7 +239,7 @@ static void drawHeaderDateTime() {
   }
 }
 
-// 左側黑底：幣別 + 24h 漲跌
+// Left black panel: coin symbol + 24h change
 static void drawSymbolPanel(const char* symbol, float change24h) {
   int panelWidth = SYMBOL_PANEL_WIDTH;
 
@@ -280,7 +280,7 @@ static void drawSymbolPanel(const char* symbol, float change24h) {
   display.setTextColor(GxEPD_BLACK);
 }
 
-// 單價置中
+// Center price display
 static void drawPriceCenter(float priceUsd) {
   int panelLeft  = SYMBOL_PANEL_WIDTH;
   int panelWidth = display.width() - panelLeft;
@@ -348,7 +348,7 @@ static void drawPriceCenter(float priceUsd) {
   display.print(numBuf);
 }
 
-// 主圖（含昨天均線虛線）
+// Main chart (including previous day average reference line)
 static void drawHistoryChart() {
  // V0.97: Chart always stays in USD scale.
  // (Only the big price display converts to NTD; the chart has no unit labels.)
@@ -438,7 +438,7 @@ static void drawHistoryChart() {
   }
 }
 
-// 開機歡迎畫面
+// Boot splash screen
 void drawSplashScreen(const char* version) {
   const char* title = "CryptoBar";
 
@@ -799,7 +799,7 @@ void drawWifiInfoScreen(const char* version, const char* mac, const char* staIp,
 
 
 
-// 主畫面（full / partial）
+// Main screen (full / partial refresh)
 void drawMainScreen(float priceUsd, float change24h, bool fullRefresh) {
   if (fullRefresh) {
     display.setFullWindow();
@@ -821,8 +821,8 @@ void drawMainScreen(float priceUsd, float change24h, bool fullRefresh) {
   } while (display.nextPage());
 }
 
-// 畫 scrollbar（menu / tz menu 共用）
-// Settings 主選單：游標保持在可視範圍
-// Settings 主選單畫面
-// 時區子選單：游標保持在可視範圍
-// 時區子選單畫面
+// Draw scrollbar (shared by menu / tz menu)
+// Settings main menu: keep cursor in visible range
+// Settings main menu screen
+// Timezone submenu: keep cursor in visible range
+// Timezone submenu screen

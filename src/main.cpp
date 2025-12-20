@@ -316,8 +316,7 @@ void setup() {
   drawSplashScreen(CRYPTOBAR_VERSION);
   uint32_t splashStartMs = millis();
 
-  pinMode(ENC_CLK_PIN, INPUT_PULLUP);
-  pinMode(ENC_DT_PIN,  INPUT_PULLUP);
+  // Encoder button pin (CLK/DT pins are configured inside encoderPcntBegin)
   pinMode(ENC_SW_PIN,  INPUT_PULLUP);
   g_lastEncSw = digitalRead(ENC_SW_PIN);
 
@@ -774,7 +773,7 @@ if (doUpdate) {
         }
       }
     } else {
-      fadeLedTo(100, 0, 120);  // API fail → 紫
+      fadeLedTo(100, 0, 120);  // API fail → purple
     }
   }
 
@@ -799,5 +798,5 @@ if (doUpdate) {
 
   ledAnimLoop(g_appState == APP_STATE_RUNNING, g_lastPriceOk);
 
-  delay(1); // 比 delay(10) 更滑
+  delay(1); // Smoother than delay(10)
 }

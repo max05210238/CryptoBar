@@ -8,7 +8,7 @@
 //
 // Implementation notes:
 // - Use proper quadrature decoding (X2 mode: CLK rising/falling edges)
-// - GPIO 1 (CLK) and GPIO 2 (DT) - GPIO 5/6 don't support PCNT on ESP32-S3
+// - GPIO 2 (CLK) and GPIO 1 (DT) - GPIO 5/6 don't support PCNT on ESP32-S3
 // - Bourns PEC11R-S0024: 24 PPR, smooth (no detents)
 // - Rate-limit emitted steps per loop so UI won't "jump" after long blocking ops.
 //

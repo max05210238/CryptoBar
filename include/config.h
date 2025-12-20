@@ -3,27 +3,28 @@
 
 // NOTE (V0.97): Coin registry moved to coins.h / coins.cpp (single source of truth).
 
-// 預設更新間隔（毫秒）– 30 秒
+// Default update interval (milliseconds) - 30 seconds
 static const uint32_t UPDATE_INTERVAL_MS = 30UL * 1000UL;
 
-// ----------------- 時區設定 -----------------
+// ----------------- Timezone Configuration -----------------
 struct TimezoneInfo {
-  const char* label;           // 設定選單裡顯示的字串
-  int8_t      utcOffsetHours;  // 相對 UTC 的小時數（整數）
+  const char* label;           // Display string in settings menu
+  int8_t      utcOffsetHours;  // UTC offset in hours (integer)
 };
 
-// V0.97: 補齊整數時區（UTC-12 ~ UTC+14）。
-// 注意：TIMEZONES[] 仍保留舊版 tzIndex 的順序相容性；但「設定列表顯示」會用 UTC 排序（見 TIMEZONE_DISPLAY_ORDER[]）。
-// 名稱刻意縮短，避免跑到畫面左邊
+// V0.97: Complete integer timezones (UTC-12 ~ UTC+14).
+// Note: TIMEZONES[] preserves legacy tzIndex order for compatibility,
+// but the settings menu uses UTC-sorted order (see TIMEZONE_DISPLAY_ORDER[]).
+// Names are deliberately short to fit on screen.
 static const TimezoneInfo TIMEZONES[] = {
  // --- V0.97 legacy order (index 0..6) ---
   { "UTC+00 London",    0  },
   { "UTC+01 Berlin",    1  },
   { "UTC+02 Athens",    2  },
   { "UTC+04 Dubai",     4  },
-  { "UTC+08 Taipei",    8  },   // 台灣代表城市固定用 Taipei
+  { "UTC+08 Taipei",    8  },   // Taiwan representative city
   { "UTC-05 New York", -5  },
-  { "UTC-08 Seattle",  -8  },   // 這一個要當預設
+  { "UTC-08 Seattle",  -8  },   // Default timezone
 
  // --- Additional integer UTC offsets ---
   { "UTC-12 Baker",     -12 },
@@ -50,7 +51,7 @@ static const TimezoneInfo TIMEZONES[] = {
 
 static const uint8_t TIMEZONE_COUNT         = sizeof(TIMEZONES) / sizeof(TIMEZONES[0]);
 
-// ✅ 預設時區：Seattle
+// Default timezone: Seattle
 // Note: must be declared BEFORE any inline helper that references it.
 static const uint8_t DEFAULT_TIMEZONE_INDEX = 6;   // index 6 = "UTC-08 Seattle"
 
@@ -73,7 +74,7 @@ static inline int tzDisplayPosFromTzIndex(int tzIdx) {
   return 0;
 }
 
-// ----------------- 顯示幣別 -----------------
+// ----------------- Display Currency -----------------
 // 0 = USD, 1 = NTD (TWD)
 enum DisplayCurrency : uint8_t {
   CURR_USD = 0,

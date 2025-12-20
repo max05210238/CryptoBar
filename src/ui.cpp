@@ -242,7 +242,7 @@ static void drawHeaderDateTime() {
   }
 }
 
-// Left black panel: coin symbol + 24h change
+// V0.99f: Left black panel: currency + coin symbol + 24h change
 static void drawSymbolPanel(const char* symbol, float change24h) {
   int panelWidth = SYMBOL_PANEL_WIDTH;
 
@@ -252,13 +252,22 @@ static void drawSymbolPanel(const char* symbol, float change24h) {
   const GFXfont* bigFont   = &FreeSansBold18pt7b;
   const GFXfont* smallFont = &FreeSansBold9pt7b;
 
-  // Coin symbol bounds
+  // Currency code bounds (small font, top)
+  const CurrencyInfo& curr = CURRENCY_INFO[g_displayCurrency];
+  const char* currCode = curr.code;  // Just the code, no symbol
+
+  display.setFont(smallFont);
+  int16_t currX1, currY1;
+  uint16_t currW, currH;
+  display.getTextBounds(currCode, 0, 0, &currX1, &currY1, &currW, &currH);
+
+  // Coin symbol bounds (big font, middle)
   display.setFont(bigFont);
   int16_t sx1, sy1;
   uint16_t sW, sH;
   display.getTextBounds(symbol, 0, 0, &sx1, &sy1, &sW, &sH);
 
-  // Change percentage bounds
+  // Change percentage bounds (small font, bottom)
   char changeBuf[24];
   snprintf(changeBuf, sizeof(changeBuf), "%+.2f%%", change24h);
 
@@ -267,43 +276,36 @@ static void drawSymbolPanel(const char* symbol, float change24h) {
   uint16_t cW, cH;
   display.getTextBounds(changeBuf, 0, 0, &cx1, &cy1, &cW, &cH);
 
-  // Currency symbol bounds (V0.99f)
-  const CurrencyInfo& curr = CURRENCY_INFO[g_displayCurrency];
-  char currBuf[16];
-  snprintf(currBuf, sizeof(currBuf), "%s-%s", curr.symbol, curr.code);
-
-  int16_t currX1, currY1;
-  uint16_t currW, currH;
-  display.getTextBounds(currBuf, 0, 0, &currX1, &currY1, &currW, &currH);
-
-  // Calculate vertical layout: [Symbol] [Change] [Currency]
-  int totalH = sH + 4 + cH + 4 + currH;
+  // Calculate vertical layout with spacing: [Currency] [gap] [Symbol] [gap] [Change]
+  const int gap = 8;  // spacing between elements
+  int totalH = currH + gap + sH + gap + cH;
   int topY   = (display.height() - totalH) / 2;
 
-  // Draw coin symbol
-  int16_t sy = topY + sH;
+  // Draw currency code (top)
+  int16_t currY = topY + currH;
+  int16_t currX = (panelWidth - currW) / 2;
+  display.setFont(smallFont);
+  display.setCursor(currX, currY);
+  display.print(currCode);
+
+  // Draw coin symbol (middle)
+  int16_t sy = currY + gap + sH;
   int16_t sx = (panelWidth - sW) / 2;
   display.setFont(bigFont);
   display.setCursor(sx, sy);
   display.print(symbol);
 
-  // Draw change percentage
-  int16_t cy = sy + 4 + cH;
+  // Draw change percentage (bottom)
+  int16_t cy = sy + gap + cH;
   int16_t cx = (panelWidth - cW) / 2;
   display.setFont(smallFont);
   display.setCursor(cx, cy);
   display.print(changeBuf);
 
-  // Draw currency symbol (V0.99f)
-  int16_t currY = cy + 4 + currH;
-  int16_t currX = (panelWidth - currW) / 2;
-  display.setCursor(currX, currY);
-  display.print(currBuf);
-
   display.setTextColor(GxEPD_BLACK);
 }
 
-// V0.99f: Center price display with multi-currency support
+// V0.99f: Center price display with multi-currency support (number only)
 static void drawPriceCenter(float priceUsd) {
   int panelLeft  = SYMBOL_PANEL_WIDTH;
   int panelWidth = display.width() - panelLeft;
@@ -321,22 +323,18 @@ static void drawPriceCenter(float priceUsd) {
   // Determine max decimals based on currency type
   int maxDecimals = curr.noDecimals ? 0 : 4;
 
-  // Big font for number (may downgrade to 12pt if needed)
+  // Start with 18pt font (may downgrade to 12pt if needed)
   const GFXfont* numFont = &FreeSansBold18pt7b;
   display.setFont(numFont);
   display.setTextColor(GxEPD_BLACK);
 
-  // Reserve a prefix slot equal to '$' width (big font)
-  int16_t x1, y1;
-  uint16_t wDollar, hDollar;
-  display.getTextBounds("$", 0, 0, &x1, &y1, &wDollar, &hDollar);
-
-  const int gap = 4;
-  int maxNumberW = panelWidth - (int)wDollar - gap;
+  // Available width for price number (no currency symbol, so more space)
+  int maxNumberW = panelWidth - 8;  // 4px margin on each side
   if (maxNumberW < 10) maxNumberW = 10;
 
   // Adaptive decimals: start at maxDecimals, reduce until it fits
   char numBuf[32];
+  int16_t x1, y1;
   uint16_t wNum = 0, hNum = 0;
   bool needDowngrade = false;
 
@@ -351,7 +349,7 @@ static void drawPriceCenter(float priceUsd) {
     }
   }
 
-  // V0.99f: Downgrade to 12pt font only if necessary (>9 digits with 0 decimals)
+  // Downgrade to 12pt font if necessary (e.g., BTC at $100,000+)
   if (needDowngrade) {
     numFont = &FreeSansBold12pt7b;
     display.setFont(numFont);
@@ -365,48 +363,13 @@ static void drawPriceCenter(float priceUsd) {
     Serial.printf("[UI] Price downgraded to 12pt font: %s\n", numBuf);
   }
 
-  // Reset to 18pt for symbol measurement
-  display.setFont(&FreeSansBold18pt7b);
-
-  int totalW = (int)wDollar + gap + (int)wNum;
-  int16_t xStart = panelLeft + (panelWidth - totalW) / 2;
+  // Center the number horizontally
+  int16_t xStart = panelLeft + (panelWidth - (int)wNum) / 2;
   int16_t yBase  = 52 + largeContentYOffset();
 
-  // Draw currency symbol/prefix
-  if (curr.twoCharSym) {
-    // Two-character symbols: NT, C$, S$, A$ (use 12pt, compressed)
-    display.setFont(&FreeSansBold12pt7b);
-
-    const char* sym = curr.symbol;
-    char ch1[2] = {sym[0], '\0'};
-    char ch2[2] = {sym[1], '\0'};
-
-    uint16_t w1, w2, h1, h2;
-    display.getTextBounds(ch1, 0, 0, &x1, &y1, &w1, &h1);
-    display.getTextBounds(ch2, 0, 0, &x1, &y1, &w2, &h2);
-
-    int overlap = 2;
-    int symW = (int)w1 + (int)w2 - overlap;
-    if (symW > (int)wDollar) overlap += (symW - (int)wDollar);
-    if (overlap > (int)w1 - 1) overlap = (int)w1 - 1;
-    symW = (int)w1 + (int)w2 - overlap;
-
-    int16_t symX = xStart + ((int)wDollar - symW) / 2;
-    display.setCursor(symX, yBase);
-    display.print(ch1);
-    display.setCursor(symX + (int)w1 - overlap, yBase);
-    display.print(ch2);
-
-  } else {
-    // Single-character symbols: $, €, £, ¥, ₩ (use 18pt)
-    display.setFont(&FreeSansBold18pt7b);
-    display.setCursor(xStart, yBase);
-    display.print(curr.symbol);
-  }
-
-  // Draw number
-  display.setFont(numFont);  // Use potentially downgraded font
-  display.setCursor(xStart + (int)wDollar + gap, yBase);
+  // Draw price number only (no currency symbol)
+  display.setFont(numFont);
+  display.setCursor(xStart, yBase);
   display.print(numBuf);
 }
 

@@ -72,9 +72,7 @@ static void printMenuItem(int i) {
     case MENU_CURRENCY: {
       display.print("Currency: ");
       int idx = (g_displayCurrency>=0 && g_displayCurrency < (int)CURR_COUNT) ? g_displayCurrency : 0;
-      // V0.99f: Display format "Symbol-Code" (e.g., "$-USD", "NT-TWD")
-      display.print(CURRENCY_INFO[idx].symbol);
-      display.print("-");
+      // V0.99f: Display currency code only (e.g., "USD", "TWD")
       display.print(CURRENCY_INFO[idx].code);
       break;
     }

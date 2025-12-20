@@ -367,9 +367,9 @@ page += "</select>";
 // Currency (V0.99f: Multi-currency support)
 page += "<label>Currency (cur)</label><select name='cur'>";
 appendOption(page, "", "Keep current", s_defCur < 0);
-// Generate options for all supported currencies with "Symbol-Code" format
+// Generate options for all supported currencies (code only, e.g., "USD")
 for (int i = 0; i < (int)CURR_COUNT; i++) {
-  String label = String(i) + " = " + CURRENCY_INFO[i].symbol + "-" + CURRENCY_INFO[i].code;
+  String label = String(i) + " = " + CURRENCY_INFO[i].code;
   appendOption(page, String(i), label, s_defCur == i);
 }
 page += "</select>";

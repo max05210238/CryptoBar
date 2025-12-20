@@ -36,9 +36,9 @@ static const int ENC_DIR_INVERT = 1;
 // Helps reject spurious direction changes from display noise
 static const uint32_t ENC_DIR_LOCK_MS = 50;
 
-// V0.99: Debug disabled for production use
+// V0.99: Debug enabled for diagnostics
 // Set to 1 to enable basic debug, 2 for verbose mode
-static const int ENC_DEBUG = 0;
+static const int ENC_DEBUG = 2;
 
 static int      s_lastEncDir     = 0;
 static uint32_t s_lastEncStepMs  = 0;

@@ -21,20 +21,20 @@
 static const pcnt_unit_t    ENC_PCNT_UNIT = PCNT_UNIT_0;
 static const pcnt_channel_t ENC_PCNT_CH   = PCNT_CHANNEL_0;
 
-// V0.99: Balanced configuration for cheap/noisy encoders
-// Increased from 100 to 300 APB cycles for better noise rejection
-static const uint16_t ENC_PCNT_FILTER_VAL = 300;
+// V0.99: EMI-hardened configuration for E-ink display interference
+// Increased filter to reject high-frequency EMI spikes from display
+static const uint16_t ENC_PCNT_FILTER_VAL = 500;
 
-// V0.99: Changed from 1 to 2 for better stability
-// Requires 2 PCNT counts per step - filters small bounces/noise
-static const int ENC_COUNTS_PER_DETENT = 2;
+// V0.99: Increased to 4 for better EMI noise rejection
+// Bourns PEC11R has 24 pulses/rev = 4 counts per detent with quadrature
+static const int ENC_COUNTS_PER_DETENT = 4;
 
 // If direction is reversed, set to 1.
 static const int ENC_DIR_INVERT = 1;
 
-// V0.99: Light direction lock (30ms) to filter accidental reversals
-// Prevents quick bounce-induced direction changes
-static const uint32_t ENC_DIR_LOCK_MS = 30;
+// V0.99: Moderate direction lock to filter EMI-induced reversals
+// Helps reject spurious direction changes from display noise
+static const uint32_t ENC_DIR_LOCK_MS = 50;
 
 // V0.99: Debug disabled for production use
 // Set to 1 to enable basic debug, 2 for verbose mode
@@ -133,6 +133,20 @@ void encoderPcntPoll(bool appRunning, volatile int* stepAccum, portMUX_TYPE* mux
   }
 
   if (cnt == 0) return;
+
+  // V0.99: EMI spike rejection - discard unrealistically large jumps
+  // Bourns PEC11R at 30 RPM = ~10ms per detent, poll rate ~10ms
+  // Maximum plausible counts per poll: ~16 (very fast rotation)
+  // Anything larger is likely EMI from E-ink display
+  const int EMI_SPIKE_THRESHOLD = 16;
+  if (abs(cnt) > EMI_SPIKE_THRESHOLD) {
+    if (ENC_DEBUG) {
+      Serial.printf("[ENC] EMI SPIKE REJECTED: PCNT=%d (threshold=%d)\n",
+                    cnt, EMI_SPIKE_THRESHOLD);
+    }
+    pcnt_counter_clear(ENC_PCNT_UNIT);
+    return;
+  }
 
  // Clear immediately so the counter won't overflow even if loop blocks.
   pcnt_counter_clear(ENC_PCNT_UNIT);

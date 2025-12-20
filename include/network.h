@@ -2,17 +2,17 @@
 
 #include <Arduino.h>
 
-// 統一對外提供的「抓價」與「歷史 OHLC bootstrap」API
+// Unified API for price fetching and historical OHLC bootstrap
 
-// 抓最新價格（優先 CoinPaprika，失敗 fallback CoinGecko，再失敗 fallback Kraken）
-// 回傳：true = 成功，priceUsd / change24h 已填入
+// Fetch latest price (priority: CoinPaprika, fallback to CoinGecko, fallback to Kraken)
+// Returns: true = success, priceUsd / change24h are populated
 bool fetchPrice(float& priceUsd, float& change24h);
 
-// 歷史曲線 bootstrap：
-// - 有 Kraken pair：用 Kraken OHLC (5min interval)
-// - 否則：用 CoinGecko market_chart (days=1)
+// Historical chart bootstrap:
+// - If Kraken pair configured: use Kraken OHLC (5min interval)
+// - Otherwise: use CoinGecko market_chart (days=1)
 void bootstrapHistoryFromKrakenOHLC();
 
-// USD -> TWD 匯率 (NTD)
-// 回傳：true = 成功，outRate 已填入
+// USD -> TWD exchange rate (NTD)
+// Returns: true = success, outRate is populated
 bool fetchUsdToTwdRate(float& outRate);

@@ -33,8 +33,11 @@ extern const int SYMBOL_PANEL_WIDTH;
 #define BOARD_RGB_COUNT 1
 
 // Rotary encoder pins
-#define ENC_CLK_PIN 5
-#define ENC_DT_PIN 6
+// V0.99a: CLK=GPIO2, DT=GPIO1 (ESP32-S3 PCNT-compatible)
+// V0.98 used GPIO 5/6 (doesn't support PCNT on ESP32-S3)
+// V0.99 swapped CLK/DT assignment to fix direction issue in quadrature decoding
+#define ENC_CLK_PIN 2
+#define ENC_DT_PIN 1
 #define ENC_SW_PIN 21
 
 // NTP

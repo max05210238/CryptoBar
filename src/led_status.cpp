@@ -85,7 +85,7 @@ static const float    LED_EVENT_SLOW_THRESH = 5.0f;
 static const float    LED_EVENT_FAST_THRESH = 10.0f;
 static const uint32_t LED_BREATHE_SLOW_PERIOD_MS = 2400;
 static const uint32_t LED_BREATHE_FAST_PERIOD_MS = 900;
-static const float    LED_BREATHE_MIN_FRAC = 0.15f;   // 最暗時仍可見（在 master 亮度內）
+static const float    LED_BREATHE_MIN_FRAC = 0.15f;   // Minimum brightness still visible (within master brightness)
 
 static inline float absf(float x) { return (x < 0.0f) ? -x : x; }
 
@@ -129,7 +129,7 @@ void ledStatusGetLogicalRgb(uint8_t* r, uint8_t* g, uint8_t* b) {
   if (b) *b = s_logicalB;
 }
 
-// Master 亮度縮放（設定中的 LED 亮度 = master 上限；動畫只會在此上限內變化）
+// Master brightness scaling (LED brightness setting = master limit; animation only varies within this limit)
 static inline uint8_t scaleBright(uint8_t v, float animFactor = 1.0f) {
   float m = s_masterBrightness * animFactor;
   if (m <= 0.001f) return 0;
@@ -137,11 +137,11 @@ static inline uint8_t scaleBright(uint8_t v, float animFactor = 1.0f) {
   return (uint8_t)((float)v * m + 0.5f);
 }
 
-// animFactor: 0.0..1.0（SOLID=1.0；呼吸燈用）
+// animFactor: 0.0..1.0 (SOLID=1.0; used for breathing animation)
 static void setLedScaled(uint8_t r, uint8_t g, uint8_t b, float animFactor = 1.0f) {
   if (!s_pixel) return;
 
- // Master OFF -> forced off
+ // Master OFF -> force off
   if (s_masterBrightness <= 0.001f) {
     r = g = b = 0;
     animFactor = 1.0f;
@@ -223,7 +223,7 @@ void fadeLedTo(uint8_t r, uint8_t g, uint8_t b, int steps, int delayMs) {
   s_logicalG = g;
   s_logicalB = b;
 
- // sync cache (avoid one-frame mismatch)
+ // Sync cache (avoid one-frame mismatch)
   s_lastNeoPixelColor = ((uint32_t)scaleBright(r, 1.0f) << 16) |
                         ((uint32_t)scaleBright(g, 1.0f) << 8)  |
                         (uint32_t)scaleBright(b, 1.0f);
@@ -265,8 +265,8 @@ void updateLedForPrice(float change24h, bool priceOk) {
   }
 
  // --- Trend (near-zero hysteresis) ---
-  const float ENTER = 0.02f;  // 超過 0.02% 才進入紅/綠
-  const float EXIT  = 0.005f; // 小於 0.005% 才回到白/灰
+  const float ENTER = 0.02f;  // Enter red/green only when exceeding 0.02%
+  const float EXIT  = 0.005f; // Return to white/gray only when below 0.005%
 
   if (s_ledTrend == LED_NEUTRAL) {
     if (change24h >  ENTER) s_ledTrend = LED_UP;

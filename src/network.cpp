@@ -10,9 +10,9 @@
 #include "day_avg.h"
 #include "network.h"
 
-// 有些值你原本是用 config.h 帶進來，這裡做防呆 fallback
+// Some values were originally from config.h; these are fallback defaults
 #ifndef MARKET_GMT_OFFSET_SEC
-// 預設為美東 UTC-5（未處理 DST）
+// Default: US Eastern Time UTC-5 (DST not handled)
 #define MARKET_GMT_OFFSET_SEC (-5 * 3600)
 #endif
 
@@ -21,7 +21,7 @@
 #define MARKET_ANCHOR_HOUR_ET 19
 #endif
 
-// 由 main.cpp 提供的 helper（只宣告，定義在 main.cpp）
+// Helper provided by main.cpp (declaration only; definition in main.cpp)
 const CoinInfo& currentCoin();
 
 // ==================== 7pm ET cycle & chart samples =====================
@@ -33,14 +33,14 @@ void updateEtCycle() {
     return;
   }
 
- // 換算成交易所時間（預設 ET）
+ // Convert to exchange time (default: ET)
   time_t nowEt = nowUtc + MARKET_GMT_OFFSET_SEC;
 
-  time_t dayStartEt = nowEt - (nowEt % 86400);                   // 今天 00:00 ET
+  time_t dayStartEt = nowEt - (nowEt % 86400);                   // Today 00:00 ET
   time_t anchorEt   = dayStartEt + MARKET_ANCHOR_HOUR_ET * 3600; // 7pm ET
 
   if (nowEt < anchorEt) {
- // 還沒到今天 7pm → 用昨天 7pm 做 anchor
+ // Before today's 7pm → use yesterday's 7pm as anchor
     anchorEt -= 86400;
   }
 
@@ -58,7 +58,7 @@ void updateEtCycle() {
   }
 }
 
-// 內部用：以「指定 UTC 時間」塞一個 sample 進 chart buffer
+// Internal: add a sample to chart buffer at specified UTC time
 static void addChartSampleUtc(time_t sampleUtc, float price) {
   if (!g_cycleInit) {
     updateEtCycle();
@@ -78,7 +78,7 @@ static void addChartSampleUtc(time_t sampleUtc, float price) {
     g_chartSamples[g_chartSampleCount].price = price;
     g_chartSampleCount++;
   } else {
- // 滾動 buffer：丟掉最舊
+ // Rolling buffer: discard oldest
     for (int i = 1; i < MAX_CHART_SAMPLES; ++i) {
       g_chartSamples[i - 1] = g_chartSamples[i];
     }
@@ -87,10 +87,10 @@ static void addChartSampleUtc(time_t sampleUtc, float price) {
   }
 }
 
-// 對外 API：用「現在時間」加一個 sample
-// ✅ 修正：不要每 30 秒新增一點，改為 5 分鐘一桶（跟 Kraken OHLC interval=5 一致）
-// - 同一個 5 分鐘 bucket 內只更新最後一筆 price
-// - 跨 bucket 才 append 新 sample
+// Public API: add a sample using current time
+// Fixed: instead of adding a point every 30s, use 5-minute buckets (matching Kraken OHLC interval=5)
+// - Within the same 5-minute bucket, only update the last price
+// - Only append a new sample when crossing bucket boundaries
 void addChartSampleForNow(float price) {
   time_t nowUtc = time(nullptr);
   if (nowUtc <= 0) {
@@ -105,7 +105,7 @@ void addChartSampleForNow(float price) {
   int bucket = (int)((nowUtc - g_cycleStartUtc) / BUCKET_SEC);
   if (bucket < 0) return;
 
- // cycle 換日時重置 bucket 記憶
+ // Reset bucket memory when cycle rolls over to new day
   static time_t s_lastCycleStart = 0;
   static int    s_lastBucket     = -1;
   if (s_lastCycleStart != g_cycleStartUtc) {
@@ -113,19 +113,19 @@ void addChartSampleForNow(float price) {
     s_lastBucket = -1;
   }
 
- // 同一桶：更新最後一點，不新增（避免 300 sample 很快塞爆）
+ // Same bucket: update last point, don't add new one (prevents filling 300 samples too quickly)
   if (bucket == s_lastBucket && g_chartSampleCount > 0) {
     g_chartSamples[g_chartSampleCount - 1].price = price;
     return;
   }
 
- // 新桶：新增一點（用 bucket 起點時間）
+ // New bucket: add new point (using bucket start time)
   s_lastBucket = bucket;
   time_t bucketUtc = g_cycleStartUtc + (time_t)bucket * BUCKET_SEC;
   addChartSampleUtc(bucketUtc, price);
 }
 
-// ==================== 價格抓取 =====================
+// ==================== Price fetching =====================
 
 static bool fetchPriceFromPaprika(float& priceUsd, float& change24h) {
   const CoinInfo& coin = currentCoin();
@@ -140,8 +140,9 @@ static bool fetchPriceFromPaprika(float& priceUsd, float& change24h) {
   }
 
   HTTPClient http;
-  String url = "https://api.coinpaprika.com/v1/tickers/";
-  url += coin.paprikaId;
+  // V0.99b: Avoid String concatenation (heap fragmentation)
+  char url[128];
+  snprintf(url, sizeof(url), "https://api.coinpaprika.com/v1/tickers/%s", coin.paprikaId);
 
   Serial.print("[CP] GET ");
   Serial.println(url);
@@ -200,8 +201,9 @@ static bool fetchPriceFromKraken(float& priceUsd, float& change24h) {
   }
 
   HTTPClient http;
-  String url = "https://api.kraken.com/0/public/Ticker?pair=";
-  url += coin.krakenPair;
+  // V0.99b: Avoid String concatenation (heap fragmentation)
+  char url[128];
+  snprintf(url, sizeof(url), "https://api.kraken.com/0/public/Ticker?pair=%s", coin.krakenPair);
 
   Serial.print("[Kraken] GET ");
   Serial.println(url);
@@ -243,7 +245,7 @@ static bool fetchPriceFromKraken(float& priceUsd, float& change24h) {
   JsonObject ticker;
   for (JsonPair kv : result) {
     ticker = kv.value().as<JsonObject>();
-    break;   // 只抓第一個 key
+    break;   // Only grab the first key
   }
   if (ticker.isNull()) {
     Serial.println("[Kraken] ticker missing.");
@@ -280,13 +282,13 @@ static bool fetchPriceFromCoingecko(float& priceUsd, float& change24h) {
     Serial.println("[CG] No geckoId configured for this coin.");
     return false;
   }
-  String cgId = String(coin.geckoId);
 
   HTTPClient http;
-  String url =
-      "https://api.coingecko.com/api/v3/simple/price?ids=" +
-      cgId +
-      "&vs_currencies=usd&include_24hr_change=true";
+  // V0.99b: Avoid String concatenation (heap fragmentation)
+  char url[192];
+  snprintf(url, sizeof(url),
+           "https://api.coingecko.com/api/v3/simple/price?ids=%s&vs_currencies=usd&include_24hr_change=true",
+           coin.geckoId);
 
   Serial.print("[CG] GET ");
   Serial.println(url);
@@ -352,7 +354,7 @@ bool fetchPrice(float& priceUsd, float& change24h) {
   return false;
 }
 
-// ==================== 歷史 OHLC bootstrap =====================
+// ==================== Historical OHLC bootstrap =====================
 
 static bool bootstrapHistoryFromCoingeckoMarketChart() {
   const CoinInfo& coin = currentCoin();
@@ -384,9 +386,11 @@ static bool bootstrapHistoryFromCoingeckoMarketChart() {
   if (nowUtc < windowEndUtc) windowEndUtc = nowUtc;
 
   HTTPClient http;
-  String cgId = String(coin.geckoId);
-  String url = "https://api.coingecko.com/api/v3/coins/" + cgId +
-               "/market_chart?vs_currency=usd&days=1";
+  // V0.99b: Avoid String concatenation (heap fragmentation)
+  char url[192];
+  snprintf(url, sizeof(url),
+           "https://api.coingecko.com/api/v3/coins/%s/market_chart?vs_currency=usd&days=1",
+           coin.geckoId);
 
   Serial.print("[History][CG] GET ");
   Serial.println(url);
@@ -409,10 +413,17 @@ static bool bootstrapHistoryFromCoingeckoMarketChart() {
   StaticJsonDocument<64> filter;
   filter["prices"] = true;
 
-  DynamicJsonDocument doc(24576);
+ // V0.99b: Reduced from 24576 to 16384 (33% reduction) to save heap
+ // Filter extracts only "prices" array, reducing memory footprint
+  DynamicJsonDocument doc(16384);
   DeserializationError err = deserializeJson(doc, payload, DeserializationOption::Filter(filter));
   if (err) {
-    Serial.printf("[History][CG] JSON parse error: %s\n", err.c_str());
+    if (err == DeserializationError::NoMemory) {
+      Serial.printf("[History][CG] Insufficient memory for parsing (need >16KB)\n");
+      Serial.printf("[History][CG] Free heap: %u bytes\n", ESP.getFreeHeap());
+    } else {
+      Serial.printf("[History][CG] JSON parse error: %s\n", err.c_str());
+    }
     return false;
   }
 
@@ -454,7 +465,7 @@ void bootstrapHistoryFromKrakenOHLC() {
     return;
   }
 
- // 先確保 7pm ET cycle 已建立
+ // Ensure 7pm ET cycle is established first
   updateEtCycle();
   if (!g_cycleInit) {
     Serial.println("[History] cycle not initialized, abort.");
@@ -467,7 +478,7 @@ void bootstrapHistoryFromKrakenOHLC() {
     return;
   }
 
- // 這一個 7pm ET 週期的 UTC 視窗
+ // UTC window for this 7pm ET cycle
   time_t windowStartUtc = g_cycleStartUtc;
   time_t windowEndUtc   = g_cycleEndUtc;
   if (nowUtc < windowEndUtc) {
@@ -494,11 +505,12 @@ void bootstrapHistoryFromKrakenOHLC() {
   }
 
   HTTPClient http;
-  String url = "https://api.kraken.com/0/public/OHLC?pair=";
-  url += coin.krakenPair;
-  url += "&interval=5&since=";
- // 只要從這個週期開始的 timestamp 之後的資料，避免 JSON 太大
-  url += String((long)sinceUtc);
+  // V0.99b: Avoid String concatenation (heap fragmentation)
+  // Only fetch data after this cycle's start timestamp to avoid oversized JSON
+  char url[192];
+  snprintf(url, sizeof(url),
+           "https://api.kraken.com/0/public/OHLC?pair=%s&interval=5&since=%ld",
+           coin.krakenPair, (long)sinceUtc);
 
   Serial.print("[History] GET ");
   Serial.println(url);
@@ -519,11 +531,17 @@ void bootstrapHistoryFromKrakenOHLC() {
 
   Serial.printf("[History] Payload length: %d bytes\n", payload.length());
 
- // 原本是 32768，稍微加大一點，配合 since= 應該就很安全
-  DynamicJsonDocument doc(49152);
+ // V0.99b: Reduced from 49152 to 32768 (33% reduction) to save heap
+ // With since= parameter, payload is filtered to current cycle only
+  DynamicJsonDocument doc(32768);
   DeserializationError err = deserializeJson(doc, payload);
   if (err) {
-    Serial.printf("[History] JSON parse error: %s\n", err.c_str());
+    if (err == DeserializationError::NoMemory) {
+      Serial.printf("[History] Insufficient memory for OHLC parsing (need >32KB)\n");
+      Serial.printf("[History] Free heap: %u bytes\n", ESP.getFreeHeap());
+    } else {
+      Serial.printf("[History] JSON parse error: %s\n", err.c_str());
+    }
     return;
   }
 
@@ -574,7 +592,7 @@ void bootstrapHistoryFromKrakenOHLC() {
     if (tUtc < minT) minT = tUtc;
     if (tUtc > maxT) maxT = tUtc;
 
- // 只把這個週期內的點塞進 chart
+ // Only add points within this cycle to the chart
     if (tUtc < windowStartUtc || tUtc > windowEndUtc) continue;
 
     float closePrice = atof(closeStr);
@@ -623,7 +641,7 @@ bool fetchUsdToTwdRate(float& outRate) {
     String payload = http.getString();
     http.end();
 
- // 只取 rates.TWD 這個欄位
+ // Only extract the rates.TWD field
     StaticJsonDocument<64> filter;
     filter["rates"]["TWD"] = true;
 

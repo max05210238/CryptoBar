@@ -3,26 +3,26 @@
 #include <Arduino.h>
 #include <time.h>
 
-// 單一圖表 sample：在當天 7pm ET cycle 中的相對位置 + 價格
+// Single chart sample: relative position within today's 7pm ET cycle + price
 struct ChartSample {
-  float pos;    // 0.0–1.0, 一天內相對位置（7pm ET → 7pm ET）
+  float pos;    // 0.0–1.0, relative position within day (7pm ET → 7pm ET)
   float price;
 };
 
-// 一天最多 sample 數（跟你原本一樣 300）
+// Maximum samples per day (same as original: 300)
 constexpr int MAX_CHART_SAMPLES = 300;
 
-// 這些全域變數在 main.cpp 裡「定義」，在其他 .cpp 只用 extern 引用
+// These global variables are defined in main.cpp; other .cpp files use extern references
 extern ChartSample g_chartSamples[MAX_CHART_SAMPLES];
 extern int         g_chartSampleCount;
 
-// 7pm ET cycle 狀態（同樣在 main.cpp 定義）
+// 7pm ET cycle state (also defined in main.cpp)
 extern bool   g_cycleInit;
 extern time_t g_cycleStartUtc;
 extern time_t g_cycleEndUtc;
 
-// 對外提供的 API（實作在 network.cpp）
-// - 重新計算今天的 7pm ET cycle
-// - 用「現在時間」加進一個 sample
+// Public API (implemented in network.cpp)
+// - Recalculate today's 7pm ET cycle
+// - Add a sample using current time
 void updateEtCycle();
 void addChartSampleForNow(float price);

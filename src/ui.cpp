@@ -465,8 +465,8 @@ void drawSplashScreen(const char* version) {
   do {
     display.fillScreen(GxEPD_WHITE);
 
- // --- Center title (V0.99e: Space Grotesk Bold 24pt) ---
-    display.setFont(&SpaceGrotesk_Bold24pt7b);
+ // --- Center title (V0.99e: Space Grotesk SemiBold 24pt) ---
+    display.setFont(&SpaceGrotesk_SemiBold24pt7b);
     display.setTextColor(GxEPD_BLACK);
 
     int16_t x1, y1;

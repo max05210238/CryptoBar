@@ -37,7 +37,8 @@ static const int ENC_DIR_INVERT = 1;
 static const uint32_t ENC_DIR_LOCK_MS = 0;
 
 // V0.99: Enable debug output (set to 1 to see encoder diagnostics in Serial)
-static const int ENC_DEBUG = 1;
+// Set to 2 for VERBOSE mode - prints every poll including zero counts
+static const int ENC_DEBUG = 2;
 
 static int      s_lastEncDir     = 0;
 static uint32_t s_lastEncStepMs  = 0;
@@ -89,13 +90,18 @@ void encoderPcntBegin(int clkPin, int dtPin) {
   Serial.println("[ENC] V0.99 PCNT enabled");
   Serial.printf("[ENC] Config: Filter=%d APB, Counts/Detent=%d, DirInvert=%d, DirLock=%dms\n",
                 ENC_PCNT_FILTER_VAL, ENC_COUNTS_PER_DETENT, ENC_DIR_INVERT, ENC_DIR_LOCK_MS);
-  if (ENC_DEBUG) {
+  if (ENC_DEBUG >= 2) {
+    Serial.println("[ENC] VERBOSE DEBUG MODE - prints every poll (ENC_DEBUG=2)");
+  } else if (ENC_DEBUG == 1) {
     Serial.println("[ENC] DEBUG MODE ENABLED - will output encoder events");
   }
 }
 
 void encoderPcntPoll(bool appRunning, volatile int* stepAccum, portMUX_TYPE* mux) {
   if (!stepAccum || !mux) return;
+
+  static uint32_t pollCount = 0;
+  pollCount++;
 
  // During WiFi provisioning / transitional states, discard rotation so we don't apply
  // a pile of steps later when the UI resumes.
@@ -110,6 +116,14 @@ void encoderPcntPoll(bool appRunning, volatile int* stepAccum, portMUX_TYPE* mux
 
   int16_t cnt = 0;
   pcnt_get_counter_value(ENC_PCNT_UNIT, &cnt);
+
+  // Verbose debug mode: print every poll
+  if (ENC_DEBUG >= 2) {
+    uint32_t nowMs = millis();
+    Serial.printf("[ENC] Poll #%lu @ %lums: PCNT=%d, Accum=%d, Backlog=%d\n",
+                  pollCount, nowMs, cnt, s_encDetentAccum, s_encBacklog);
+  }
+
   if (cnt == 0) return;
 
  // Clear immediately so the counter won't overflow even if loop blocks.

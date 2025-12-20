@@ -62,11 +62,13 @@ void encoderPcntBegin(int clkPin, int dtPin) {
   cfg.unit           = ENC_PCNT_UNIT;
   cfg.channel        = ENC_PCNT_CH;
 
- // Count both edges on CLK
-  cfg.pos_mode = PCNT_COUNT_INC;
+ // Quadrature encoder configuration for proper phase detection
+  // CLK rising edge: DT=HIGH → count down, DT=LOW → count up
+  // CLK falling edge: DT=HIGH → count up, DT=LOW → count down
+  cfg.pos_mode = PCNT_COUNT_DEC;
   cfg.neg_mode = PCNT_COUNT_INC;
 
- // Reverse direction when DT is LOW
+ // Direction controlled by DT level
   cfg.lctrl_mode = PCNT_MODE_REVERSE;
   cfg.hctrl_mode = PCNT_MODE_KEEP;
 

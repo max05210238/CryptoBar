@@ -171,8 +171,8 @@ void handleCoinSelect() {
   bootstrapHistoryFromKrakenOHLC();
 
  // Force an immediate price refresh on coin change (best-effort)
-  float price  = 0.0f;
-  float change = 0.0f;
+  double price  = 0.0;
+  double change = 0.0;
   if (fetchPrice(price, change)) {
     g_lastPriceUsd  = price;
     g_lastChange24h = change;
@@ -180,7 +180,7 @@ void handleCoinSelect() {
     updateLedForPrice(g_lastChange24h, g_lastPriceOk);
   } else {
     g_lastPriceOk = false;
-    updateLedForPrice(0.0f, false);
+    updateLedForPrice(0.0, false);
   }
 
   g_uiMode = UI_MODE_MENU;

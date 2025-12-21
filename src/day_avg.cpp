@@ -7,13 +7,13 @@ static constexpr time_t kWindowSec   = 24 * 3600;
 
 struct MeanSample {
   time_t tUtc;   // bucket start (UTC seconds)
-  float  price;
+  double price;
 };
 
 static MeanSample s_buf[kMaxSamples];
-static int  s_head  = 0;   // index of oldest
-static int  s_count = 0;   // number of valid samples
-static float s_sum  = 0.0f;
+static int    s_head  = 0;   // index of oldest
+static int    s_count = 0;   // number of valid samples
+static double s_sum   = 0.0;
 
 static inline int idxAt(int offset) {
   return (s_head + offset) % kMaxSamples;
@@ -22,7 +22,7 @@ static inline int idxAt(int offset) {
 void dayAvgRollingReset() {
   s_head  = 0;
   s_count = 0;
-  s_sum   = 0.0f;
+  s_sum   = 0.0;
 }
 
 static void popOldest() {
@@ -32,7 +32,7 @@ static void popOldest() {
   s_count--;
 }
 
-static void pushNewest(time_t bucketUtc, float price) {
+static void pushNewest(time_t bucketUtc, double price) {
  // If full, drop oldest.
   if (s_count >= kMaxSamples) {
     popOldest();
@@ -44,7 +44,7 @@ static void pushNewest(time_t bucketUtc, float price) {
   s_count++;
 }
 
-void dayAvgRollingAdd(time_t sampleUtc, float price) {
+void dayAvgRollingAdd(time_t sampleUtc, double price) {
   if (sampleUtc <= 0) return;
 
  // Normalize to 5-min bucket.
@@ -86,10 +86,10 @@ static void trimTo24h(time_t nowUtc) {
   }
 }
 
-bool dayAvgRollingGet(time_t nowUtc, float& outMean) {
+bool dayAvgRollingGet(time_t nowUtc, double& outMean) {
   trimTo24h(nowUtc);
   if (s_count <= 0) return false;
-  outMean = s_sum / (float)s_count;
+  outMean = s_sum / (double)s_count;
   return true;
 }
 
@@ -97,12 +97,12 @@ int dayAvgRollingCount() {
   return s_count;
 }
 
-bool dayAvgCycleMean(float& outMean) {
+bool dayAvgCycleMean(double& outMean) {
   if (g_chartSampleCount <= 0) return false;
   double acc = 0.0;
   for (int i = 0; i < g_chartSampleCount; i++) {
-    acc += (double)g_chartSamples[i].price;
+    acc += g_chartSamples[i].price;
   }
-  outMean = (float)(acc / (double)g_chartSampleCount);
+  outMean = acc / (double)g_chartSampleCount;
   return true;
 }

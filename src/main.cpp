@@ -1,4 +1,4 @@
-// CryptoBar V0.99i (Price Update Optimization)
+// CryptoBar V0.99j (Price Precision Fix)
 #include <Arduino.h>
 #include <WiFi.h>
 #include <HTTPClient.h>
@@ -82,7 +82,7 @@ void updateAvgLineReference(time_t nowUtc) {
     return;
   }
 
-  float mean = 0.0f;
+  double mean = 0.0;
   bool ok = false;
 
   if (g_dayAvgMode == DAYAVG_CYCLE) {
@@ -193,8 +193,8 @@ static void startNormalOperation(bool enforceSplashDelay, uint32_t splashStartMs
   updateEtCycle();
   bootstrapHistoryFromKrakenOHLC();
 
-  float price  = 0.0f;
-  float change = 0.0f;
+  double price  = 0.0;
+  double change = 0.0;
 
   g_lastPriceOk = fetchPrice(price, change);
   if (g_lastPriceOk) {
@@ -353,8 +353,8 @@ void loop() {
   unsigned long now = millis();
 
  // V0.99i: Track consecutive identical price updates to detect stale API data
-  static float s_lastFetchedPrice = 0.0f;
-  static int   s_duplicatePriceCount = 0;
+  static double s_lastFetchedPrice = 0.0;
+  static int    s_duplicatePriceCount = 0;
 
  // If we are in an OTA pending state (freshly updated firmware), mark it as
  // "valid" after it has been running stably for a short time.
@@ -737,8 +737,8 @@ if (doUpdate) {
       }
     }
 
-    float price  = 0.0f;
-    float change = 0.0f;
+    double price  = 0.0;
+    double change = 0.0;
     bool ok = false;
  // Use prefetched data if it matches the tick we're committing now.
     if (thisTickUtc != 0 && g_prefetchValid && g_prefetchForUtc == thisTickUtc) {
@@ -756,9 +756,9 @@ if (doUpdate) {
 
     if (ok) {
       // V0.99i: Track duplicate prices for diagnostics (log only, always refresh display)
-      const float PRICE_EPSILON = 0.0001f;  // tolerance for floating-point comparison
+      const double PRICE_EPSILON = 0.0001;  // tolerance for floating-point comparison
 
-      if (s_lastFetchedPrice > 0.0f && fabs(price - s_lastFetchedPrice) < PRICE_EPSILON) {
+      if (s_lastFetchedPrice > 0.0 && fabs(price - s_lastFetchedPrice) < PRICE_EPSILON) {
         s_duplicatePriceCount++;
         Serial.printf("[Price] Duplicate #%d: $%.6f (no change)\n", s_duplicatePriceCount, price);
 

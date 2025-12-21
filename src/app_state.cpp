@@ -1,10 +1,10 @@
-// CryptoBar V0.99i (Price Update Optimization)
+// CryptoBar V0.99j (Price Precision Fix)
 // app_state.cpp - Global application state definitions
 #include "app_state.h"
 #include "day_avg.h"  // for DAYAVG_ROLLING constant
 
 // ==================== Version =====================
-const char* CRYPTOBAR_VERSION = "V0.99i";
+const char* CRYPTOBAR_VERSION = "V0.99j";
 
 // ==================== Constants =====================
 
@@ -138,16 +138,16 @@ const uint32_t PREFETCH_FIXED_LEAD_SEC = 4;
 uint32_t g_fetchJitterSec = 0;
 bool   g_prefetchValid  = false;
 time_t g_prefetchForUtc = 0;
-float  g_prefetchPrice  = 0.0f;
-float  g_prefetchChange = 0.0f;
+double g_prefetchPrice  = 0.0;
+double g_prefetchChange = 0.0;
 
-float g_lastPriceUsd   = 0.0f;
-float g_lastChange24h  = 0.0f;
-bool  g_lastPriceOk    = false;
+double g_lastPriceUsd   = 0.0;
+double g_lastChange24h  = 0.0;
+bool   g_lastPriceOk    = false;
 
 // Previous day average reference price
-float g_prevDayRefPrice   = 0.0f;
-bool  g_prevDayRefValid   = false;
+double g_prevDayRefPrice   = 0.0;
+bool   g_prevDayRefValid   = false;
 
 // 7pm ET cycle state
 bool   g_cycleInit     = false;

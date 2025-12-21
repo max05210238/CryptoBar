@@ -16,9 +16,9 @@ enum DayAvgMode : uint8_t {
 
 // Rolling 24h mean state (5-min buckets)
 void dayAvgRollingReset();
-void dayAvgRollingAdd(time_t sampleUtc, float price);
-bool dayAvgRollingGet(time_t nowUtc, float& outMean);
+void dayAvgRollingAdd(time_t sampleUtc, double price);
+bool dayAvgRollingGet(time_t nowUtc, double& outMean);
 int  dayAvgRollingCount();
 
 // Cycle mean computed from current chart buffer (7pm ET cycle)
-bool dayAvgCycleMean(float& outMean);
+bool dayAvgCycleMean(double& outMean);

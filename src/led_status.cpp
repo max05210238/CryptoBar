@@ -309,7 +309,7 @@ static float breatheFactor(uint32_t nowMs, uint32_t periodMs) {
   return LED_BREATHE_MIN_FRAC + (1.0f - LED_BREATHE_MIN_FRAC) * wave; // min..1
 }
 
-void updateLedForPrice(float change24h, bool priceOk) {
+void updateLedForPrice(double change24h, bool priceOk) {
  // If price invalid, show yellow (API fail / no data)
   if (!priceOk) {
     s_ledAnimMode = LED_ANIM_SOLID;

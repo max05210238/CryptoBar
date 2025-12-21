@@ -224,6 +224,10 @@ static bool fetchPriceFromKraken(double& priceUsd, double& change24h) {
   String payload = http.getString();
   http.end();
 
+  // V0.99k: Debug - show first 300 chars of raw JSON response
+  Serial.print("[Kraken] Raw JSON payload (first 300 chars): ");
+  Serial.println(payload.substring(0, 300));
+
   StaticJsonDocument<4096> doc;
   DeserializationError err = deserializeJson(doc, payload);
   if (err) {
@@ -319,6 +323,10 @@ static bool fetchPriceFromBinance(double& priceUsd, double& change24h) {
   String payload = http.getString();
   http.end();
 
+  // V0.99k: Debug - show first 200 chars of raw JSON response
+  Serial.print("[Binance] Raw JSON payload (first 200 chars): ");
+  Serial.println(payload.substring(0, 200));
+
   // Parse Binance 24hr ticker response
   StaticJsonDocument<512> doc;
   DeserializationError err = deserializeJson(doc, payload);
@@ -407,9 +415,16 @@ static bool fetchPriceFromCoingecko(double& priceUsd, double& change24h) {
     return false;
   }
 
+  // CoinGecko returns prices as numbers (not strings)
+  const char* rawPrice = doc[coin.geckoId]["usd"] | "null";
+  const char* rawChange = doc[coin.geckoId]["usd_24h_change"] | "null";
+
   priceUsd  = coinObj["usd"].as<double>();
   change24h = coinObj["usd_24h_change"].as<double>();
 
+  // V0.99k: Debug - show raw JSON and parsed values
+  Serial.printf("[CG] Raw JSON: usd=%s, change=%s\n", rawPrice, rawChange);
+  Serial.printf("[CG] Parsed: $%.10f (24h: %.2f%%)\n", priceUsd, change24h);
   Serial.printf("[CG] %s: $%.6f (24h: %.2f%%)\n",
                 coin.ticker, priceUsd, change24h);
 

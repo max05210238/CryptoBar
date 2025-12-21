@@ -24,10 +24,13 @@ void setLedGreen();
 void setLedRed();
 void setLedBlue();
 void setLedPurple();
+void setLedYellow();
+void setLedCyan();
 void setLedWhiteLow();
 
 // Update target LED trend + animation based on 24h change.
-// priceOk indicates whether price data is valid (if false, LED shows purple).
+// priceOk indicates whether price data is valid (if false, LED shows yellow).
+// Special modes: +20% triggers rainbow party mode; breathing for 5%+ moves.
 void updateLedForPrice(float change24h, bool priceOk);
 
 // Non-blocking LED animation tick; call every loop.

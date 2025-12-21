@@ -1,10 +1,10 @@
-// CryptoBar V0.99f (Multi-Currency Support)
+// CryptoBar V0.99g (Binance API Support)
 // app_state.cpp - Global application state definitions
 #include "app_state.h"
 #include "day_avg.h"  // for DAYAVG_ROLLING constant
 
 // ==================== Version =====================
-const char* CRYPTOBAR_VERSION = "V0.99f";
+const char* CRYPTOBAR_VERSION = "V0.99g";
 
 // ==================== Constants =====================
 

@@ -7,12 +7,13 @@
 // - paprikaId/geckoId/krakenPair are provider-specific identifiers.
 
 struct CoinInfo {
-  const char* ticker;      // persisted key + UI ticker
-  const char* display;     // display label (currently same as ticker)
-  uint16_t    marketRank;  // 1..N snapshot
-  const char* paprikaId;   // e.g., "xrp-xrp"
-  const char* geckoId;     // e.g., "ripple"
-  const char* krakenPair;  // e.g., "XXRPZUSD" (nullptr/"" if not available)
+  const char* ticker;        // persisted key + UI ticker
+  const char* display;       // display label (currently same as ticker)
+  uint16_t    marketRank;    // 1..N snapshot
+  const char* paprikaId;     // e.g., "xrp-xrp"
+  const char* geckoId;       // e.g., "ripple"
+  const char* krakenPair;    // e.g., "XXRPZUSD" (nullptr/"" if not available)
+  const char* binanceSymbol; // e.g., "XRPUSDT" (nullptr/"" if not available)
 };
 
 int coinCount();

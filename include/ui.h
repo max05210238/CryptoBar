@@ -53,7 +53,7 @@ void drawFirmwareUpdateConfirmScreen(const char* version);
 void drawFirmwareUpdateApScreen(const char* version, const char* apSsid, const char* apIp);
 
 // Main price display screen: coin symbol from currentCoin()
-void drawMainScreen(float priceUsd, float change24h, bool fullRefresh);
+void drawMainScreen(double priceUsd, double change24h, bool fullRefresh);
 
 // Main settings menu
 void drawMenuScreen(bool fullRefresh);

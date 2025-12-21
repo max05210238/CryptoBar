@@ -31,7 +31,7 @@ void setLedWhiteLow();
 // Update target LED trend + animation based on 24h change.
 // priceOk indicates whether price data is valid (if false, LED shows yellow).
 // Special modes: +20% triggers rainbow party mode; breathing for 5%+ moves.
-void updateLedForPrice(float change24h, bool priceOk);
+void updateLedForPrice(double change24h, bool priceOk);
 
 // Non-blocking LED animation tick; call every loop.
 // appRunning indicates whether UI is in normal running state (skip updates during provisioning).

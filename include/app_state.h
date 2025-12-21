@@ -156,16 +156,16 @@ extern const uint32_t PREFETCH_FIXED_LEAD_SEC;
 extern uint32_t g_fetchJitterSec;
 extern bool   g_prefetchValid;
 extern time_t g_prefetchForUtc;
-extern float  g_prefetchPrice;
-extern float  g_prefetchChange;
+extern double g_prefetchPrice;
+extern double g_prefetchChange;
 
-extern float g_lastPriceUsd;
-extern float g_lastChange24h;
-extern bool  g_lastPriceOk;
+extern double g_lastPriceUsd;
+extern double g_lastChange24h;
+extern bool   g_lastPriceOk;
 
 // Previous day average reference price
-extern float g_prevDayRefPrice;
-extern bool  g_prevDayRefValid;
+extern double g_prevDayRefPrice;
+extern bool   g_prevDayRefValid;
 
 // 7pm ET cycle state
 extern bool   g_cycleInit;

@@ -306,16 +306,16 @@ static void drawSymbolPanel(const char* symbol, float change24h) {
 }
 
 // V0.99f: Center price display with multi-currency support (number only)
-static void drawPriceCenter(float priceUsd) {
+static void drawPriceCenter(double priceUsd) {
   int panelLeft  = SYMBOL_PANEL_WIDTH;
   int panelWidth = display.width() - panelLeft;
 
   // Convert for display if needed
-  float fx = 1.0f;
+  double fx = 1.0;
   if (g_displayCurrency != (int)CURR_USD && g_displayCurrency < (int)CURR_COUNT) {
     fx = g_usdToRate[g_displayCurrency];
   }
-  float price = priceUsd * fx;
+  double price = priceUsd * fx;
 
   // Get currency metadata
   const CurrencyInfo& curr = CURRENCY_INFO[g_displayCurrency];
@@ -394,22 +394,22 @@ static void drawHistoryChart() {
     return;
   }
 
-    float minP = g_chartSamples[0].price * fx;
-  float maxP = g_chartSamples[0].price * fx;
+    double minP = g_chartSamples[0].price * fx;
+  double maxP = g_chartSamples[0].price * fx;
   for (int i = 1; i < g_chartSampleCount; ++i) {
-        float p0 = g_chartSamples[i].price * fx;
+        double p0 = g_chartSamples[i].price * fx;
     if (p0 < minP) minP = p0;
     if (p0 > maxP) maxP = p0;
   }
 
   if (g_dayAvgMode != DAYAVG_OFF && g_prevDayRefValid) {
-        float p = g_prevDayRefPrice * fx;
+        double p = g_prevDayRefPrice * fx;
     if (p < minP) minP = p;
     if (p > maxP) maxP = p;
   }
 
   if (minP == maxP) {
-    maxP = minP + 1.0f;
+    maxP = minP + 1.0;
   }
 
   int chartHeight = chartBottom - chartTop;
@@ -417,9 +417,9 @@ static void drawHistoryChart() {
 
   int yDayAvg = -1;
   if (g_dayAvgMode != DAYAVG_OFF && g_prevDayRefValid) {
-        float norm = ((g_prevDayRefPrice * fx) - minP) / (maxP - minP);
-    if (norm < 0.0f) norm = 0.0f;
-    if (norm > 1.0f) norm = 1.0f;
+        double norm = ((g_prevDayRefPrice * fx) - minP) / (maxP - minP);
+    if (norm < 0.0) norm = 0.0;
+    if (norm > 1.0) norm = 1.0;
     yDayAvg = chartBottom - int(norm * chartHeight);
   }
 
@@ -440,7 +440,7 @@ static void drawHistoryChart() {
   int prevX = 0, prevY = 0;
   for (int i = 0; i < g_chartSampleCount; ++i) {
     float pos = g_chartSamples[i].pos;
-        float p   = g_chartSamples[i].price * fx;
+        double p   = g_chartSamples[i].price * fx;
 
     if (pos < 0.0f) pos = 0.0f;
     if (pos > 1.0f) pos = 1.0f;
@@ -825,7 +825,7 @@ void drawWifiInfoScreen(const char* version, const char* mac, const char* staIp,
 
 
 // Main screen (full / partial refresh)
-void drawMainScreen(float priceUsd, float change24h, bool fullRefresh) {
+void drawMainScreen(double priceUsd, double change24h, bool fullRefresh) {
   if (fullRefresh) {
     display.setFullWindow();
   } else {

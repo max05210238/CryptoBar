@@ -61,7 +61,7 @@ void updateEtCycle() {
 }
 
 // Internal: add a sample to chart buffer at specified UTC time
-static void addChartSampleUtc(time_t sampleUtc, float price) {
+static void addChartSampleUtc(time_t sampleUtc, double price) {
   if (!g_cycleInit) {
     updateEtCycle();
     if (!g_cycleInit) return;
@@ -93,7 +93,7 @@ static void addChartSampleUtc(time_t sampleUtc, float price) {
 // Fixed: instead of adding a point every 30s, use 5-minute buckets (matching Kraken OHLC interval=5)
 // - Within the same 5-minute bucket, only update the last price
 // - Only append a new sample when crossing bucket boundaries
-void addChartSampleForNow(float price) {
+void addChartSampleForNow(double price) {
   time_t nowUtc = time(nullptr);
   if (nowUtc <= 0) {
     Serial.println("[Chart] time(nullptr) failed in addChartSampleForNow().");
@@ -129,7 +129,7 @@ void addChartSampleForNow(float price) {
 
 // ==================== Price fetching =====================
 
-static bool fetchPriceFromPaprika(float& priceUsd, float& change24h) {
+static bool fetchPriceFromPaprika(double& priceUsd, double& change24h) {
   const CoinInfo& coin = currentCoin();
 
   if (!coin.paprikaId || coin.paprikaId[0] == '\0') {
@@ -187,10 +187,10 @@ static bool fetchPriceFromPaprika(float& priceUsd, float& change24h) {
   Serial.printf("[CP] %s: $%.6f (24h: %.2f%%)\n",
                 coin.ticker, priceUsd, change24h);
 
-  return (priceUsd > 0.0f);
+  return (priceUsd > 0.0);
 }
 
-static bool fetchPriceFromKraken(float& priceUsd, float& change24h) {
+static bool fetchPriceFromKraken(double& priceUsd, double& change24h) {
   const CoinInfo& coin = currentCoin();
 
   if (!coin.krakenPair || coin.krakenPair[0] == '\0') {
@@ -258,11 +258,11 @@ static bool fetchPriceFromKraken(float& priceUsd, float& change24h) {
   const char* openStr = ticker["o"]    | "0";
 
   priceUsd = atof(lastStr);
-  float open = atof(openStr);
-  if (open <= 0.0f) {
-    change24h = 0.0f;
+  double open = atof(openStr);
+  if (open <= 0.0) {
+    change24h = 0.0;
   } else {
-    change24h = (priceUsd - open) / open * 100.0f;
+    change24h = (priceUsd - open) / open * 100.0;
   }
 
   Serial.printf("[Kraken] %s: $%.6f (24h: %.2f%%)\n",
@@ -271,7 +271,7 @@ static bool fetchPriceFromKraken(float& priceUsd, float& change24h) {
   return true;
 }
 
-static bool fetchPriceFromBinance(float& priceUsd, float& change24h) {
+static bool fetchPriceFromBinance(double& priceUsd, double& change24h) {
   const CoinInfo& coin = currentCoin();
 
   if (!coin.binanceSymbol || coin.binanceSymbol[0] == '\0') {
@@ -332,10 +332,10 @@ static bool fetchPriceFromBinance(float& priceUsd, float& change24h) {
   Serial.printf("[Binance] %s: $%.6f (24h: %.2f%%)\n",
                 coin.ticker, priceUsd, change24h);
 
-  return (priceUsd > 0.0f);
+  return (priceUsd > 0.0);
 }
 
-static bool fetchPriceFromCoingecko(float& priceUsd, float& change24h) {
+static bool fetchPriceFromCoingecko(double& priceUsd, double& change24h) {
   const CoinInfo& coin = currentCoin();
 
   if (WiFi.status() != WL_CONNECTED) {
@@ -396,7 +396,7 @@ static bool fetchPriceFromCoingecko(float& priceUsd, float& change24h) {
   return true;
 }
 
-bool fetchPrice(float& priceUsd, float& change24h) {
+bool fetchPrice(double& priceUsd, double& change24h) {
   if (WiFi.status() != WL_CONNECTED) {
     Serial.println("[Price] WiFi not connected.");
     return false;
@@ -518,8 +518,8 @@ static bool bootstrapHistoryFromCoingeckoMarketChart() {
  // CoinGecko timestamps are milliseconds.
     long long tMs = row[0].as<long long>();
     time_t tUtc = (time_t)(tMs / 1000LL);
-    float price = row[1].as<float>();
-    if (price <= 0.0f) continue;
+    double price = row[1].as<double>();
+    if (price <= 0.0) continue;
 
  // Rolling 24h mean uses full last-day window (seeded from CoinGecko)
     dayAvgRollingAdd(tUtc, price);
@@ -637,9 +637,9 @@ static bool bootstrapHistoryFromBinanceKlines() {
     long long tMs = row[0].as<long long>();
     time_t tUtc = (time_t)(tMs / 1000LL);
     const char* closeStr = row[4] | "0";
-    float closePrice = atof(closeStr);
+    double closePrice = atof(closeStr);
 
-    if (closePrice <= 0.0f) continue;
+    if (closePrice <= 0.0) continue;
 
     // Rolling 24h mean uses full last-day window
     dayAvgRollingAdd(tUtc, closePrice);
@@ -802,7 +802,7 @@ void bootstrapHistoryFromKrakenOHLC() {
  // Only add points within this cycle to the chart
     if (tUtc < windowStartUtc || tUtc > windowEndUtc) continue;
 
-    float closePrice = atof(closeStr);
+    double closePrice = atof(closeStr);
     dayAvgRollingAdd((time_t)tUtc, closePrice);
     addChartSampleUtc((time_t)tUtc, closePrice);
     kept++;

@@ -4,9 +4,9 @@
 
 // Unified API for price fetching and historical OHLC bootstrap
 
-// V0.99g: Fetch latest price (4-layer fallback: Paprika → Binance → CoinGecko → Kraken)
-// Returns: true = success, priceUsd / change24h are populated
-bool fetchPrice(float& priceUsd, float& change24h);
+// V0.99i: Fetch latest price (4-layer fallback: Binance → Kraken → Paprika → CoinGecko)
+// Returns: true = success, priceUsd / change24h are populated (double for precision)
+bool fetchPrice(double& priceUsd, double& change24h);
 
 // V0.99g: Historical chart bootstrap (3-layer fallback):
 // - If Kraken pair configured: use Kraken OHLC (5min interval)

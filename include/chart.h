@@ -5,8 +5,8 @@
 
 // Single chart sample: relative position within today's 7pm ET cycle + price
 struct ChartSample {
-  float pos;    // 0.0–1.0, relative position within day (7pm ET → 7pm ET)
-  float price;
+  float  pos;    // 0.0–1.0, relative position within day (7pm ET → 7pm ET)
+  double price;  // Price in USD (double for precision)
 };
 
 // Maximum samples per day (same as original: 300)
@@ -25,4 +25,4 @@ extern time_t g_cycleEndUtc;
 // - Recalculate today's 7pm ET cycle
 // - Add a sample using current time
 void updateEtCycle();
-void addChartSampleForNow(float price);
+void addChartSampleForNow(double price);

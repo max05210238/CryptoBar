@@ -878,11 +878,11 @@ bool fetchExchangeRates() {
         continue;
       }
 
-      double rate = rates[currCodes[c]].as<double>() | 0.0;
+      double rate = rates[currCodes[c]].as<double>();
       if (rate > 0.001 && rate < 1000000.0) {
         g_usdToRate[c] = rate;
         successCount++;
-        Serial.printf("[FX] USD->%s: %.6f\n", currCodes[c], (double)rate);
+        Serial.printf("[FX] USD->%s: %.6f\n", currCodes[c], rate);
       } else {
         Serial.printf("[FX] Invalid/missing rate for %s\n", currCodes[c]);
       }

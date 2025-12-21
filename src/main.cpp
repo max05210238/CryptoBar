@@ -1,4 +1,4 @@
-// CryptoBar V0.99e (Bolder Welcome Font)
+// CryptoBar V0.99g (Binance API Support)
 #include <Arduino.h>
 #include <WiFi.h>
 #include <HTTPClient.h>

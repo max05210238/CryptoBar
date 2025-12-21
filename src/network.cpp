@@ -271,6 +271,70 @@ static bool fetchPriceFromKraken(float& priceUsd, float& change24h) {
   return true;
 }
 
+static bool fetchPriceFromBinance(float& priceUsd, float& change24h) {
+  const CoinInfo& coin = currentCoin();
+
+  if (!coin.binanceSymbol || coin.binanceSymbol[0] == '\0') {
+    Serial.println("[Binance] No binanceSymbol configured for this coin.");
+    return false;
+  }
+  if (WiFi.status() != WL_CONNECTED) {
+    Serial.println("[Binance] WiFi not connected.");
+    return false;
+  }
+
+  HTTPClient http;
+  char url[192];
+  snprintf(url, sizeof(url),
+           "https://api.binance.com/api/v3/ticker/24hr?symbol=%s",
+           coin.binanceSymbol);
+
+  Serial.print("[Binance] GET ");
+  Serial.println(url);
+
+  http.begin(url);
+  http.setFollowRedirects(HTTPC_STRICT_FOLLOW_REDIRECTS);
+  http.setTimeout(8000);
+
+  int code = http.GET();
+  if (code != 200) {
+    Serial.printf("[Binance] HTTP error: %d\n", code);
+    http.end();
+    return false;
+  }
+
+  String payload = http.getString();
+  http.end();
+
+  // Parse Binance 24hr ticker response
+  StaticJsonDocument<512> doc;
+  DeserializationError err = deserializeJson(doc, payload);
+  if (err) {
+    Serial.printf("[Binance] JSON parse error: %s\n", err.c_str());
+    return false;
+  }
+
+  // Check for API error
+  if (doc.containsKey("code")) {
+    int errCode = doc["code"].as<int>();
+    const char* msg = doc["msg"] | "unknown";
+    Serial.printf("[Binance] API error %d: %s\n", errCode, msg);
+    return false;
+  }
+
+  // Extract price and change
+  const char* lastPriceStr = doc["lastPrice"] | "0";
+  const char* changePercentStr = doc["priceChangePercent"] | "0";
+
+  priceUsd  = atof(lastPriceStr);
+  change24h = atof(changePercentStr);
+
+  Serial.printf("[Binance] %s: $%.6f (24h: %.2f%%)\n",
+                coin.ticker, priceUsd, change24h);
+
+  return (priceUsd > 0.0f);
+}
+
 static bool fetchPriceFromCoingecko(float& priceUsd, float& change24h) {
   const CoinInfo& coin = currentCoin();
 
@@ -338,15 +402,20 @@ bool fetchPrice(float& priceUsd, float& change24h) {
     return false;
   }
 
+  // V0.99g: 4-layer fallback: Paprika → Binance → CoinGecko → Kraken
   if (fetchPriceFromPaprika(priceUsd, change24h)) {
     return true;
   }
-  Serial.println("[Price] CoinPaprika failed, falling back to CoinGecko...");
+  Serial.println("[Price] CoinPaprika failed, falling back to Binance...");
+
+  if (fetchPriceFromBinance(priceUsd, change24h)) {
+    return true;
+  }
+  Serial.println("[Price] Binance failed, falling back to CoinGecko...");
 
   if (fetchPriceFromCoingecko(priceUsd, change24h)) {
     return true;
   }
-
   Serial.println("[Price] CoinGecko failed, falling back to Kraken...");
 
   if (fetchPriceFromKraken(priceUsd, change24h)) {
@@ -461,6 +530,129 @@ static bool bootstrapHistoryFromCoingeckoMarketChart() {
   return (kept > 0);
 }
 
+static bool bootstrapHistoryFromBinanceKlines() {
+  const CoinInfo& coin = currentCoin();
+
+  if (!coin.binanceSymbol || coin.binanceSymbol[0] == '\0') {
+    Serial.println("[History][Binance] No binanceSymbol configured for this coin.");
+    return false;
+  }
+  if (WiFi.status() != WL_CONNECTED) {
+    Serial.println("[History][Binance] WiFi not connected.");
+    return false;
+  }
+
+  // Ensure 7pm ET cycle exists
+  updateEtCycle();
+  if (!g_cycleInit) {
+    Serial.println("[History][Binance] cycle not initialized.");
+    return false;
+  }
+
+  time_t nowUtc = time(nullptr);
+  if (nowUtc <= 0) {
+    Serial.println("[History][Binance] time(nullptr) failed.");
+    return false;
+  }
+
+  time_t windowStartUtc = g_cycleStartUtc;
+  time_t windowEndUtc   = g_cycleEndUtc;
+  if (nowUtc < windowEndUtc) windowEndUtc = nowUtc;
+
+  // Calculate start time (24h ago for rolling average seed)
+  time_t sinceUtc = windowStartUtc;
+  if (nowUtc > 100000) {
+    time_t rollSince = nowUtc - (24 * 3600);
+    if (rollSince < sinceUtc) sinceUtc = rollSince;
+  }
+
+  // Convert to milliseconds for Binance API
+  long long startTimeMs = (long long)sinceUtc * 1000LL;
+
+  HTTPClient http;
+  char url[256];
+  snprintf(url, sizeof(url),
+           "https://api.binance.com/api/v3/klines?symbol=%s&interval=5m&startTime=%lld&limit=500",
+           coin.binanceSymbol, startTimeMs);
+
+  Serial.print("[History][Binance] GET ");
+  Serial.println(url);
+
+  http.begin(url);
+  http.setFollowRedirects(HTTPC_STRICT_FOLLOW_REDIRECTS);
+  http.setTimeout(8000);
+
+  int code = http.GET();
+  if (code != 200) {
+    Serial.printf("[History][Binance] HTTP error: %d\n", code);
+    http.end();
+    return false;
+  }
+
+  String payload = http.getString();
+  http.end();
+
+  Serial.printf("[History][Binance] Payload length: %d bytes\n", payload.length());
+
+  // Parse klines data
+  DynamicJsonDocument doc(32768);
+  DeserializationError err = deserializeJson(doc, payload);
+  if (err) {
+    if (err == DeserializationError::NoMemory) {
+      Serial.printf("[History][Binance] Insufficient memory for parsing (need >32KB)\n");
+      Serial.printf("[History][Binance] Free heap: %u bytes\n", ESP.getFreeHeap());
+    } else {
+      Serial.printf("[History][Binance] JSON parse error: %s\n", err.c_str());
+    }
+    return false;
+  }
+
+  // Check for API error
+  if (doc.containsKey("code")) {
+    int errCode = doc["code"].as<int>();
+    const char* msg = doc["msg"] | "unknown";
+    Serial.printf("[History][Binance] API error %d: %s\n", errCode, msg);
+    return false;
+  }
+
+  JsonArray klines = doc.as<JsonArray>();
+  if (klines.isNull()) {
+    Serial.println("[History][Binance] klines array missing.");
+    return false;
+  }
+
+  Serial.printf("[History][Binance] Klines raw size: %u\n", (unsigned)klines.size());
+
+  g_chartSampleCount = 0;
+  dayAvgRollingReset();
+  int kept = 0;
+
+  for (JsonVariant v : klines) {
+    JsonArray row = v.as<JsonArray>();
+    if (row.isNull() || row.size() < 5) continue;
+
+    // Binance kline format: [openTime(ms), open, high, low, close, volume, ...]
+    long long tMs = row[0].as<long long>();
+    time_t tUtc = (time_t)(tMs / 1000LL);
+    const char* closeStr = row[4] | "0";
+    float closePrice = atof(closeStr);
+
+    if (closePrice <= 0.0f) continue;
+
+    // Rolling 24h mean uses full last-day window
+    dayAvgRollingAdd(tUtc, closePrice);
+
+    // Only add points within this cycle to the chart
+    if (tUtc < windowStartUtc || tUtc > windowEndUtc) continue;
+    addChartSampleUtc(tUtc, closePrice);
+    kept++;
+  }
+
+  Serial.printf("[History][Binance] Kept %d samples into chart.\n", kept);
+  Serial.printf("[History][Binance] g_chartSampleCount = %d\n", g_chartSampleCount);
+  return (kept > 0);
+}
+
 void bootstrapHistoryFromKrakenOHLC() {
   const CoinInfo& coin = currentCoin();
   if (WiFi.status() != WL_CONNECTED) {
@@ -492,7 +684,12 @@ void bootstrapHistoryFromKrakenOHLC() {
                 (long)windowStartUtc, (long)windowEndUtc);
 
   if (!coin.krakenPair || coin.krakenPair[0] == '\0') {
-    Serial.println("[History] No Kraken pair configured, trying CoinGecko...");
+    // V0.99g: Try Binance first, fallback to CoinGecko
+    Serial.println("[History] No Kraken pair configured, trying Binance...");
+    if (bootstrapHistoryFromBinanceKlines()) {
+      return;
+    }
+    Serial.println("[History] Binance history failed, trying CoinGecko...");
     if (!bootstrapHistoryFromCoingeckoMarketChart()) {
       Serial.println("[History] CoinGecko history failed.");
     }
@@ -569,8 +766,13 @@ void bootstrapHistoryFromKrakenOHLC() {
     break;
   }
   if (ohlcArr.isNull()) {
+    // V0.99g: Try Binance first, fallback to CoinGecko
     Serial.println("[History] OHLC array missing or wrong type.");
-    Serial.println("[History] Trying CoinGecko...");
+    Serial.println("[History] Trying Binance...");
+    if (bootstrapHistoryFromBinanceKlines()) {
+      return;
+    }
+    Serial.println("[History] Binance history failed, trying CoinGecko...");
     if (!bootstrapHistoryFromCoingeckoMarketChart()) {
       Serial.println("[History] CoinGecko history failed.");
     }

@@ -254,11 +254,9 @@ static bool fetchPriceFromKraken(double& priceUsd, double& change24h) {
     return false;
   }
 
-  const char* lastStr = ticker["c"][0] | "0";
-  const char* openStr = ticker["o"]    | "0";
-
-  priceUsd = atof(lastStr);
-  double open = atof(openStr);
+  // Extract price and open directly as double for precision
+  priceUsd = ticker["c"][0].as<double>();
+  double open = ticker["o"].as<double>();
   if (open <= 0.0) {
     change24h = 0.0;
   } else {
@@ -322,12 +320,9 @@ static bool fetchPriceFromBinance(double& priceUsd, double& change24h) {
     return false;
   }
 
-  // Extract price and change
-  const char* lastPriceStr = doc["lastPrice"] | "0";
-  const char* changePercentStr = doc["priceChangePercent"] | "0";
-
-  priceUsd  = atof(lastPriceStr);
-  change24h = atof(changePercentStr);
+  // Extract price and change directly as double for precision
+  priceUsd  = doc["lastPrice"].as<double>();
+  change24h = doc["priceChangePercent"].as<double>();
 
   Serial.printf("[Binance] %s: $%.6f (24h: %.2f%%)\n",
                 coin.ticker, priceUsd, change24h);

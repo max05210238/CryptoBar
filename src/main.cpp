@@ -1,4 +1,4 @@
-// CryptoBar V0.99h (LED Optimization with Party Mode)
+// CryptoBar V0.99i (Price Update Optimization)
 #include <Arduino.h>
 #include <WiFi.h>
 #include <HTTPClient.h>
@@ -351,6 +351,10 @@ startNormalOperation(true, splashStartMs);
 
 void loop() {
   unsigned long now = millis();
+
+ // V0.99i: Track consecutive identical price updates to detect stale API data
+  static float s_lastFetchedPrice = 0.0f;
+  static int   s_duplicatePriceCount = 0;
 
  // If we are in an OTA pending state (freshly updated firmware), mark it as
  // "valid" after it has been running stably for a short time.
@@ -751,6 +755,29 @@ if (doUpdate) {
     g_lastPriceOk = ok;
 
     if (ok) {
+      // V0.99i: Detect duplicate prices to identify stale API data
+      bool priceChanged = true;
+      const float PRICE_EPSILON = 0.0001f;  // tolerance for floating-point comparison
+
+      if (s_lastFetchedPrice > 0.0f && fabs(price - s_lastFetchedPrice) < PRICE_EPSILON) {
+        s_duplicatePriceCount++;
+        priceChanged = false;
+        Serial.printf("[Price] Duplicate #%d: $%.6f (no change)\n", s_duplicatePriceCount, price);
+
+        // Warning: if price hasn't changed for 3+ consecutive updates, API might be stale
+        if (s_duplicatePriceCount == 3) {
+          Serial.println("[Price] WARNING: Price unchanged for 3 updates - possible stale API data");
+        }
+      } else {
+        if (s_duplicatePriceCount > 0) {
+          Serial.printf("[Price] CHANGED after %d duplicates: $%.6f -> $%.6f\n",
+                        s_duplicatePriceCount, s_lastFetchedPrice, price);
+        }
+        s_duplicatePriceCount = 0;
+        priceChanged = true;
+      }
+      s_lastFetchedPrice = price;
+
       g_lastPriceUsd  = price;
       g_lastChange24h = change;
       if (nowUtc >= TIME_VALID_MIN_UTC) {
@@ -772,13 +799,21 @@ if (doUpdate) {
           doFull = (g_partialRefreshCount >= PARTIAL_REFRESH_LIMIT);
         }
 
-        drawMainScreen(g_lastPriceUsd, g_lastChange24h, doFull);
+        // V0.99i: Skip screen refresh if price hasn't changed (save power & reduce flicker)
+        // But still refresh periodically (every 5 updates) to update time display
+        bool shouldRefresh = priceChanged || (s_duplicatePriceCount % 5 == 0);
 
-        if (g_refreshMode == 0) {
-          if (doFull) g_partialRefreshCount = 0;
-          else        g_partialRefreshCount++;
+        if (shouldRefresh) {
+          drawMainScreen(g_lastPriceUsd, g_lastChange24h, doFull);
+
+          if (g_refreshMode == 0) {
+            if (doFull) g_partialRefreshCount = 0;
+            else        g_partialRefreshCount++;
+          } else {
+            g_partialRefreshCount = 0;
+          }
         } else {
-          g_partialRefreshCount = 0;
+          Serial.println("[Display] Skip refresh (price unchanged, waiting for 5-update interval)");
         }
       }
     } else {

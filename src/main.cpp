@@ -662,8 +662,8 @@ String apIp = WiFi.softAPIP().toString();
     if (prefetchAtUtc < earliestPrefetchAt) prefetchAtUtc = earliestPrefetchAt;
     if (prefetchAtUtc > latestPrefetchAt)   prefetchAtUtc = latestPrefetchAt;
     if (!g_prefetchValid && nowUtc >= prefetchAtUtc && nowUtc < g_nextUpdateUtc && WiFi.status() == WL_CONNECTED) {
-      float p = 0.0f;
-      float c = 0.0f;
+      double p = 0.0;
+      double c = 0.0;
       Serial.printf("[Prefetch] Tick=%ld (in %ld s) prefetchAt=%ld (lead=%lu)\n",
                     (long)g_nextUpdateUtc,
                     (long)(g_nextUpdateUtc - nowUtc),

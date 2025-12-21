@@ -42,8 +42,8 @@ extern int g_refreshMode;
 extern const char* REFRESH_MODE_LABELS[];
 
 // Previous day average reference line
-extern float g_prevDayRefPrice;
-extern bool  g_prevDayRefValid;
+extern double g_prevDayRefPrice;
+extern bool   g_prevDayRefValid;
 
 // Chart samples
 extern ChartSample g_chartSamples[MAX_CHART_SAMPLES];

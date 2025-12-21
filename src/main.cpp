@@ -1,4 +1,4 @@
-// CryptoBar V0.99g (Binance API Support)
+// CryptoBar V0.99h (LED Optimization with Party Mode)
 #include <Arduino.h>
 #include <WiFi.h>
 #include <HTTPClient.h>

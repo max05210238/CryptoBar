@@ -324,6 +324,11 @@ static bool fetchPriceFromBinance(double& priceUsd, double& change24h) {
   priceUsd  = doc["lastPrice"].as<double>();
   change24h = doc["priceChangePercent"].as<double>();
 
+  // V0.99k: Debug - show raw JSON values and parsed doubles
+  const char* rawPrice = doc["lastPrice"] | "null";
+  const char* rawChange = doc["priceChangePercent"] | "null";
+  Serial.printf("[Binance] Raw JSON: price=\"%s\", change=\"%s\"\n", rawPrice, rawChange);
+  Serial.printf("[Binance] Parsed: $%.10f (24h: %.2f%%)\n", priceUsd, change24h);
   Serial.printf("[Binance] %s: $%.6f (24h: %.2f%%)\n",
                 coin.ticker, priceUsd, change24h);
 

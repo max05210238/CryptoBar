@@ -873,16 +873,16 @@ bool fetchExchangeRates() {
     int successCount = 0;
     for (int c = 0; c < (int)CURR_COUNT; c++) {
       if (c == CURR_USD) {
-        g_usdToRate[c] = 1.0f;  // USD is always 1.0
+        g_usdToRate[c] = 1.0;  // USD is always 1.0
         successCount++;
         continue;
       }
 
       float rate = rates[currCodes[c]] | 0.0f;
       if (rate > 0.001f && rate < 1000000.0f) {
-        g_usdToRate[c] = rate;
+        g_usdToRate[c] = (double)rate;  // Convert to double for precision
         successCount++;
-        Serial.printf("[FX] USD->%s: %.4f\n", currCodes[c], rate);
+        Serial.printf("[FX] USD->%s: %.6f\n", currCodes[c], (double)rate);
       } else {
         Serial.printf("[FX] Invalid/missing rate for %s\n", currCodes[c]);
       }

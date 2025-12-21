@@ -1,4 +1,4 @@
-// CryptoBar V0.99h (LED Optimization with Party Mode)
+// CryptoBar V0.99i (Price Update Optimization)
 #include <Arduino.h>
 #include <WiFi.h>
 #include <HTTPClient.h>
@@ -351,6 +351,10 @@ startNormalOperation(true, splashStartMs);
 
 void loop() {
   unsigned long now = millis();
+
+ // V0.99i: Track consecutive identical price updates to detect stale API data
+  static float s_lastFetchedPrice = 0.0f;
+  static int   s_duplicatePriceCount = 0;
 
  // If we are in an OTA pending state (freshly updated firmware), mark it as
  // "valid" after it has been running stably for a short time.
@@ -751,6 +755,26 @@ if (doUpdate) {
     g_lastPriceOk = ok;
 
     if (ok) {
+      // V0.99i: Track duplicate prices for diagnostics (log only, always refresh display)
+      const float PRICE_EPSILON = 0.0001f;  // tolerance for floating-point comparison
+
+      if (s_lastFetchedPrice > 0.0f && fabs(price - s_lastFetchedPrice) < PRICE_EPSILON) {
+        s_duplicatePriceCount++;
+        Serial.printf("[Price] Duplicate #%d: $%.6f (no change)\n", s_duplicatePriceCount, price);
+
+        // Warning: if price hasn't changed for 3+ consecutive updates, API might be stale
+        if (s_duplicatePriceCount == 3) {
+          Serial.println("[Price] WARNING: Price unchanged for 3 updates - possible stale API data");
+        }
+      } else {
+        if (s_duplicatePriceCount > 0) {
+          Serial.printf("[Price] CHANGED after %d duplicates: $%.6f -> $%.6f\n",
+                        s_duplicatePriceCount, s_lastFetchedPrice, price);
+        }
+        s_duplicatePriceCount = 0;
+      }
+      s_lastFetchedPrice = price;
+
       g_lastPriceUsd  = price;
       g_lastChange24h = change;
       if (nowUtc >= TIME_VALID_MIN_UTC) {

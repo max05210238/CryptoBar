@@ -402,23 +402,25 @@ bool fetchPrice(float& priceUsd, float& change24h) {
     return false;
   }
 
-  // V0.99g: 4-layer fallback: Paprika → Binance → CoinGecko → Kraken
-  if (fetchPriceFromPaprika(priceUsd, change24h)) {
-    return true;
-  }
-  Serial.println("[Price] CoinPaprika failed, falling back to Binance...");
-
+  // V0.99i: 4-layer fallback ordered by update speed: Binance → Kraken → CoinPaprika → CoinGecko
+  // Binance & Kraken are real-time exchange APIs (fastest)
+  // CoinPaprika & CoinGecko are aggregator APIs (slower, with caching)
   if (fetchPriceFromBinance(priceUsd, change24h)) {
     return true;
   }
-  Serial.println("[Price] Binance failed, falling back to CoinGecko...");
-
-  if (fetchPriceFromCoingecko(priceUsd, change24h)) {
-    return true;
-  }
-  Serial.println("[Price] CoinGecko failed, falling back to Kraken...");
+  Serial.println("[Price] Binance failed, falling back to Kraken...");
 
   if (fetchPriceFromKraken(priceUsd, change24h)) {
+    return true;
+  }
+  Serial.println("[Price] Kraken failed, falling back to CoinPaprika...");
+
+  if (fetchPriceFromPaprika(priceUsd, change24h)) {
+    return true;
+  }
+  Serial.println("[Price] CoinPaprika failed, falling back to CoinGecko...");
+
+  if (fetchPriceFromCoingecko(priceUsd, change24h)) {
     return true;
   }
 

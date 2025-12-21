@@ -335,14 +335,19 @@ static bool fetchPriceFromBinance(double& priceUsd, double& change24h) {
     return false;
   }
 
-  // Extract price and change directly as double for precision
-  priceUsd  = doc["lastPrice"].as<double>();
-  change24h = doc["priceChangePercent"].as<double>();
+  // Binance returns prices as STRINGS in JSON, not numbers
+  const char* lastPriceStr = doc["lastPrice"] | "0";
+  const char* changePercentStr = doc["priceChangePercent"] | "0";
 
-  // V0.99k: Debug - show raw JSON values and parsed doubles
-  const char* rawPrice = doc["lastPrice"] | "null";
-  const char* rawChange = doc["priceChangePercent"] | "null";
-  Serial.printf("[Binance] Raw JSON: price=\"%s\", change=\"%s\"\n", rawPrice, rawChange);
+  // V0.99k: Debug - show raw JSON string values
+  Serial.printf("[Binance] Raw JSON: price=\"%s\", change=\"%s\"\n", lastPriceStr, changePercentStr);
+
+  // Use strtod() for string-to-double conversion with full precision
+  char* endPtr1;
+  char* endPtr2;
+  priceUsd  = strtod(lastPriceStr, &endPtr1);
+  change24h = strtod(changePercentStr, &endPtr2);
+
   Serial.printf("[Binance] Parsed: $%.10f (24h: %.2f%%)\n", priceUsd, change24h);
   Serial.printf("[Binance] %s: $%.6f (24h: %.2f%%)\n",
                 coin.ticker, priceUsd, change24h);

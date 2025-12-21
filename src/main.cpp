@@ -755,13 +755,11 @@ if (doUpdate) {
     g_lastPriceOk = ok;
 
     if (ok) {
-      // V0.99i: Detect duplicate prices to identify stale API data
-      bool priceChanged = true;
+      // V0.99i: Track duplicate prices for diagnostics (log only, always refresh display)
       const float PRICE_EPSILON = 0.0001f;  // tolerance for floating-point comparison
 
       if (s_lastFetchedPrice > 0.0f && fabs(price - s_lastFetchedPrice) < PRICE_EPSILON) {
         s_duplicatePriceCount++;
-        priceChanged = false;
         Serial.printf("[Price] Duplicate #%d: $%.6f (no change)\n", s_duplicatePriceCount, price);
 
         // Warning: if price hasn't changed for 3+ consecutive updates, API might be stale
@@ -774,7 +772,6 @@ if (doUpdate) {
                         s_duplicatePriceCount, s_lastFetchedPrice, price);
         }
         s_duplicatePriceCount = 0;
-        priceChanged = true;
       }
       s_lastFetchedPrice = price;
 
@@ -799,21 +796,13 @@ if (doUpdate) {
           doFull = (g_partialRefreshCount >= PARTIAL_REFRESH_LIMIT);
         }
 
-        // V0.99i: Skip screen refresh if price hasn't changed (save power & reduce flicker)
-        // But still refresh periodically (every 5 updates) to update time display
-        bool shouldRefresh = priceChanged || (s_duplicatePriceCount % 5 == 0);
+        drawMainScreen(g_lastPriceUsd, g_lastChange24h, doFull);
 
-        if (shouldRefresh) {
-          drawMainScreen(g_lastPriceUsd, g_lastChange24h, doFull);
-
-          if (g_refreshMode == 0) {
-            if (doFull) g_partialRefreshCount = 0;
-            else        g_partialRefreshCount++;
-          } else {
-            g_partialRefreshCount = 0;
-          }
+        if (g_refreshMode == 0) {
+          if (doFull) g_partialRefreshCount = 0;
+          else        g_partialRefreshCount++;
         } else {
-          Serial.println("[Display] Skip refresh (price unchanged, waiting for 5-update interval)");
+          g_partialRefreshCount = 0;
         }
       }
     } else {

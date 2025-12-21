@@ -181,8 +181,8 @@ static bool fetchPriceFromPaprika(double& priceUsd, double& change24h) {
     return false;
   }
 
-  priceUsd  = usd["price"].as<float>();
-  change24h = usd["percent_change_24h"].as<float>();
+  priceUsd  = usd["price"].as<double>();
+  change24h = usd["percent_change_24h"].as<double>();
 
   Serial.printf("[CP] %s: $%.6f (24h: %.2f%%)\n",
                 coin.ticker, priceUsd, change24h);
@@ -387,8 +387,8 @@ static bool fetchPriceFromCoingecko(double& priceUsd, double& change24h) {
     return false;
   }
 
-  priceUsd  = coinObj["usd"].as<float>();
-  change24h = coinObj["usd_24h_change"].as<float>();
+  priceUsd  = coinObj["usd"].as<double>();
+  change24h = coinObj["usd_24h_change"].as<double>();
 
   Serial.printf("[CG] %s: $%.6f (24h: %.2f%%)\n",
                 coin.ticker, priceUsd, change24h);
@@ -873,16 +873,16 @@ bool fetchExchangeRates() {
     int successCount = 0;
     for (int c = 0; c < (int)CURR_COUNT; c++) {
       if (c == CURR_USD) {
-        g_usdToRate[c] = 1.0f;  // USD is always 1.0
+        g_usdToRate[c] = 1.0;  // USD is always 1.0
         successCount++;
         continue;
       }
 
-      float rate = rates[currCodes[c]] | 0.0f;
-      if (rate > 0.001f && rate < 1000000.0f) {
+      double rate = rates[currCodes[c]].as<double>() | 0.0;
+      if (rate > 0.001 && rate < 1000000.0) {
         g_usdToRate[c] = rate;
         successCount++;
-        Serial.printf("[FX] USD->%s: %.4f\n", currCodes[c], rate);
+        Serial.printf("[FX] USD->%s: %.6f\n", currCodes[c], (double)rate);
       } else {
         Serial.printf("[FX] Invalid/missing rate for %s\n", currCodes[c]);
       }

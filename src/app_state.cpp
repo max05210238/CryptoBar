@@ -48,23 +48,23 @@ int   g_displayCurrency = (int)CURR_USD;
 
 // Exchange rates: USD -> other currencies
 // Index matches DisplayCurrency enum (0=USD, 1=TWD, 2=EUR, ...)
-float g_usdToRate[CURR_COUNT] = {
-  1.0f,   // USD (always 1.0)
-  32.0f,  // TWD (default fallback)
-  0.95f,  // EUR (default fallback)
-  0.79f,  // GBP (default fallback)
-  1.38f,  // CAD (default fallback)
-  149.0f, // JPY (default fallback)
-  1350.0f,// KRW (default fallback)
-  1.35f,  // SGD (default fallback)
-  1.54f   // AUD (default fallback)
+double g_usdToRate[CURR_COUNT] = {
+  1.0,    // USD (always 1.0)
+  32.0,   // TWD (default fallback)
+  0.95,   // EUR (default fallback)
+  0.79,   // GBP (default fallback)
+  1.38,   // CAD (default fallback)
+  149.0,  // JPY (default fallback)
+  1350.0, // KRW (default fallback)
+  1.35,   // SGD (default fallback)
+  1.54    // AUD (default fallback)
 };
 
 bool  g_fxValid         = false;
 time_t g_nextFxUpdateUtc = 0;
 
 // Backward compatibility: g_usdToTwd points to TWD rate
-float& g_usdToTwd = g_usdToRate[CURR_TWD];
+double& g_usdToTwd = g_usdToRate[CURR_TWD];
 
 // ==================== Global Variables =====================
 

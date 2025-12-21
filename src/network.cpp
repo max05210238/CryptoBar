@@ -254,9 +254,24 @@ static bool fetchPriceFromKraken(double& priceUsd, double& change24h) {
     return false;
   }
 
-  // Extract price and open directly as double for precision
-  priceUsd = ticker["c"][0].as<double>();
-  double open = ticker["o"].as<double>();
+  // Kraken returns prices as STRING arrays, not numbers!
+  // ticker["c"] = ["88799.70000", "0.01234567"] - [last, volume]
+  // ticker["o"] = "88790.10000" - open price string
+
+  const char* lastStr = ticker["c"][0] | "0";
+  const char* openStr = ticker["o"] | "0";
+
+  // V0.99k: Debug - show raw JSON strings
+  Serial.printf("[Kraken] Raw JSON: c[0]=\"%s\", o=\"%s\"\n", lastStr, openStr);
+
+  // Use strtod() instead of atof() for better precision control
+  char* endPtr1;
+  char* endPtr2;
+  priceUsd = strtod(lastStr, &endPtr1);
+  double open = strtod(openStr, &endPtr2);
+
+  Serial.printf("[Kraken] Parsed: price=%.10f, open=%.10f\n", priceUsd, open);
+
   if (open <= 0.0) {
     change24h = 0.0;
   } else {
@@ -320,14 +335,19 @@ static bool fetchPriceFromBinance(double& priceUsd, double& change24h) {
     return false;
   }
 
-  // Extract price and change directly as double for precision
-  priceUsd  = doc["lastPrice"].as<double>();
-  change24h = doc["priceChangePercent"].as<double>();
+  // Binance returns prices as STRINGS in JSON, not numbers
+  const char* lastPriceStr = doc["lastPrice"] | "0";
+  const char* changePercentStr = doc["priceChangePercent"] | "0";
 
-  // V0.99k: Debug - show raw JSON values and parsed doubles
-  const char* rawPrice = doc["lastPrice"] | "null";
-  const char* rawChange = doc["priceChangePercent"] | "null";
-  Serial.printf("[Binance] Raw JSON: price=\"%s\", change=\"%s\"\n", rawPrice, rawChange);
+  // V0.99k: Debug - show raw JSON string values
+  Serial.printf("[Binance] Raw JSON: price=\"%s\", change=\"%s\"\n", lastPriceStr, changePercentStr);
+
+  // Use strtod() for string-to-double conversion with full precision
+  char* endPtr1;
+  char* endPtr2;
+  priceUsd  = strtod(lastPriceStr, &endPtr1);
+  change24h = strtod(changePercentStr, &endPtr2);
+
   Serial.printf("[Binance] Parsed: $%.10f (24h: %.2f%%)\n", priceUsd, change24h);
   Serial.printf("[Binance] %s: $%.6f (24h: %.2f%%)\n",
                 coin.ticker, priceUsd, change24h);

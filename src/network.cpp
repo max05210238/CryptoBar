@@ -437,18 +437,18 @@ bool fetchPrice(double& priceUsd, double& change24h) {
     return false;
   }
 
-  // V0.99k: Changed order to prioritize APIs with better precision
-  // CoinGecko → CoinPaprika → Kraken → Binance
-  // Note: Binance.com returns 451 for US users, Kraken has limited precision (0.1 USD)
-  if (fetchPriceFromCoingecko(priceUsd, change24h)) {
-    return true;
-  }
-  Serial.println("[Price] CoinGecko failed, falling back to CoinPaprika...");
-
+  // V0.99k: Prioritize aggregated market data (not single exchange)
+  // CoinPaprika (30s update) → CoinGecko (2-5min) → Kraken → Binance
+  // For open-source project: only free APIs, no API keys needed
   if (fetchPriceFromPaprika(priceUsd, change24h)) {
     return true;
   }
-  Serial.println("[Price] CoinPaprika failed, falling back to Kraken...");
+  Serial.println("[Price] CoinPaprika failed, falling back to CoinGecko...");
+
+  if (fetchPriceFromCoingecko(priceUsd, change24h)) {
+    return true;
+  }
+  Serial.println("[Price] CoinGecko failed, falling back to Kraken...");
 
   if (fetchPriceFromKraken(priceUsd, change24h)) {
     return true;
@@ -720,18 +720,25 @@ void bootstrapHistoryFromKrakenOHLC() {
   Serial.printf("[History] cycle UTC window: %ld .. %ld\n",
                 (long)windowStartUtc, (long)windowEndUtc);
 
-  if (!coin.krakenPair || coin.krakenPair[0] == '\0') {
-    // V0.99g: Try Binance first, fallback to CoinGecko
-    Serial.println("[History] No Kraken pair configured, trying Binance...");
-    if (bootstrapHistoryFromBinanceKlines()) {
-      return;
-    }
-    Serial.println("[History] Binance history failed, trying CoinGecko...");
-    if (!bootstrapHistoryFromCoingeckoMarketChart()) {
-      Serial.println("[History] CoinGecko history failed.");
-    }
+  // V0.99k: Prioritize aggregated market data for history
+  // Try CoinGecko first (aggregated), then Binance (single exchange) as fallback
+  Serial.println("[History] Using aggregated market data (CoinGecko)...");
+  if (bootstrapHistoryFromCoingeckoMarketChart()) {
     return;
   }
+
+  Serial.println("[History] CoinGecko failed, trying Binance...");
+  if (bootstrapHistoryFromBinanceKlines()) {
+    return;
+  }
+
+  // If both aggregated sources fail and Kraken is available, use it
+  if (!coin.krakenPair || coin.krakenPair[0] == '\0') {
+    Serial.println("[History] All history sources failed.");
+    return;
+  }
+  Serial.println("[History] Falling back to Kraken OHLC...");
+  // Continue to Kraken OHLC below
 
  // Seed rolling 24h mean buffer (independent of chart window)
   dayAvgRollingReset();

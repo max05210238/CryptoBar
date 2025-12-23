@@ -3,10 +3,9 @@
 
 // NOTE (V0.97): Coin registry moved to coins.h / coins.cpp (single source of truth).
 
-// V0.99k: Default update interval changed to 120 seconds (2 minutes)
-// Reason: Aggregated market data APIs (CoinPaprika, CoinGecko) update every 30s-2min
-// Using 2-minute interval ensures fresh data and avoids duplicate price displays
-static const uint32_t UPDATE_INTERVAL_MS = 120UL * 1000UL;  // 2 minutes
+// V0.99k: Default update interval: 30 seconds
+// CoinPaprika (aggregated market data) updates every 30 seconds
+static const uint32_t UPDATE_INTERVAL_MS = 30UL * 1000UL;  // 30 seconds
 
 // ----------------- Timezone Configuration -----------------
 struct TimezoneInfo {

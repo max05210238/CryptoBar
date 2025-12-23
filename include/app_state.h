@@ -50,7 +50,8 @@ extern const float BRIGHTNESS_PRESETS[BRIGHTNESS_PRESETS_COUNT];
 extern const char* BRIGHTNESS_LABELS[BRIGHTNESS_PRESETS_COUNT];
 
 // Update frequency presets
-#define UPDATE_PRESETS_COUNT 4
+// V0.99k: Update interval presets: 30s, 1min, 3min, 5min, 10min
+#define UPDATE_PRESETS_COUNT 5
 extern const uint32_t UPDATE_PRESETS_MS[UPDATE_PRESETS_COUNT];
 extern const char* UPDATE_PRESET_LABELS[UPDATE_PRESETS_COUNT];
 

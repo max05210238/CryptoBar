@@ -20,13 +20,15 @@ const float BRIGHTNESS_PRESETS[] = { 0.2f, 0.5f, 1.0f };
 const char* BRIGHTNESS_LABELS[]  = { "Low", "Med", "High" };
 
 // Update frequency presets
+// V0.99k: 30s, 1min, 3min, 5min, 10min (CoinPaprika supports 30s updates)
 const uint32_t UPDATE_PRESETS_MS[] = {
-  30UL * 1000UL,
-  60UL * 1000UL,
-  180UL * 1000UL,
-  300UL * 1000UL
+  30UL * 1000UL,   // 30s
+  60UL * 1000UL,   // 1min
+  180UL * 1000UL,  // 3min
+  300UL * 1000UL,  // 5min
+  600UL * 1000UL   // 10min
 };
-const char* UPDATE_PRESET_LABELS[] = { "30s", "60s", "3m", "5m" };
+const char* UPDATE_PRESET_LABELS[] = { "30s", "1m", "3m", "5m", "10m" };
 
 // Date format labels
 const char* DATE_FORMAT_LABELS[DATE_FORMAT_COUNT] = {

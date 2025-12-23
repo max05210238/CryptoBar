@@ -53,11 +53,11 @@ static int s_defCur      = 0; // V0.99f: 0=USD, 1=TWD, 2=EUR, etc. (see CURR_COU
 static int s_defTz       = DEFAULT_TIMEZONE_INDEX;
 static int s_defDayAvg   = 1; // 0=Off, 1=Rolling 24h, 2=ET 7pm cycle
 
-// V0.99k: Mirror of firmware presets (keep in sync with main.cpp).
-// Changed default from 30s to 120s (2 minutes) for aggregated market data
-static const int kUpdPresetCount = 4;
-static const int kUpdPresetSecs[kUpdPresetCount] = {120, 180, 300, 600};
-static const char* kUpdPresetLabels[kUpdPresetCount] = {"2m", "3m", "5m", "10m"};
+// V0.99k: Mirror of firmware presets (keep in sync with app_state.cpp)
+// 30s, 1min, 3min, 5min, 10min (CoinPaprika supports 30s updates)
+static const int kUpdPresetCount = 5;
+static const int kUpdPresetSecs[kUpdPresetCount] = {30, 60, 180, 300, 600};
+static const char* kUpdPresetLabels[kUpdPresetCount] = {"30s", "1m", "3m", "5m", "10m"};
 
 static void appendOption(String& out, const String& value, const String& label, bool selected) {
   out += "<option value='";

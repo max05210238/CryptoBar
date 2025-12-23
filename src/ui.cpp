@@ -344,8 +344,8 @@ static void drawPriceCenter(double priceUsd) {
   const CurrencyInfo& curr = CURRENCY_INFO[g_displayCurrency];
 
   // V0.99k: Dynamically detect actual decimal precision
-  // Don't show trailing zeros - if API only provides integer, show integer
-  int maxDecimals = curr.noDecimals ? 0 : 4;
+  // CoinPaprika provides up to 6 decimals, but max 4 for cleaner display
+  int maxDecimals = curr.noDecimals ? 0 : 4;  // Max 4 decimals for user-friendly display
   int actualDecimals = detectDecimalPlaces(price, maxDecimals);
 
   // Start with 18pt font (may downgrade to 12pt if needed)

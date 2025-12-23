@@ -437,23 +437,22 @@ bool fetchPrice(double& priceUsd, double& change24h) {
     return false;
   }
 
-  // V0.99k: Changed order to prioritize APIs with better precision
-  // CoinGecko → CoinPaprika → Kraken → Binance
-  // Note: Binance.com returns 451 for US users, Kraken has limited precision (0.1 USD)
-  if (fetchPriceFromCoingecko(priceUsd, change24h)) {
+  // V0.99k: Revert to Kraken priority (0.1 USD precision) vs CoinGecko (integer only)
+  // Kraken → CoinPaprika → CoinGecko → Binance
+  if (fetchPriceFromKraken(priceUsd, change24h)) {
     return true;
   }
-  Serial.println("[Price] CoinGecko failed, falling back to CoinPaprika...");
+  Serial.println("[Price] Kraken failed, falling back to CoinPaprika...");
 
   if (fetchPriceFromPaprika(priceUsd, change24h)) {
     return true;
   }
-  Serial.println("[Price] CoinPaprika failed, falling back to Kraken...");
+  Serial.println("[Price] CoinPaprika failed, falling back to CoinGecko...");
 
-  if (fetchPriceFromKraken(priceUsd, change24h)) {
+  if (fetchPriceFromCoingecko(priceUsd, change24h)) {
     return true;
   }
-  Serial.println("[Price] Kraken failed, falling back to Binance...");
+  Serial.println("[Price] CoinGecko failed, falling back to Binance...");
 
   if (fetchPriceFromBinance(priceUsd, change24h)) {
     return true;

@@ -305,6 +305,29 @@ static void drawSymbolPanel(const char* symbol, float change24h) {
   display.setTextColor(GxEPD_BLACK);
 }
 
+// V0.99k: Detect actual decimal precision in price
+static int detectDecimalPlaces(double price, int maxDecimals) {
+  // Check how many trailing zeros we have
+  double fractional = price - floor(price);
+
+  if (fractional < 0.0001) {
+    return 0;  // Integer or negligible decimals
+  }
+
+  // Check each decimal place
+  for (int d = 1; d <= maxDecimals; d++) {
+    double multiplier = pow(10.0, d);
+    double scaled = fractional * multiplier;
+    double remainder = scaled - floor(scaled);
+
+    if (remainder < 0.001) {
+      return d;  // This many decimals are significant
+    }
+  }
+
+  return maxDecimals;  // Use full precision
+}
+
 // V0.99f: Center price display with multi-currency support (number only)
 static void drawPriceCenter(double priceUsd) {
   int panelLeft  = SYMBOL_PANEL_WIDTH;
@@ -320,8 +343,10 @@ static void drawPriceCenter(double priceUsd) {
   // Get currency metadata
   const CurrencyInfo& curr = CURRENCY_INFO[g_displayCurrency];
 
-  // Determine max decimals based on currency type
+  // V0.99k: Dynamically detect actual decimal precision
+  // Don't show trailing zeros - if API only provides integer, show integer
   int maxDecimals = curr.noDecimals ? 0 : 4;
+  int actualDecimals = detectDecimalPlaces(price, maxDecimals);
 
   // Start with 18pt font (may downgrade to 12pt if needed)
   const GFXfont* numFont = &FreeSansBold18pt7b;
@@ -332,13 +357,14 @@ static void drawPriceCenter(double priceUsd) {
   int maxNumberW = panelWidth - 8;  // 4px margin on each side
   if (maxNumberW < 10) maxNumberW = 10;
 
-  // Adaptive decimals: start at maxDecimals, reduce until it fits
+  // V0.99k: Use actual decimal places (no trailing zeros)
+  // Adaptive decimals: start at actualDecimals, reduce until it fits
   char numBuf[32];
   int16_t x1, y1;
   uint16_t wNum = 0, hNum = 0;
   bool needDowngrade = false;
 
-  for (int dec = maxDecimals; dec >= 0; --dec) {
+  for (int dec = actualDecimals; dec >= 0; --dec) {
     snprintf(numBuf, sizeof(numBuf), "%.*f", dec, price);
     display.getTextBounds(numBuf, 0, 0, &x1, &y1, &wNum, &hNum);
     if ((int)wNum <= maxNumberW) break;
@@ -355,7 +381,7 @@ static void drawPriceCenter(double priceUsd) {
     display.setFont(numFont);
 
     // Retry formatting with smaller font
-    for (int dec = maxDecimals; dec >= 0; --dec) {
+    for (int dec = actualDecimals; dec >= 0; --dec) {
       snprintf(numBuf, sizeof(numBuf), "%.*f", dec, price);
       display.getTextBounds(numBuf, 0, 0, &x1, &y1, &wNum, &hNum);
       if ((int)wNum <= maxNumberW) break;

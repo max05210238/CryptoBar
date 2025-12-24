@@ -530,8 +530,12 @@ void drawSplashScreen(const char* version) {
 
 // WiFi provisioning / status screens
 // Preparing AP screen (AP startup can take ~30s on some boards/firmware)
-void drawWifiPreparingApScreen(const char* version) {
-  display.setFullWindow();
+void drawWifiPreparingApScreen(const char* version, bool fullRefresh) {
+  if (fullRefresh) {
+    display.setFullWindow();
+  } else {
+    display.setPartialWindow(0, 0, display.width(), display.height());
+  }
 
   display.firstPage();
   do {
@@ -563,8 +567,12 @@ void drawWifiPreparingApScreen(const char* version) {
 }
 
 // WiFi AP portal instructions screen
-void drawWifiPortalScreen(const char* version, const char* apSsid, const char* apIp) {
-  display.setFullWindow();
+void drawWifiPortalScreen(const char* version, const char* apSsid, const char* apIp, bool fullRefresh) {
+  if (fullRefresh) {
+    display.setFullWindow();
+  } else {
+    display.setPartialWindow(0, 0, display.width(), display.height());
+  }
 
   display.firstPage();
   do {
@@ -706,8 +714,12 @@ void drawFirmwareUpdateApScreen(const char* version, const char* apSsid, const c
   } while (display.nextPage());
 }
 
-void drawWifiConnectingScreen(const char* version, const char* ssid) {
-  display.setFullWindow();
+void drawWifiConnectingScreen(const char* version, const char* ssid, bool fullRefresh) {
+  if (fullRefresh) {
+    display.setFullWindow();
+  } else {
+    display.setPartialWindow(0, 0, display.width(), display.height());
+  }
 
   display.firstPage();
   do {
@@ -745,8 +757,12 @@ void drawWifiConnectingScreen(const char* version, const char* ssid) {
   } while (display.nextPage());
 }
 
-void drawWifiConnectFailedScreen(const char* version) {
-  display.setFullWindow();
+void drawWifiConnectFailedScreen(const char* version, bool fullRefresh) {
+  if (fullRefresh) {
+    display.setFullWindow();
+  } else {
+    display.setPartialWindow(0, 0, display.width(), display.height());
+  }
 
   display.firstPage();
   do {

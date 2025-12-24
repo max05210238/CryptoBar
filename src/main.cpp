@@ -1,4 +1,4 @@
-// CryptoBar V0.99j (Price Precision Fix)
+// CryptoBar V0.99l (Display Refresh Optimization)
 #include <Arduino.h>
 #include <WiFi.h>
 #include <HTTPClient.h>
@@ -118,7 +118,7 @@ void showWifiSetupRequired(unsigned long splashStartMs, bool enforceSplashDelay 
   const uint32_t PREP_MS = 10000;
   uint32_t t0 = millis();
 
-  drawWifiPreparingApScreen(CRYPTOBAR_VERSION);
+  drawWifiPreparingApScreen(CRYPTOBAR_VERSION, false);  // Partial refresh from splash screen
 
   wifiPortalSetDefaultCoinTicker(coinAt(g_currentCoinIndex).ticker);
   
@@ -153,7 +153,7 @@ uint32_t elapsed = millis() - t0;
   String apIp = "192.168.4.1";
 
   setLedPurple();
-  drawWifiPortalScreen(CRYPTOBAR_VERSION, wifiPortalApSsid().c_str(), apIp.c_str());
+  drawWifiPortalScreen(CRYPTOBAR_VERSION, wifiPortalApSsid().c_str(), apIp.c_str(), false);  // Partial refresh
 
   g_appState = APP_STATE_NEED_WIFI;
 }
@@ -434,7 +434,7 @@ void loop() {
       delay(50);
       WiFi.begin(g_wifiSsid.c_str(), g_wifiPass.c_str());
       setLedBlue();
-      drawWifiConnectingScreen(CRYPTOBAR_VERSION, g_wifiSsid.c_str());
+      drawWifiConnectingScreen(CRYPTOBAR_VERSION, g_wifiSsid.c_str(), false);  // Partial refresh
     }
 
     delay(5);
@@ -461,7 +461,7 @@ void loop() {
     if ((millis() - g_staConnectStartMs) > STA_CONNECT_TIMEOUT_MS) {
       Serial.println("[WiFi] Connect FAILED (timeout) - restarting portal");
       setLedRed();
-      drawWifiConnectFailedScreen(CRYPTOBAR_VERSION);
+      drawWifiConnectFailedScreen(CRYPTOBAR_VERSION, false);  // Partial refresh
 
       WiFi.disconnect(false);
       delay(800);
@@ -470,7 +470,7 @@ void loop() {
       wifiPortalStop();
       delay(150);
 
-      drawWifiPreparingApScreen(CRYPTOBAR_VERSION);
+      drawWifiPreparingApScreen(CRYPTOBAR_VERSION, false);  // Partial refresh
       wifiPortalSetDefaultCoinTicker(coinAt(g_currentCoinIndex).ticker);
   
 
@@ -499,7 +499,7 @@ void loop() {
   wifiPortalStart();
 String apIp = WiFi.softAPIP().toString();
       setLedPurple();
-      drawWifiPortalScreen(CRYPTOBAR_VERSION, wifiPortalApSsid().c_str(), apIp.c_str());
+      drawWifiPortalScreen(CRYPTOBAR_VERSION, wifiPortalApSsid().c_str(), apIp.c_str(), false);  // Partial refresh
       g_appState = APP_STATE_NEED_WIFI;
       return;
     }
@@ -583,7 +583,7 @@ String apIp = WiFi.softAPIP().toString();
         bool showUi = (g_uiMode == UI_MODE_NORMAL);
         if (showUi) {
           String label = String(g_wifiSsid) + " (reconnect)";
-          drawWifiConnectingScreen(CRYPTOBAR_VERSION, label.c_str());
+          drawWifiConnectingScreen(CRYPTOBAR_VERSION, label.c_str(), false);  // Partial refresh
         }
         Serial.printf("[WiFi] Runtime reconnect batch %u (attempts=%u, timeout=%lums)\n",
                       (unsigned)g_runtimeReconnectBatch + 1, (unsigned)RUNTIME_RECONNECT_ATTEMPTS,
@@ -598,7 +598,7 @@ String apIp = WiFi.softAPIP().toString();
           if (showUi) {
             setLedRed();
             String label = String("Offline, retry in ") + String(RUNTIME_RECONNECT_BACKOFF_MS / 1000UL) + "s";
-            drawWifiConnectingScreen(CRYPTOBAR_VERSION, label.c_str());
+            drawWifiConnectingScreen(CRYPTOBAR_VERSION, label.c_str(), false);  // Partial refresh
           }
  // Skip network work this loop, but keep LED animation alive.
           ledAnimLoop(g_appState == APP_STATE_RUNNING, g_lastPriceOk);

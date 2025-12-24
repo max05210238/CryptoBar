@@ -113,15 +113,19 @@ void showWifiSetupRequired(unsigned long splashStartMs, bool enforceSplashDelay 
     if (elapsed < 3000) delay(3000 - elapsed);
   }
 
- // Show a fixed "Preparing AP" screen for 10 seconds (total time),
- // then switch to the WiFi portal instructions screen.
-  const uint32_t PREP_MS = 10000;
-  uint32_t t0 = millis();
-
+ // Show "Preparing AP" screen for full 10 seconds before showing portal instructions
+ // This gives user time to read the message, even if portal starts quickly
   drawWifiPreparingApScreen(CRYPTOBAR_VERSION, false);  // Partial refresh from splash screen
 
+  // Display "Preparing AP" for at least 3 seconds before starting portal setup
+  uint32_t prepDisplayStart = millis();
+  const uint32_t PREP_DISPLAY_MS = 3000;  // Show "Preparing AP" for 3 seconds
+
+  delay(PREP_DISPLAY_MS);
+
+  // Now configure and start portal
   wifiPortalSetDefaultCoinTicker(coinAt(g_currentCoinIndex).ticker);
-  
+
 
   wifiPortalSetDefaultAdvanced(
 
@@ -146,8 +150,13 @@ void showWifiSetupRequired(unsigned long splashStartMs, bool enforceSplashDelay 
   );
 
   wifiPortalStart();
-uint32_t elapsed = millis() - t0;
-  if (elapsed < PREP_MS) delay(PREP_MS - elapsed);
+
+  // Ensure total time (display + setup) is at least 10 seconds
+  uint32_t totalElapsed = millis() - prepDisplayStart;
+  const uint32_t TOTAL_PREP_MS = 10000;
+  if (totalElapsed < TOTAL_PREP_MS) {
+    delay(TOTAL_PREP_MS - totalElapsed);
+  }
 
  // AP IP is fixed by softAPConfig(), so we can show it directly.
   String apIp = "192.168.4.1";
@@ -235,7 +244,7 @@ static void startNormalOperation(bool enforceSplashDelay, uint32_t splashStartMs
 
 // ==================== Maintenance mode (firmware update AP) =====================
 
-static void enterMaintenanceMode(bool fromBoot) {
+static void enterMaintenanceMode(bool fromBoot, bool drawScreen = true) {
   Serial.println("[MAINT] Enter");
 
  // When coming from normal operation, tear down any provisioning portal and STA
@@ -257,7 +266,11 @@ static void enterMaintenanceMode(bool fromBoot) {
   g_appState = APP_STATE_MAINT;
   g_uiMode   = UI_MODE_MAINT;
   setLedPurple();
-  drawFirmwareUpdateApScreen(CRYPTOBAR_VERSION, maintModeApSsid().c_str(), maintModeApIp().c_str());
+
+  // Only draw screen if requested (allows caller to control timing)
+  if (drawScreen) {
+    drawFirmwareUpdateApScreen(CRYPTOBAR_VERSION, maintModeApSsid().c_str(), maintModeApIp().c_str());
+  }
 }
 
 // : Request maintenance mode via reboot (more stable than switching modes at runtime).
@@ -325,8 +338,25 @@ void setup() {
  // : enter maintenance mode via reboot flag (requested from UI).
   if (maintBootConsumeRequested()) {
     Serial.println("[MAINT] Boot request detected");
-    drawFirmwareUpdateApScreen(CRYPTOBAR_VERSION, "Starting Update AP...", "");
-    enterMaintenanceMode(true);
+    // Show "Starting Update AP..." message with enough display time
+    drawFirmwareUpdateApScreen(CRYPTOBAR_VERSION, "Starting Update AP...", "", false);
+    uint32_t maintPrepStart = millis();
+    const uint32_t MAINT_PREP_DISPLAY_MS = 3000;
+
+    delay(MAINT_PREP_DISPLAY_MS);
+
+    // Configure and start maintenance AP (without drawing final screen yet)
+    enterMaintenanceMode(true, false);
+
+    // Ensure total preparation time is at least 10 seconds
+    uint32_t totalElapsed = millis() - maintPrepStart;
+    const uint32_t MAINT_TOTAL_PREP_MS = 10000;
+    if (totalElapsed < MAINT_TOTAL_PREP_MS) {
+      delay(MAINT_TOTAL_PREP_MS - totalElapsed);
+    }
+
+    // Now draw the final maintenance AP instructions screen
+    drawFirmwareUpdateApScreen(CRYPTOBAR_VERSION, maintModeApSsid().c_str(), maintModeApIp().c_str(), false);
     return;
   }
 
@@ -339,14 +369,72 @@ if (!g_hasWifiCreds) {
   return;
 }
 
-if (!connectWiFiStaWithRetries(g_wifiSsid.c_str(), g_wifiPass.c_str(),
-                              5, 12000, true)) {
-  Serial.println("[WiFi] Failed to connect with saved credentials (all attempts).");
-  showWifiSetupRequired(splashStartMs);
+// Start WiFi connection in background (non-blocking)
+// Allow splash screen to display for full 3 seconds while WiFi connects
+Serial.println("[WiFi] Starting connection in background...");
+WiFi.mode(WIFI_STA);
+WiFi.setSleep(false);
+WiFi.setAutoReconnect(true);
+WiFi.disconnect(true);
+delay(100);
+WiFi.begin(g_wifiSsid.c_str(), g_wifiPass.c_str());
+setLedBlue();
+
+// Ensure splash screen displays for full 3 seconds
+unsigned long elapsed = millis() - splashStartMs;
+if (elapsed < 3000) {
+  uint32_t remaining = 3000 - elapsed;
+  Serial.printf("[Boot] Splash screen: waiting %lums (WiFi connecting in background)\n", (unsigned long)remaining);
+
+  // Poll WiFi status while waiting
+  uint32_t checkInterval = 100;
+  uint32_t waited = 0;
+  bool connectedEarly = false;
+
+  while (waited < remaining) {
+    delay(checkInterval);
+    waited += checkInterval;
+
+    if (WiFi.status() == WL_CONNECTED) {
+      connectedEarly = true;
+      Serial.printf("[WiFi] Connected early (%lums into splash screen)\n", (unsigned long)elapsed + waited);
+      break;
+    }
+  }
+
+  // If connected during splash, go directly to main screen
+  if (connectedEarly) {
+    Serial.print("[WiFi] Connected during splash, IP: ");
+    Serial.println(WiFi.localIP());
+    g_wifiEverConnected = true;
+    g_nextRuntimeReconnectMs = 0;
+    g_runtimeReconnectBatch = 0;
+    startNormalOperation(false, splashStartMs);  // No splash delay needed
+    return;
+  }
+}
+
+// Splash screen displayed for 3 seconds, check WiFi status
+if (WiFi.status() == WL_CONNECTED) {
+  Serial.print("[WiFi] Connected, IP: ");
+  Serial.println(WiFi.localIP());
+  g_wifiEverConnected = true;
+  g_nextRuntimeReconnectMs = 0;
+  g_runtimeReconnectBatch = 0;
+  startNormalOperation(false, splashStartMs);  // No splash delay needed
   return;
 }
 
-startNormalOperation(true, splashStartMs);
+// WiFi not connected after 3 seconds, show connecting screen and retry
+Serial.println("[WiFi] Not connected after splash, showing connection UI...");
+if (!connectWiFiStaWithRetries(g_wifiSsid.c_str(), g_wifiPass.c_str(),
+                              5, 12000, true)) {
+  Serial.println("[WiFi] Failed to connect with saved credentials (all attempts).");
+  showWifiSetupRequired(splashStartMs, false);  // Don't enforce splash delay
+  return;
+}
+
+startNormalOperation(false, splashStartMs);  // No splash delay needed
 }
 
 void loop() {
@@ -470,9 +558,16 @@ void loop() {
       wifiPortalStop();
       delay(150);
 
+      // Show "Preparing AP" screen and ensure it displays for at least 3 seconds
       drawWifiPreparingApScreen(CRYPTOBAR_VERSION, false);  // Partial refresh
+      uint32_t prepStart = millis();
+      const uint32_t PREP_DISPLAY_MS = 3000;
+
+      delay(PREP_DISPLAY_MS);
+
+      // Configure and start portal
       wifiPortalSetDefaultCoinTicker(coinAt(g_currentCoinIndex).ticker);
-  
+
 
   wifiPortalSetDefaultAdvanced(
 
@@ -497,6 +592,14 @@ void loop() {
   );
 
   wifiPortalStart();
+
+      // Ensure total preparation time is at least 10 seconds
+      uint32_t totalElapsed = millis() - prepStart;
+      const uint32_t TOTAL_PREP_MS = 10000;
+      if (totalElapsed < TOTAL_PREP_MS) {
+        delay(TOTAL_PREP_MS - totalElapsed);
+      }
+
 String apIp = WiFi.softAPIP().toString();
       setLedPurple();
       drawWifiPortalScreen(CRYPTOBAR_VERSION, wifiPortalApSsid().c_str(), apIp.c_str(), false);  // Partial refresh

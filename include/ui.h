@@ -50,7 +50,7 @@ void drawWifiInfoScreen(const char* version, const char* mac, const char* staIp,
 
 // Firmware update / maintenance mode screens
 void drawFirmwareUpdateConfirmScreen(const char* version);
-void drawFirmwareUpdateApScreen(const char* version, const char* apSsid, const char* apIp);
+void drawFirmwareUpdateApScreen(const char* version, const char* apSsid, const char* apIp, bool fullRefresh = true);
 
 // Main price display screen: coin symbol from currentCoin()
 void drawMainScreen(double priceUsd, double change24h, bool fullRefresh);

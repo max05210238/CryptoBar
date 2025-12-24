@@ -1,4 +1,4 @@
-// CryptoBar V0.99n (API Priority & Update Frequency Optimization)
+// CryptoBar V0.99o (MAC Jitter & Price Display Optimization)
 #include <Arduino.h>
 #include <WiFi.h>
 #include <HTTPClient.h>

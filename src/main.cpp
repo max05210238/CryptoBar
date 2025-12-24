@@ -1,4 +1,4 @@
-// CryptoBar V0.99o (MAC Jitter & Price Display Optimization)
+// CryptoBar V0.99p (CoinGecko Precision Parameter Test)
 #include <Arduino.h>
 #include <WiFi.h>
 #include <HTTPClient.h>

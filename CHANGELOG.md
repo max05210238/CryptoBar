@@ -7,6 +7,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [V0.99p] - 2025-12-24
+
+### Changed - CoinGecko Precision Parameter Test
+- 🔍 **CoinGecko API precision parameter**:
+  - Added `precision=full` parameter to `/simple/price` endpoint
+  - Testing if CoinGecko supports higher precision for price data
+  - Goal: Display XRP with 4 decimals, BTC with at least 2 decimals
+- 📊 **Enhanced debug logging**:
+  - Complete raw JSON response now printed to Serial monitor
+  - Price values shown with up to 10 decimal places for precision verification
+  - Helps identify if API returns higher precision data
+
+### Technical Details
+- **Files modified**: 2 files (network.cpp, main.cpp, CHANGELOG.md)
+- **API URL change**: Added `&precision=full` query parameter
+- **Buffer size**: Increased from 192 to 256 bytes for longer URL
+- **Debug format**: `%.10f` to show up to 10 decimal places
+
+### Testing Instructions
+1. Monitor Serial output during price fetch
+2. Check "RAW JSON RESPONSE" section for actual API data
+3. Verify if BTC shows decimals and XRP shows 4+ decimals
+4. If `precision=full` not supported, will fallback to /coins/{id}/tickers endpoint
+
+---
+
 ## [V0.99o] - 2025-12-24
 
 ### Added - MAC-based Jitter & Price Display Optimization

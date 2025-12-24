@@ -392,9 +392,10 @@ static bool fetchPriceFromCoingecko(double& priceUsd, double& change24h) {
 
   HTTPClient http;
   // V0.99b: Avoid String concatenation (heap fragmentation)
-  char url[192];
+  // V0.99p: Added precision=full parameter to request maximum decimal places
+  char url[256];
   snprintf(url, sizeof(url),
-           "https://api.coingecko.com/api/v3/simple/price?ids=%s&vs_currencies=usd&include_24hr_change=true",
+           "https://api.coingecko.com/api/v3/simple/price?ids=%s&vs_currencies=usd&include_24hr_change=true&precision=full",
            coin.geckoId);
 
   Serial.print("[CG] GET ");
@@ -413,6 +414,11 @@ static bool fetchPriceFromCoingecko(double& priceUsd, double& change24h) {
 
   String payload = http.getString();
   http.end();
+
+  // V0.99p: Enhanced debug - show complete raw JSON response
+  Serial.println("[CG] ========== RAW JSON RESPONSE ==========");
+  Serial.println(payload);
+  Serial.println("[CG] ======================================");
 
   StaticJsonDocument<512> doc;
   DeserializationError err = deserializeJson(doc, payload);
@@ -436,9 +442,10 @@ static bool fetchPriceFromCoingecko(double& priceUsd, double& change24h) {
   change24h = coinObj["usd_24h_change"].as<double>();
 
   // V0.99k: Debug - show raw JSON and parsed values
+  // V0.99p: Show up to 10 decimal places to verify precision
   Serial.printf("[CG] Raw JSON: usd=%s, change=%s\n", rawPrice, rawChange);
   Serial.printf("[CG] Parsed: $%.10f (24h: %.2f%%)\n", priceUsd, change24h);
-  Serial.printf("[CG] %s: $%.6f (24h: %.2f%%)\n",
+  Serial.printf("[CG] %s: $%.10f (24h: %.2f%%)\n",
                 coin.ticker, priceUsd, change24h);
 
   // V0.99m: Track successful API source

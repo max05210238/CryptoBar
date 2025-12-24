@@ -244,7 +244,7 @@ static void startNormalOperation(bool enforceSplashDelay, uint32_t splashStartMs
 
 // ==================== Maintenance mode (firmware update AP) =====================
 
-static void enterMaintenanceMode(bool fromBoot) {
+static void enterMaintenanceMode(bool fromBoot, bool drawScreen = true) {
   Serial.println("[MAINT] Enter");
 
  // When coming from normal operation, tear down any provisioning portal and STA
@@ -266,7 +266,11 @@ static void enterMaintenanceMode(bool fromBoot) {
   g_appState = APP_STATE_MAINT;
   g_uiMode   = UI_MODE_MAINT;
   setLedPurple();
-  drawFirmwareUpdateApScreen(CRYPTOBAR_VERSION, maintModeApSsid().c_str(), maintModeApIp().c_str());
+
+  // Only draw screen if requested (allows caller to control timing)
+  if (drawScreen) {
+    drawFirmwareUpdateApScreen(CRYPTOBAR_VERSION, maintModeApSsid().c_str(), maintModeApIp().c_str());
+  }
 }
 
 // : Request maintenance mode via reboot (more stable than switching modes at runtime).
@@ -334,8 +338,25 @@ void setup() {
  // : enter maintenance mode via reboot flag (requested from UI).
   if (maintBootConsumeRequested()) {
     Serial.println("[MAINT] Boot request detected");
-    drawFirmwareUpdateApScreen(CRYPTOBAR_VERSION, "Starting Update AP...", "");
-    enterMaintenanceMode(true);
+    // Show "Starting Update AP..." message with enough display time
+    drawFirmwareUpdateApScreen(CRYPTOBAR_VERSION, "Starting Update AP...", "", false);
+    uint32_t maintPrepStart = millis();
+    const uint32_t MAINT_PREP_DISPLAY_MS = 3000;
+
+    delay(MAINT_PREP_DISPLAY_MS);
+
+    // Configure and start maintenance AP (without drawing final screen yet)
+    enterMaintenanceMode(true, false);
+
+    // Ensure total preparation time is at least 10 seconds
+    uint32_t totalElapsed = millis() - maintPrepStart;
+    const uint32_t MAINT_TOTAL_PREP_MS = 10000;
+    if (totalElapsed < MAINT_TOTAL_PREP_MS) {
+      delay(MAINT_TOTAL_PREP_MS - totalElapsed);
+    }
+
+    // Now draw the final maintenance AP instructions screen
+    drawFirmwareUpdateApScreen(CRYPTOBAR_VERSION, maintModeApSsid().c_str(), maintModeApIp().c_str(), false);
     return;
   }
 

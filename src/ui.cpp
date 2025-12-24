@@ -661,8 +661,12 @@ void drawFirmwareUpdateConfirmScreen(const char* version) {
 }
 
 // Firmware update / maintenance AP instructions
-void drawFirmwareUpdateApScreen(const char* version, const char* apSsid, const char* apIp) {
-  display.setFullWindow();
+void drawFirmwareUpdateApScreen(const char* version, const char* apSsid, const char* apIp, bool fullRefresh) {
+  if (fullRefresh) {
+    display.setFullWindow();
+  } else {
+    display.setPartialWindow(0, 0, display.width(), display.height());
+  }
 
   display.firstPage();
   do {

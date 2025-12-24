@@ -453,18 +453,18 @@ bool fetchPrice(double& priceUsd, double& change24h) {
     return false;
   }
 
-  // V0.99k: Prioritize aggregated market data (not single exchange)
-  // CoinPaprika (30s update) → CoinGecko (2-5min) → Kraken → Binance
+  // V0.99n: Prioritize CoinGecko (best aggregated market data quality)
+  // CoinGecko → CoinPaprika → Kraken → Binance
   // For open-source project: only free APIs, no API keys needed
-  if (fetchPriceFromPaprika(priceUsd, change24h)) {
-    return true;
-  }
-  Serial.println("[Price] CoinPaprika failed, falling back to CoinGecko...");
-
   if (fetchPriceFromCoingecko(priceUsd, change24h)) {
     return true;
   }
-  Serial.println("[Price] CoinGecko failed, falling back to Kraken...");
+  Serial.println("[Price] CoinGecko failed, falling back to CoinPaprika...");
+
+  if (fetchPriceFromPaprika(priceUsd, change24h)) {
+    return true;
+  }
+  Serial.println("[Price] CoinPaprika failed, falling back to Kraken...");
 
   if (fetchPriceFromKraken(priceUsd, change24h)) {
     return true;

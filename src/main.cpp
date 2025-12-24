@@ -1,4 +1,4 @@
-// CryptoBar V0.99m (API Source Display)
+// CryptoBar V0.99n (API Priority & Update Frequency Optimization)
 #include <Arduino.h>
 #include <WiFi.h>
 #include <HTTPClient.h>

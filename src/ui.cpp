@@ -252,9 +252,9 @@ static void drawSymbolPanel(const char* symbol, float change24h) {
   const GFXfont* bigFont   = &FreeSansBold18pt7b;
   const GFXfont* smallFont = &FreeSansBold9pt7b;
 
-  // V0.99m: API source labels (extra small font - default 6x8)
-  const char* priceApiLabel = "Paprika";    // Real-time price data source
-  const char* historyApiLabel = "CoinGecko"; // Historical data source
+  // V0.99m: API source labels (dynamic, updated by network.cpp)
+  const char* priceApiLabel = g_currentPriceApi;      // Real-time price data source
+  const char* historyApiLabel = g_currentHistoryApi;  // Historical data source
 
   // Get bounds for all elements
 

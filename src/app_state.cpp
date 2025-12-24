@@ -70,6 +70,10 @@ double& g_usdToTwd = g_usdToRate[CURR_TWD];
 
 // ==================== Global Variables =====================
 
+// V0.99m: API source tracking (updated by network.cpp)
+const char* g_currentPriceApi = "Paprika";      // Default: CoinPaprika
+const char* g_currentHistoryApi = "CoinGecko";  // Default: CoinGecko
+
 uint32_t g_updateIntervalMs = UPDATE_INTERVAL_MS;
 
 // Refresh statistics

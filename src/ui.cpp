@@ -296,45 +296,53 @@ static void drawSymbolPanel(const char* symbol, float change24h) {
   uint16_t histW, histH;
   display.getTextBounds(historyApiLabel, 0, 0, &histX1, &histY1, &histW, &histH);
 
-  // Calculate vertical layout with spacing: [PriceAPI] [gap] [Currency] [gap] [Symbol] [gap] [Change] [gap] [HistoryAPI]
+  // Calculate vertical layout with BTC centered in black panel
+  // Keep spacing: topApiGap=14px, normalGap=7px, bottomApiGap=4px
   const int topApiGap = 14;   // Larger gap after top API label for visual breathing room
   const int bottomApiGap = 4; // Smaller gap before bottom API label (more compact)
   const int normalGap = 7;    // Gap between main elements (currency/symbol/change)
-  int totalH = apiH + topApiGap + currH + normalGap + sH + normalGap + cH + bottomApiGap + histH;
-  int topY   = (display.height() - totalH) / 2;
+
+  // Center BTC symbol at display midpoint, then calculate other positions
+  int16_t centerY = display.height() / 2;
+  int16_t sy = centerY;  // BTC baseline at vertical center
+  int16_t sx = (panelWidth - sW) / 2;
+
+  // Work backwards from BTC to calculate upper elements
+  int16_t currY = sy - normalGap - sH + currH;
+  int16_t currX = (panelWidth - currW) / 2;
+
+  int16_t apiY = currY - topApiGap - currH + apiH;
+  int16_t apiX = (panelWidth - apiW) / 2;
+
+  // Work forwards from BTC to calculate lower elements
+  int16_t cy = sy + normalGap + cH;
+  int16_t cx = (panelWidth - cW) / 2;
+
+  int16_t histY = cy + bottomApiGap + histH;
+  int16_t histX = (panelWidth - histW) / 2;
 
   // Draw price API label (top, extra small)
-  int16_t apiY = topY + apiH;
-  int16_t apiX = (panelWidth - apiW) / 2;
   display.setFont();
   display.setTextSize(1);
   display.setCursor(apiX, apiY);
   display.print(priceApiLabel);
 
   // Draw currency code
-  int16_t currY = apiY + topApiGap + currH;
-  int16_t currX = (panelWidth - currW) / 2;
   display.setFont(smallFont);
   display.setCursor(currX, currY);
   display.print(currCode);
 
-  // Draw coin symbol (middle)
-  int16_t sy = currY + normalGap + sH;
-  int16_t sx = (panelWidth - sW) / 2;
+  // Draw coin symbol (centered in black panel)
   display.setFont(bigFont);
   display.setCursor(sx, sy);
   display.print(symbol);
 
   // Draw change percentage
-  int16_t cy = sy + normalGap + cH;
-  int16_t cx = (panelWidth - cW) / 2;
   display.setFont(smallFont);
   display.setCursor(cx, cy);
   display.print(changeBuf);
 
   // Draw history API label (bottom, extra small)
-  int16_t histY = cy + bottomApiGap + histH;
-  int16_t histX = (panelWidth - histW) / 2;
   display.setFont();
   display.setTextSize(1);
   display.setCursor(histX, histY);

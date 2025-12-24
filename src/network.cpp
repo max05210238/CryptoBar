@@ -187,6 +187,11 @@ static bool fetchPriceFromPaprika(double& priceUsd, double& change24h) {
   Serial.printf("[CP] %s: $%.6f (24h: %.2f%%)\n",
                 coin.ticker, priceUsd, change24h);
 
+  // V0.99m: Track successful API source
+  if (priceUsd > 0.0) {
+    g_currentPriceApi = "Paprika";
+  }
+
   return (priceUsd > 0.0);
 }
 
@@ -285,6 +290,9 @@ static bool fetchPriceFromKraken(double& priceUsd, double& change24h) {
   Serial.printf("[Kraken] %s: $%.6f (24h: %.2f%%)\n",
                 coin.ticker, priceUsd, change24h);
 
+  // V0.99m: Track successful API source
+  g_currentPriceApi = "Kraken";
+
   return true;
 }
 
@@ -360,6 +368,11 @@ static bool fetchPriceFromBinance(double& priceUsd, double& change24h) {
   Serial.printf("[Binance] %s: $%.6f (24h: %.2f%%)\n",
                 coin.ticker, priceUsd, change24h);
 
+  // V0.99m: Track successful API source
+  if (priceUsd > 0.0) {
+    g_currentPriceApi = "Binance";
+  }
+
   return (priceUsd > 0.0);
 }
 
@@ -427,6 +440,9 @@ static bool fetchPriceFromCoingecko(double& priceUsd, double& change24h) {
   Serial.printf("[CG] Parsed: $%.10f (24h: %.2f%%)\n", priceUsd, change24h);
   Serial.printf("[CG] %s: $%.6f (24h: %.2f%%)\n",
                 coin.ticker, priceUsd, change24h);
+
+  // V0.99m: Track successful API source
+  g_currentPriceApi = "CoinGecko";
 
   return true;
 }
@@ -564,6 +580,12 @@ static bool bootstrapHistoryFromCoingeckoMarketChart() {
   }
 
   Serial.printf("[History][CG] Kept %d samples into chart.\n", kept);
+
+  // V0.99m: Track successful history API source
+  if (kept > 0) {
+    g_currentHistoryApi = "CoinGecko";
+  }
+
   return (kept > 0);
 }
 
@@ -687,6 +709,12 @@ static bool bootstrapHistoryFromBinanceKlines() {
 
   Serial.printf("[History][Binance] Kept %d samples into chart.\n", kept);
   Serial.printf("[History][Binance] g_chartSampleCount = %d\n", g_chartSampleCount);
+
+  // V0.99m: Track successful history API source
+  if (kept > 0) {
+    g_currentHistoryApi = "Binance";
+  }
+
   return (kept > 0);
 }
 
@@ -855,6 +883,11 @@ void bootstrapHistoryFromKrakenOHLC() {
                 (maxT == LONG_MIN ? 0 : maxT));
   Serial.printf("[History] Kept %d samples into chart.\n", kept);
   Serial.printf("[History] g_chartSampleCount = %d\n", g_chartSampleCount);
+
+  // V0.99m: Track successful history API source
+  if (kept > 0) {
+    g_currentHistoryApi = "Kraken";
+  }
 }
 
 

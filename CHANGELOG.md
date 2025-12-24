@@ -7,6 +7,39 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [V0.99n] - 2025-12-24
+
+### Changed - API Priority & Update Frequency Optimization
+- 🔄 **API priority reordering**: CoinGecko now first priority for better data quality
+  - New fallback chain: CoinGecko → CoinPaprika → Kraken → Binance
+  - Prioritizes aggregated market data over single exchange data
+  - CoinGecko provides best overall market consensus pricing
+- ⏱️ **Update frequency optimization**: Removed 30s preset to reduce API pressure
+  - Available presets: 1m, 3m, 5m, 10m (removed 30s)
+  - Default preset: 3m (recommended for most users)
+  - Helps avoid CoinGecko free API rate limits (5-15 calls/min per IP)
+- 📝 **Web Portal improvements**: Added user guidance for multi-device setups
+  - 3m preset marked as "⭐ Recommended"
+  - Tip: "For multiple devices on same network, use 3m or longer to avoid API rate limits"
+  - All labels and tips in English
+
+### Technical Details
+- **Default update interval**: Changed from 30s (index 0) to 3m (index 1)
+- **Preset array size**: Reduced from 5 to 4 elements
+- **Files modified**: 6 files (app_state.cpp, app_input.cpp, wifi_portal.cpp, network.cpp, main.cpp, CHANGELOG.md)
+- **Rationale**:
+  - CoinGecko free API: 5-15 calls/min shared per IP address
+  - Multiple devices on same network share rate limit
+  - 30s updates caused frequent 429 errors for multi-device users
+  - CoinGecko quality > CoinPaprika speed for typical use cases
+
+### Migration Notes
+- Existing users: Settings preserved, but 30s no longer available
+- New users: Default 3m provides good balance of freshness and reliability
+- Multi-device users: Recommended 5m+ to avoid rate limits
+
+---
+
 ## [V0.99m] - 2025-12-24
 
 ### Added - API Source Display

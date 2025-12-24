@@ -94,7 +94,7 @@ void handleFactoryReset() {
   Serial.println("[Menu] Factory reset - restore defaults.");
 
  // Defaults (match initial globals)
-  g_updatePresetIndex      = 0;   // 30s
+  g_updatePresetIndex      = 1;   // 3m (default, recommended for most users)
   g_updateIntervalMs       = UPDATE_PRESETS_MS[g_updatePresetIndex];
   g_brightnessPresetIndex  = 1;   // Med
   g_ledBrightness          = BRIGHTNESS_PRESETS[g_brightnessPresetIndex];

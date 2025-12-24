@@ -44,7 +44,7 @@ static String s_defaultCoinTicker;
 // Defaults used to pre-select dropdown values on the portal page.
 // Set to -1 to default to "Keep current".
 static int s_defRfMode   = 1; // 0=Partial, 1=Full
-static int s_defUpd      = 0; // update preset index
+static int s_defUpd      = 1; // update preset index (1 = 3m, recommended)
 static int s_defBri      = 1; // brightness preset index
 static int s_defTimeFmt  = 1; // 0=24h, 1=12h
 static int s_defDateFmt  = 0; // 0=MM/DD, 1=DD/MM, 2=YYYY-MM-DD
@@ -53,11 +53,11 @@ static int s_defCur      = 0; // V0.99f: 0=USD, 1=TWD, 2=EUR, etc. (see CURR_COU
 static int s_defTz       = DEFAULT_TIMEZONE_INDEX;
 static int s_defDayAvg   = 1; // 0=Off, 1=Rolling 24h, 2=ET 7pm cycle
 
-// V0.99k: Mirror of firmware presets (keep in sync with app_state.cpp)
-// 30s, 1min, 3min, 5min, 10min (CoinPaprika supports 30s updates)
-static const int kUpdPresetCount = 5;
-static const int kUpdPresetSecs[kUpdPresetCount] = {30, 60, 180, 300, 600};
-static const char* kUpdPresetLabels[kUpdPresetCount] = {"30s", "1m", "3m", "5m", "10m"};
+// V0.99n: Mirror of firmware presets (keep in sync with app_state.cpp)
+// 1min, 3min, 5min, 10min (removed 30s to reduce API pressure)
+static const int kUpdPresetCount = 4;
+static const int kUpdPresetSecs[kUpdPresetCount] = {60, 180, 300, 600};
+static const char* kUpdPresetLabels[kUpdPresetCount] = {"1m", "3m", "5m", "10m"};
 
 static void appendOption(String& out, const String& value, const String& label, bool selected) {
   out += "<option value='";
@@ -330,9 +330,12 @@ page += "<label>Update Preset (upd)</label><select name='upd'>";
 appendOption(page, "", "Keep current", s_defUpd < 0);
 for (int i = 0; i < kUpdPresetCount; ++i) {
   String label = String(i) + " = " + kUpdPresetLabels[i] + " (" + String(kUpdPresetSecs[i]) + "s)";
+  // Mark 3m (index 1) as recommended
+  if (i == 1) label += " ⭐ Recommended";
   appendOption(page, String(i), label, s_defUpd == i);
 }
 page += "</select>";
+page += "<small style='color:#888'>💡 Tip: For multiple devices on same network, use 3m or longer to avoid API rate limits.</small>";
 
 // Brightness preset
 page += "<label>Brightness Preset (bri)</label><select name='bri'>";

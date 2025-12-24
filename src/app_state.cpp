@@ -1,10 +1,10 @@
-// CryptoBar V0.99m (API Source Display)
+// CryptoBar V0.99n (API Priority & Update Frequency Optimization)
 // app_state.cpp - Global application state definitions
 #include "app_state.h"
 #include "day_avg.h"  // for DAYAVG_ROLLING constant
 
 // ==================== Version =====================
-const char* CRYPTOBAR_VERSION = "V0.99m";
+const char* CRYPTOBAR_VERSION = "V0.99n";
 
 // ==================== Constants =====================
 
@@ -20,15 +20,15 @@ const float BRIGHTNESS_PRESETS[] = { 0.2f, 0.5f, 1.0f };
 const char* BRIGHTNESS_LABELS[]  = { "Low", "Med", "High" };
 
 // Update frequency presets
-// V0.99k: 30s, 1min, 3min, 5min, 10min (CoinPaprika supports 30s updates)
+// V0.99n: 1min, 3min, 5min, 10min (removed 30s to reduce API pressure)
+// Recommended: 3min for 1-3 devices, 5min for 4+ devices on same network
 const uint32_t UPDATE_PRESETS_MS[] = {
-  30UL * 1000UL,   // 30s
   60UL * 1000UL,   // 1min
-  180UL * 1000UL,  // 3min
+  180UL * 1000UL,  // 3min (default, recommended)
   300UL * 1000UL,  // 5min
   600UL * 1000UL   // 10min
 };
-const char* UPDATE_PRESET_LABELS[] = { "30s", "1m", "3m", "5m", "10m" };
+const char* UPDATE_PRESET_LABELS[] = { "1m", "3m", "5m", "10m" };
 
 // Date format labels
 const char* DATE_FORMAT_LABELS[DATE_FORMAT_COUNT] = {

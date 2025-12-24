@@ -297,9 +297,9 @@ static void drawSymbolPanel(const char* symbol, float change24h) {
   display.getTextBounds(historyApiLabel, 0, 0, &histX1, &histY1, &histW, &histH);
 
   // Calculate vertical layout with spacing: [PriceAPI] [gap] [Currency] [gap] [Symbol] [gap] [Change] [gap] [HistoryAPI]
-  const int smallGap = 4;  // Small gap between API labels and adjacent elements
-  const int normalGap = 8; // Normal gap between main elements (currency/symbol/change)
-  int totalH = apiH + smallGap + currH + normalGap + sH + normalGap + cH + smallGap + histH;
+  const int apiGap = 7;    // Gap between API labels and adjacent elements (needs more space for visual separation)
+  const int normalGap = 7; // Gap between main elements (currency/symbol/change)
+  int totalH = apiH + apiGap + currH + normalGap + sH + normalGap + cH + apiGap + histH;
   int topY   = (display.height() - totalH) / 2;
 
   // Draw price API label (top, extra small)
@@ -311,7 +311,7 @@ static void drawSymbolPanel(const char* symbol, float change24h) {
   display.print(priceApiLabel);
 
   // Draw currency code
-  int16_t currY = apiY + smallGap + currH;
+  int16_t currY = apiY + apiGap + currH;
   int16_t currX = (panelWidth - currW) / 2;
   display.setFont(smallFont);
   display.setCursor(currX, currY);
@@ -332,7 +332,7 @@ static void drawSymbolPanel(const char* symbol, float change24h) {
   display.print(changeBuf);
 
   // Draw history API label (bottom, extra small)
-  int16_t histY = cy + smallGap + histH;
+  int16_t histY = cy + apiGap + histH;
   int16_t histX = (panelWidth - histW) / 2;
   display.setFont();
   display.setTextSize(1);

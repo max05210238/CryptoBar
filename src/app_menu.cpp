@@ -142,7 +142,7 @@ void enterTimezoneSubmenu() {
   g_tzMenuIndex    = tzDisplayPosFromTzIndex(g_timezoneIndex);
   g_tzMenuTopIndex = max(0, g_tzMenuIndex - 2);
   Serial.println("[Menu] Enter TZ submenu");
-  drawTimezoneMenu(true);
+  drawTimezoneMenu(false);  // Partial refresh
 }
 
 // ==================== Menu Item Handlers =====================
@@ -155,7 +155,7 @@ void handleTimezoneSelect() {
   Serial.printf("[Menu] Timezone -> %s (UTC%+d)\n", TIMEZONES[g_timezoneIndex].label, (int)TIMEZONES[g_timezoneIndex].utcOffsetHours);
 
   g_uiMode = UI_MODE_MENU;
-  drawMenuScreen(true);
+  drawMenuScreen(false);  // Partial refresh
 }
 
 void handleCoinSelect() {
@@ -184,7 +184,7 @@ void handleCoinSelect() {
   }
 
   g_uiMode = UI_MODE_MENU;
-  drawMenuScreen(true);
+  drawMenuScreen(false);  // Partial refresh
 }
 
 void handleCurrencySelect() {
@@ -221,7 +221,7 @@ void handleMenuSelect() {
       g_coinMenuTopIndex = 0;
       g_coinDirty        = true;
       Serial.println("[Menu] Enter COIN submenu");
-      drawCoinMenu(true);
+      drawCoinMenu(false);  // Partial refresh
       break;
     }
 

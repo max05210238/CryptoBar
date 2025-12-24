@@ -119,7 +119,7 @@ bool connectWiFiStaWithRetries(const char* ssid, const char* pass,
     if (showUi) {
       // Append (i/N) to SSID label to show attempt count
       String label = String(ssid) + " (" + String(i) + "/" + String(maxAttempts) + ")";
-      drawWifiConnectingScreen(CRYPTOBAR_VERSION, label.c_str());
+      drawWifiConnectingScreen(CRYPTOBAR_VERSION, label.c_str(), false);  // Partial refresh
     }
 
     Serial.printf("[WiFi] STA attempt %d/%d (timeout=%lums)\n",

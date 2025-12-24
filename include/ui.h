@@ -42,10 +42,10 @@ enum MenuItem {
 void drawSplashScreen(const char* version);
 
 // WiFi provisioning / status screens
-void drawWifiPreparingApScreen(const char* version);
-void drawWifiPortalScreen(const char* version, const char* apSsid, const char* apIp);
-void drawWifiConnectingScreen(const char* version, const char* ssid);
-void drawWifiConnectFailedScreen(const char* version);
+void drawWifiPreparingApScreen(const char* version, bool fullRefresh = false);
+void drawWifiPortalScreen(const char* version, const char* apSsid, const char* apIp, bool fullRefresh = false);
+void drawWifiConnectingScreen(const char* version, const char* ssid, bool fullRefresh = false);
+void drawWifiConnectFailedScreen(const char* version, bool fullRefresh = false);
 void drawWifiInfoScreen(const char* version, const char* mac, const char* staIp, int signalBars, int channel, bool connected);
 
 // Firmware update / maintenance mode screens

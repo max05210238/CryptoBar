@@ -242,7 +242,7 @@ static void drawHeaderDateTime() {
   }
 }
 
-// V0.99f: Left black panel: currency + coin symbol + 24h change
+// V0.99m: Left black panel: price API + currency + coin symbol + 24h change + history API
 static void drawSymbolPanel(const char* symbol, float change24h) {
   int panelWidth = SYMBOL_PANEL_WIDTH;
 
@@ -252,7 +252,20 @@ static void drawSymbolPanel(const char* symbol, float change24h) {
   const GFXfont* bigFont   = &FreeSansBold18pt7b;
   const GFXfont* smallFont = &FreeSansBold9pt7b;
 
-  // Currency code bounds (small font, top)
+  // V0.99m: API source labels (extra small font - default 6x8)
+  const char* priceApiLabel = "Paprika";    // Real-time price data source
+  const char* historyApiLabel = "CoinGecko"; // Historical data source
+
+  // Get bounds for all elements
+
+  // Price API label bounds (extra small font - default 6x8)
+  display.setFont();  // Use default 6x8 font for extra small text
+  display.setTextSize(1);
+  int16_t apiX1, apiY1;
+  uint16_t apiW, apiH;
+  display.getTextBounds(priceApiLabel, 0, 0, &apiX1, &apiY1, &apiW, &apiH);
+
+  // Currency code bounds (small font)
   const CurrencyInfo& curr = CURRENCY_INFO[g_displayCurrency];
   const char* currCode = curr.code;  // Just the code, no symbol
 
@@ -261,13 +274,13 @@ static void drawSymbolPanel(const char* symbol, float change24h) {
   uint16_t currW, currH;
   display.getTextBounds(currCode, 0, 0, &currX1, &currY1, &currW, &currH);
 
-  // Coin symbol bounds (big font, middle)
+  // Coin symbol bounds (big font)
   display.setFont(bigFont);
   int16_t sx1, sy1;
   uint16_t sW, sH;
   display.getTextBounds(symbol, 0, 0, &sx1, &sy1, &sW, &sH);
 
-  // Change percentage bounds (small font, bottom)
+  // Change percentage bounds (small font)
   char changeBuf[24];
   snprintf(changeBuf, sizeof(changeBuf), "%+.2f%%", change24h);
 
@@ -276,13 +289,28 @@ static void drawSymbolPanel(const char* symbol, float change24h) {
   uint16_t cW, cH;
   display.getTextBounds(changeBuf, 0, 0, &cx1, &cy1, &cW, &cH);
 
-  // Calculate vertical layout with spacing: [Currency] [gap] [Symbol] [gap] [Change]
-  const int gap = 8;  // spacing between elements
-  int totalH = currH + gap + sH + gap + cH;
+  // History API label bounds (extra small font - default 6x8)
+  display.setFont();
+  display.setTextSize(1);
+  int16_t histX1, histY1;
+  uint16_t histW, histH;
+  display.getTextBounds(historyApiLabel, 0, 0, &histX1, &histY1, &histW, &histH);
+
+  // Calculate vertical layout with spacing: [PriceAPI] [gap] [Currency] [gap] [Symbol] [gap] [Change] [gap] [HistoryAPI]
+  const int gap = 6;  // Reduced gap for more compact layout with 5 elements
+  int totalH = apiH + gap + currH + gap + sH + gap + cH + gap + histH;
   int topY   = (display.height() - totalH) / 2;
 
-  // Draw currency code (top)
-  int16_t currY = topY + currH;
+  // Draw price API label (top, extra small)
+  int16_t apiY = topY + apiH;
+  int16_t apiX = (panelWidth - apiW) / 2;
+  display.setFont();
+  display.setTextSize(1);
+  display.setCursor(apiX, apiY);
+  display.print(priceApiLabel);
+
+  // Draw currency code
+  int16_t currY = apiY + gap + currH;
   int16_t currX = (panelWidth - currW) / 2;
   display.setFont(smallFont);
   display.setCursor(currX, currY);
@@ -295,12 +323,20 @@ static void drawSymbolPanel(const char* symbol, float change24h) {
   display.setCursor(sx, sy);
   display.print(symbol);
 
-  // Draw change percentage (bottom)
+  // Draw change percentage
   int16_t cy = sy + gap + cH;
   int16_t cx = (panelWidth - cW) / 2;
   display.setFont(smallFont);
   display.setCursor(cx, cy);
   display.print(changeBuf);
+
+  // Draw history API label (bottom, extra small)
+  int16_t histY = cy + gap + histH;
+  int16_t histX = (panelWidth - histW) / 2;
+  display.setFont();
+  display.setTextSize(1);
+  display.setCursor(histX, histY);
+  display.print(historyApiLabel);
 
   display.setTextColor(GxEPD_BLACK);
 }

@@ -34,15 +34,27 @@ void tickSchedulerReset(const char* reason) {
 
   g_timeValid = true;
   uint32_t sec = updateIntervalSec();
-  g_nextUpdateUtc = alignNextTickUtc(nowUtc, sec);
+
+  // V0.99o: Separate display time (synchronized) from fetch time (jittered)
+  // Display time: epoch-aligned, all devices update screen simultaneously
+  time_t nextDisplayUtc = alignNextTickUtc(nowUtc, sec);
+
+  // Fetch time: display time minus (6s fixed lead + 0-10s MAC-based jitter)
+  // This distributes API requests across 6-16 seconds before display update
+  const uint32_t MIN_API_LEAD_SEC = 6;
+  uint32_t totalLead = MIN_API_LEAD_SEC + g_fetchJitterSec;  // 6-16 seconds
+  g_nextUpdateUtc = nextDisplayUtc - totalLead;
+
   g_nextFxUpdateUtc = alignNextTickUtc(nowUtc, 300);
 
   // New schedule → discard any pending prefetch
   g_prefetchValid = false;
   g_prefetchForUtc = 0;
-  Serial.printf("[Sched] Reset(%s): int=%lus nextUpdateUtc=%ld (in %ld s)\n",
+
+  Serial.printf("[Sched] Reset(%s): int=%lus displayUtc=%ld fetchUtc=%ld (lead=%lus jitter=%lus)\n",
                 reason ? reason : "", (unsigned long)sec,
-                (long)g_nextUpdateUtc, (long)(g_nextUpdateUtc - nowUtc));
+                (long)nextDisplayUtc, (long)g_nextUpdateUtc,
+                (unsigned long)totalLead, (unsigned long)g_fetchJitterSec);
 }
 
 void logTickInfo(const char* tag, uint32_t intervalSec) {

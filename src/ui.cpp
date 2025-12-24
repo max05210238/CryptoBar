@@ -358,27 +358,29 @@ static void drawSymbolPanel(const char* symbol, float change24h) {
   display.setTextColor(GxEPD_BLACK);
 }
 
-// V0.99k: Detect actual decimal precision in price
+// V0.99o: Detect decimal precision with intelligent 0/2/4 display modes
+// Truncates to 4 decimals (no rounding), then displays 0, 2, or 4 decimals
 static int detectDecimalPlaces(double price, int maxDecimals) {
-  // Check how many trailing zeros we have
   double fractional = price - floor(price);
 
-  if (fractional < 0.0001) {
-    return 0;  // Integer or negligible decimals
+  // Integer check (tolerance for floating point errors)
+  // 0.0001 = one ten-thousandth, safe threshold for price precision
+  if (fabs(fractional) < 0.0001) {
+    return 0;  // Display as integer (e.g., "107234")
   }
 
-  // Check each decimal place
-  for (int d = 1; d <= maxDecimals; d++) {
-    double multiplier = pow(10.0, d);
-    double scaled = fractional * multiplier;
-    double remainder = scaled - floor(scaled);
+  // Truncate to 4 decimals using floor (no rounding)
+  // Example: 0.56789 → floor(5678.9) = 5678
+  int64_t scaled = (int64_t)floor(fractional * 10000.0);
 
-    if (remainder < 0.001) {
-      return d;  // This many decimals are significant
-    }
+  // Check if last 2 digits (decimals 3-4) are zero
+  // Example: 5600 % 100 = 0 → display 2 decimals ("107234.56")
+  //          5678 % 100 = 78 → display 4 decimals ("107234.5678")
+  if (scaled % 100 == 0) {
+    return 2;  // Display 2 decimals (e.g., "107234.56", "107234.90")
+  } else {
+    return 4;  // Display 4 decimals (e.g., "107234.5678", "107234.5670")
   }
-
-  return maxDecimals;  // Use full precision
 }
 
 // V0.99f: Center price display with multi-currency support (number only)

@@ -1,10 +1,10 @@
-// CryptoBar V0.99n (API Priority & Update Frequency Optimization)
+// CryptoBar V0.99o (MAC Jitter & Price Display Optimization)
 // app_state.cpp - Global application state definitions
 #include "app_state.h"
 #include "day_avg.h"  // for DAYAVG_ROLLING constant
 
 // ==================== Version =====================
-const char* CRYPTOBAR_VERSION = "V0.99n";
+const char* CRYPTOBAR_VERSION = "V0.99o";
 
 // ==================== Constants =====================
 
@@ -138,9 +138,10 @@ bool   g_timeValid      = false;
 time_t g_nextUpdateUtc  = 0;
 
 // Prefetch-to-tick
+// V0.99o: Increased minimum lead time to 6s for better API response tolerance
 const uint32_t PREFETCH_WINDOW_SEC   = 6;
-const uint32_t PREFETCH_MIN_LEAD_SEC = 2;
-const uint32_t PREFETCH_FIXED_LEAD_SEC = 4;
+const uint32_t PREFETCH_MIN_LEAD_SEC = 6;   // Increased from 2s to 6s
+const uint32_t PREFETCH_FIXED_LEAD_SEC = 6; // Increased from 4s to 6s
 uint32_t g_fetchJitterSec = 0;
 bool   g_prefetchValid  = false;
 time_t g_prefetchForUtc = 0;

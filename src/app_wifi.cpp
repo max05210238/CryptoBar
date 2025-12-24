@@ -56,8 +56,15 @@ static inline uint32_t macLast16bits() {
 }
 
 static inline void initFetchJitterIfNeeded() {
-  // Disable per-device fetch jitter to maximize multi-unit sync
-  g_fetchJitterSec = 0;
+  // V0.99o: Enable MAC-based jitter to distribute API load across devices
+  // Range: 0-10 seconds based on last 4 digits of MAC address
+  // This prevents thundering herd when multiple devices share same network
+  uint32_t macTail = macLast16bits();
+  g_fetchJitterSec = macTail % 11;  // 0-10 seconds (11 possible values)
+
+  Serial.printf("[Sched] Fetch jitter=%lu s (MAC tail=0x%04lX)\n",
+                (unsigned long)g_fetchJitterSec,
+                (unsigned long)macTail);
 }
 
 bool connectWiFiSta(const char* ssid, const char* pass, uint32_t timeoutMs) {
@@ -68,11 +75,6 @@ bool connectWiFiSta(const char* ssid, const char* pass, uint32_t timeoutMs) {
   WiFi.setSleep(false);
   WiFi.setAutoReconnect(true);
   initFetchJitterIfNeeded();
-  if (g_fetchJitterSec == 0) {
-    Serial.printf("[Sched] Fetch jitter DISABLED (MAC tail=0x%04lX)\n", (unsigned long)macLast16bits());
-  } else {
-    Serial.printf("[Sched] Fetch jitter=%lu s (MAC tail=0x%04lX)\n", (unsigned long)g_fetchJitterSec, (unsigned long)macLast16bits());
-  }
   WiFi.disconnect(true);
   delay(100);
 

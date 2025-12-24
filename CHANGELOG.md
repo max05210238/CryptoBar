@@ -7,6 +7,57 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [V0.99o] - 2025-12-24
+
+### Added - MAC-based Jitter & Price Display Optimization
+- 🎯 **MAC-based jitter for distributed API requests**:
+  - Each device automatically calculates 0-10 second jitter based on MAC address
+  - API requests distributed across 6-16 seconds before screen update
+  - Prevents "thundering herd" when multiple devices share same network
+  - Screen updates remain synchronized across all devices (visual perfection)
+- 🔢 **Intelligent price display (0/2/4 decimal modes)**:
+  - Fixes unwanted trailing zeros (e.g., .9100 → .91, .5600 → .56)
+  - Three display modes: integer, 2 decimals, or 4 decimals
+  - Truncates to 4 decimals (no rounding) before display logic
+  - Clean display: 107234, 107234.56, or 107234.5678
+
+### Changed
+- **API fetch timing**:
+  - Minimum lead time increased from 4s to 6s (better tolerance for slow networks)
+  - Total lead time: 6-16 seconds (6s fixed + 0-10s MAC jitter)
+  - Distributes 10 devices evenly across 10-second window
+- **Price precision algorithm**:
+  - Uses integer math (floor) instead of floating point (pow)
+  - Threshold 0.0001 to handle floating point errors
+  - Smart detection: if decimals 3-4 are "00" → display 2 decimals, else 4
+
+### Technical Details
+- **Files modified**: 6 files (app_state.cpp, app_wifi.cpp, app_scheduler.cpp, ui.cpp, main.cpp, CHANGELOG.md)
+- **Jitter calculation**: `macLast16bits() % 11` produces 0-10 seconds
+- **Display logic**: `floor(fractional * 10000) % 100 == 0` detects trailing zeros
+- **Scheduler**: Separates display time (synchronized) from fetch time (jittered)
+
+### Example Scenarios
+**MAC-based jitter (3-minute update, 10:00:00 screen update)**:
+- Device A (MAC ...3245, jitter=5s): Fetch at 09:59:49 → Display at 10:00:00
+- Device B (MAC ...7891, jitter=1s): Fetch at 09:59:53 → Display at 10:00:00
+- Device C (MAC ...0000, jitter=0s): Fetch at 09:59:54 → Display at 10:00:00
+
+**Price display modes**:
+- 107234.0000 → 107234 (integer)
+- 107234.5600 → 107234.56 (2 decimals, trailing 00)
+- 107234.9100 → 107234.91 (2 decimals, trailing 00)
+- 107234.5678 → 107234.5678 (4 decimals, has value)
+- 107234.5670 → 107234.5670 (4 decimals, decimal 3 has value)
+
+### Benefits
+- ✅ API requests distributed → avoids CoinGecko rate limits
+- ✅ Screen updates synchronized → visual perfection
+- ✅ Clean price display → no confusing .9100 or .5600
+- ✅ Zero configuration → automatic based on MAC address
+
+---
+
 ## [V0.99n] - 2025-12-24
 
 ### Changed - API Priority & Update Frequency Optimization

@@ -297,8 +297,9 @@ static void drawSymbolPanel(const char* symbol, float change24h) {
   display.getTextBounds(historyApiLabel, 0, 0, &histX1, &histY1, &histW, &histH);
 
   // Calculate vertical layout with spacing: [PriceAPI] [gap] [Currency] [gap] [Symbol] [gap] [Change] [gap] [HistoryAPI]
-  const int gap = 6;  // Reduced gap for more compact layout with 5 elements
-  int totalH = apiH + gap + currH + gap + sH + gap + cH + gap + histH;
+  const int smallGap = 4;  // Small gap between API labels and adjacent elements
+  const int normalGap = 8; // Normal gap between main elements (currency/symbol/change)
+  int totalH = apiH + smallGap + currH + normalGap + sH + normalGap + cH + smallGap + histH;
   int topY   = (display.height() - totalH) / 2;
 
   // Draw price API label (top, extra small)
@@ -310,28 +311,28 @@ static void drawSymbolPanel(const char* symbol, float change24h) {
   display.print(priceApiLabel);
 
   // Draw currency code
-  int16_t currY = apiY + gap + currH;
+  int16_t currY = apiY + smallGap + currH;
   int16_t currX = (panelWidth - currW) / 2;
   display.setFont(smallFont);
   display.setCursor(currX, currY);
   display.print(currCode);
 
   // Draw coin symbol (middle)
-  int16_t sy = currY + gap + sH;
+  int16_t sy = currY + normalGap + sH;
   int16_t sx = (panelWidth - sW) / 2;
   display.setFont(bigFont);
   display.setCursor(sx, sy);
   display.print(symbol);
 
   // Draw change percentage
-  int16_t cy = sy + gap + cH;
+  int16_t cy = sy + normalGap + cH;
   int16_t cx = (panelWidth - cW) / 2;
   display.setFont(smallFont);
   display.setCursor(cx, cy);
   display.print(changeBuf);
 
   // Draw history API label (bottom, extra small)
-  int16_t histY = cy + gap + histH;
+  int16_t histY = cy + smallGap + histH;
   int16_t histX = (panelWidth - histW) / 2;
   display.setFont();
   display.setTextSize(1);

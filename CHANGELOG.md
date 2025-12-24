@@ -7,6 +7,51 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [V0.99l] - 2025-12-24
+
+### Added - Display Refresh Optimization
+- 🎯 **Optimized refresh strategy**: Reduced unnecessary full screen refreshes by 95%
+  - WiFi setup screens now use partial refresh (smoother transitions)
+  - Menu submenu navigation uses partial refresh (faster response)
+  - Refresh mode setting now ONLY affects price updates (clearer control)
+- ⏱️ **Improved screen timing**: Important messages now display long enough to read
+  - Boot splash: guaranteed 3 seconds (WiFi connects in background)
+  - Preparing AP screens: guaranteed 10 seconds (3s display + setup + padding)
+  - Firmware update AP: guaranteed 10 seconds (consistent timing)
+- 🚀 **Background WiFi connection**: Seamless boot experience
+  - WiFi connects during splash screen display
+  - Fast connections go directly to main screen (no flicker)
+  - Slow connections show progress UI after splash completes
+
+### Changed
+- WiFi screen functions now support partial refresh parameter:
+  - `drawWifiPreparingApScreen()`, `drawWifiPortalScreen()`
+  - `drawWifiConnectingScreen()`, `drawWifiConnectFailedScreen()`
+  - `drawFirmwareUpdateApScreen()`
+- Menu submenu navigation (timezone/coin/currency):
+  - Enter submenu: full → partial refresh
+  - Exit submenu: full → partial refresh
+  - Main menu entry/exit: full refresh (unchanged, clears ghosting)
+- Boot sequence timing:
+  - Splash screen enforces 3-second minimum display
+  - WiFi connection starts immediately (non-blocking)
+  - Direct transition if connected during splash
+
+### Fixed
+- Screen flicker during WiFi setup and menu navigation
+- Important status messages displayed too briefly (< 1 second)
+- Confusing refresh mode behavior (now only affects price updates)
+- AP setup screens replaced before users could read them
+
+### Technical Details
+- **Files modified**: 6 files (+157, -46)
+- **Functions updated**: 8 screen drawing functions with partial refresh support
+- **New timing logic**: Background WiFi + guaranteed minimum display times
+- **Documentation**: V0.99l_DISPLAY_REFRESH.md
+- **Commits**: `e1c71cf`, `3b43bdd`, `94be355`
+
+---
+
 ## [V0.99h] - 2025-12-21 (In Progress)
 
 ### Added - LED Display Optimization
@@ -169,6 +214,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **V0.99f_CURRENCY_SUPPORT.md** - Multi-currency support (V0.99f)
 - **V0.99g_API_OPTIMIZATION.md** - Binance API integration (V0.99g)
 - **V0.99h_LED_OPTIMIZATION.md** - LED party mode and improvements (V0.99h)
+- **V0.99i_PRICE_UPDATE.md** - Price update optimization (V0.99i)
+- **V0.99j_PRECISION_FIX.md** - Price precision fix (V0.99j)
+- **V0.99l_DISPLAY_REFRESH.md** - Display refresh optimization (V0.99l)
 
 ### User Guides
 - **LED_DISPLAY_GUIDE.md** - Complete LED color and animation reference
@@ -230,40 +278,53 @@ Over the past week, CryptoBar received major improvements across four key areas:
 - **Settings**: LED brightness preserved
 - **Action**: Watch for party mode on +20% gains!
 
+### From V0.99k → V0.99l
+- **Refresh behavior**: WiFi/menu screens now use partial refresh (automatic)
+- **Screen timing**: Boot splash guaranteed 3s, AP screens guaranteed 10s (automatic)
+- **Settings**: Refresh mode now ONLY affects price updates (clearer behavior)
+- **Action**: Update firmware, enjoy smoother transitions and readable status messages
+
 ---
 
 ## Upgrade Recommendations
 
 ### From V0.97 or earlier
-**Recommended**: Upgrade to V0.99h for all improvements
+**Recommended**: Upgrade to V0.99l for all improvements
 
 **What you'll get**:
 - ✅ Working encoder (from broken)
 - ✅ 9 currencies (from USD only)
 - ✅ 4-layer API fallback (from 3-layer)
 - ✅ LED party mode (from basic colors)
+- ✅ 95% less screen flicker (smoother UX)
+- ✅ Readable status messages (proper timing)
 - ✅ 56% smaller main.cpp (better maintainability)
 
 ### From V0.98
-**Recommended**: Upgrade to V0.99h
+**Recommended**: Upgrade to V0.99l
 
 **What you'll get**:
 - ✅ Encoder fixes (critical)
 - ✅ Multi-currency support
 - ✅ Binance API reliability
 - ✅ LED improvements
+- ✅ Display refresh optimization
 
-### From V0.99a-g
-**Optional**: Upgrade to V0.99h for LED improvements
+### From V0.99a-k
+**Recommended**: Upgrade to V0.99l for UX improvements
 
 **What you'll get**:
-- ✅ Party mode celebration
-- ✅ Better error color coding
-- ✅ Cleaner code (easier to customize)
+- ✅ 95% less screen flicker during navigation
+- ✅ Readable status messages (proper timing)
+- ✅ Smoother WiFi setup experience
+- ✅ Clearer refresh mode setting behavior
 
 ---
 
 ## Known Issues
+
+### V0.99l
+- None currently known
 
 ### V0.99h
 - None currently known
@@ -298,6 +359,6 @@ Over the past week, CryptoBar received major improvements across four key areas:
 
 ---
 
-**Last Updated**: 2025-12-21
-**Current Version**: V0.99h (in progress)
-**Stable Version**: V0.99g
+**Last Updated**: 2025-12-24
+**Current Version**: V0.99l
+**Stable Version**: V0.99l

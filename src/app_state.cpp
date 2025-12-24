@@ -1,10 +1,10 @@
-// CryptoBar V0.99l (Display Refresh Optimization)
+// CryptoBar V0.99m (API Source Display)
 // app_state.cpp - Global application state definitions
 #include "app_state.h"
 #include "day_avg.h"  // for DAYAVG_ROLLING constant
 
 // ==================== Version =====================
-const char* CRYPTOBAR_VERSION = "V0.99l";
+const char* CRYPTOBAR_VERSION = "V0.99m";
 
 // ==================== Constants =====================
 

@@ -296,29 +296,36 @@ static void drawSymbolPanel(const char* symbol, float change24h) {
   uint16_t histW, histH;
   display.getTextBounds(historyApiLabel, 0, 0, &histX1, &histY1, &histW, &histH);
 
-  // Calculate vertical layout with BTC centered in black panel
-  // Keep spacing: topApiGap=14px, normalGap=7px, bottomApiGap=4px
-  const int topApiGap = 14;   // Larger gap after top API label for visual breathing room
-  const int bottomApiGap = 4; // Smaller gap before bottom API label (more compact)
-  const int normalGap = 7;    // Gap between main elements (currency/symbol/change)
+  // Calculate vertical layout with BTC centered in black panel (128px height)
+  // Spacing: topApiGap=14px, normalGap=7px, bottomApiGap=4px
+  const int topApiGap = 14;   // Larger gap after top API label
+  const int bottomApiGap = 4; // Smaller gap before bottom API label
+  const int normalGap = 7;    // Gap between main elements
 
-  // Center BTC symbol at display midpoint, then calculate other positions
-  int16_t centerY = display.height() / 2;
-  int16_t sy = centerY;  // BTC baseline at vertical center
+  // Center BTC symbol at display midpoint
+  // BTC baseline calculation: center - sy1 - sH/2 (to position visual center at midpoint)
+  int16_t btcCenter = display.height() / 2;  // 64 for 128px display
+  int16_t sy = btcCenter - sy1 - sH / 2;
   int16_t sx = (panelWidth - sW) / 2;
 
-  // Work backwards from BTC to calculate upper elements
-  int16_t currY = sy - normalGap - sH + currH;
+  // Calculate baselines using spacing formula:
+  // Upper element: current_baseline - (current_height + gap)
+  // Lower element: current_baseline + (gap + element_height)
+
+  // USD baseline (above BTC): BTC_baseline - (BTC_height + gap)
+  int16_t currY = sy - sH - normalGap;
   int16_t currX = (panelWidth - currW) / 2;
 
-  int16_t apiY = currY - topApiGap - currH + apiH;
+  // Paprika baseline (above USD): USD_baseline - (USD_height + gap)
+  int16_t apiY = currY - currH - topApiGap;
   int16_t apiX = (panelWidth - apiW) / 2;
 
-  // Work forwards from BTC to calculate lower elements
+  // Change% baseline (below BTC): BTC_baseline + (gap + change_height)
   int16_t cy = sy + normalGap + cH;
   int16_t cx = (panelWidth - cW) / 2;
 
-  int16_t histY = cy + bottomApiGap + histH;
+  // CoinGecko baseline (below %): change_baseline + (change_height + gap)
+  int16_t histY = cy + cH + bottomApiGap;
   int16_t histX = (panelWidth - histW) / 2;
 
   // Draw price API label (top, extra small)

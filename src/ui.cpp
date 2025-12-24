@@ -297,8 +297,8 @@ static void drawSymbolPanel(const char* symbol, float change24h) {
   display.getTextBounds(historyApiLabel, 0, 0, &histX1, &histY1, &histW, &histH);
 
   // Calculate vertical layout with BTC centered in black panel (128px height)
-  // Spacing: topApiGap=18px, normalGap=7px, bottomApiGap=4px
-  const int topApiGap = 18;   // Gap between Paprika and USD (moved up 4px from 14px)
+  // Spacing: topApiGap=22px, normalGap=7px, bottomApiGap=4px
+  const int topApiGap = 22;   // Gap between Paprika and USD
   const int bottomApiGap = 4; // Smaller gap before bottom API label
   const int normalGap = 7;    // Gap between main elements
 

@@ -7,6 +7,38 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [V0.99m] - 2025-12-24
+
+### Added - API Source Display
+- 🔍 **Dynamic API source display**: Real-time indication of data sources
+  - Top label: Shows current price API (Paprika/CoinGecko/Kraken/Binance)
+  - Bottom label: Shows current history API (CoinGecko/Binance/Kraken)
+  - Automatically updates when fallback occurs
+- 📊 **Full transparency**: Users always know where their data comes from
+  - Price API fallback chain: CoinPaprika → CoinGecko → Kraken → Binance
+  - History API fallback chain: CoinGecko → Binance → Kraken
+- 🎨 **Optimized layout**: BTC symbol perfectly centered in black panel
+  - Precise baseline calculations for visual balance
+  - Asymmetric spacing: 22px (top) / 7px (middle) / 4px (bottom)
+  - All elements properly aligned using baseline formula
+
+### Changed
+- Left black panel layout (5 elements, top to bottom):
+  1. API source label (price) - extra small font, 6x8
+  2. Currency code (USD/TWD/EUR...) - small font, FreeSansBold9pt7b
+  3. Coin symbol (BTC/ETH...) - large font, FreeSansBold18pt7b (centered)
+  4. 24h change percentage - small font, FreeSansBold9pt7b
+  5. API source label (history) - extra small font, 6x8
+
+### Technical Details
+- **New global variables**: `g_currentPriceApi`, `g_currentHistoryApi`
+- **API tracking**: network.cpp updates variables on successful fetch
+- **Dynamic rendering**: ui.cpp reads variables for real-time display
+- **Files modified**: 4 files (app_state.h/cpp, network.cpp, ui.cpp)
+- **Commits**: 8 commits with iterative spacing refinements
+
+---
+
 ## [V0.99l] - 2025-12-24
 
 ### Added - Display Refresh Optimization

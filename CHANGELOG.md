@@ -7,7 +7,68 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [V0.99h] - 2025-12-21 (In Progress)
+## [V0.99k] - 2025-12-23
+
+### Added - Aggregated Market Data Priority
+- 📊 **Aggregated market prices**: CoinPaprika (200+ exchanges) → CoinGecko (500+ exchanges)
+- 🎯 **Real market value**: No longer showing single exchange prices
+- ⏱️ **5 update intervals**: 30s, 1min, 3min, 5min, 10min (added 30s and 10min options)
+- 🔢 **Dynamic decimal precision**: Auto-detects significant digits, removes trailing zeros
+- ✨ **Clean display**: Max 4 decimals (down from 6) for user-friendly appearance
+
+### Changed
+- **API priority for current price**: CoinPaprika → CoinGecko → Kraken → Binance
+- **API priority for history/charts**: CoinGecko → Binance → Kraken (all aggregated first)
+- **Default update interval**: 30s (matches CoinPaprika's 30-second update frequency)
+- **Update interval presets**: Changed from {2m, 3m, 5m, 10m} to {30s, 1m, 3m, 5m, 10m}
+- **Max decimal display**: 6 → 4 decimals (eliminates visual noise)
+- **Preset label format**: "60s" → "1m" for consistency
+
+### Technical Details
+- **Files modified**: 6 files (network.cpp, ui.cpp, config.h, app_state.cpp/h, wifi_portal.cpp)
+- **New function**: `detectDecimalPlaces()` for intelligent decimal detection
+- **CoinPaprika precision**: Up to 6 decimals ($87,733.576448), displayed as 4
+- **Documentation**: V0.99k_AGGREGATED_DATA.md
+- **Commits**: `8a9a00e`, `c15aa18`, `4d19ef6`
+
+### User Benefits
+- ✅ **True market prices** from 200+ exchanges (not single exchange)
+- ✅ **Cleaner display** with max 4 decimals, no trailing zeros
+- ✅ **Flexible updates** from 30s (active traders) to 10min (battery saving)
+- ✅ **Open source friendly** - all APIs free, no keys required
+
+---
+
+## [V0.99j] - 2025-12-21
+
+### Fixed - Price Precision
+- 🔧 **Double precision**: Upgraded all price variables from float → double
+- 🎯 **Eliminated artifacts**: No more .0000 or .5000 decimal endings
+- 📊 **Full precision**: 15-16 significant digits (vs 6-7 with float)
+- ⚡ **ESP32 printf support**: Added `-Wl,-u,vfprintf_float` linker flag
+
+### Changed
+- All price variables: `float` → `double` (g_lastPriceUsd, g_prefetchPrice, etc.)
+- ChartSample.price: `float` → `double`
+- All price-related function signatures updated
+- String parsing: `atof()` → `strtod()` for better precision control
+
+### Technical Details
+- **Memory impact**: ~200 bytes additional RAM (< 0.04% of 512KB SRAM)
+- **Performance impact**: None (ESP32-S3 has hardware double-precision FPU)
+- **Documentation**: V0.99j_PRECISION_FIX.md
+
+---
+
+## [V0.99i] - 2025-12-21
+
+### Changed - Price Update Optimization
+- 📡 **API reordering**: Optimized fetch priority based on reliability
+- 🔄 **Historical data**: Improved fallback strategy
+
+---
+
+## [V0.99h] - 2025-12-21
 
 ### Added - LED Display Optimization
 - 🎉 **Party Mode**: Rainbow gradient LED animation for +20% gains
@@ -169,6 +230,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **V0.99f_CURRENCY_SUPPORT.md** - Multi-currency support (V0.99f)
 - **V0.99g_API_OPTIMIZATION.md** - Binance API integration (V0.99g)
 - **V0.99h_LED_OPTIMIZATION.md** - LED party mode and improvements (V0.99h)
+- **V0.99i_PRICE_UPDATE.md** - Price update optimization (V0.99i)
+- **V0.99j_PRECISION_FIX.md** - Float to double precision upgrade (V0.99j)
+- **V0.99k_AGGREGATED_DATA.md** - Aggregated market data priority (V0.99k)
 
 ### User Guides
 - **LED_DISPLAY_GUIDE.md** - Complete LED color and animation reference
@@ -178,9 +242,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## Recent Improvements Summary (V0.99a - V0.99h)
+## Recent Improvements Summary (V0.99a - V0.99k)
 
-Over the past week, CryptoBar received major improvements across four key areas:
+Over the past week, CryptoBar received major improvements across six key areas:
 
 ### 1️⃣ **Encoder Reliability** (V0.99a)
 - Fixed critical GPIO incompatibility on ESP32-S3
@@ -206,6 +270,19 @@ Over the past week, CryptoBar received major improvements across four key areas:
 - Improved code quality with 20+ lines removed
 - **Impact**: Celebration feedback + better visual language
 
+### 5️⃣ **Price Precision** (V0.99j)
+- Float → double precision upgrade (32-bit → 64-bit)
+- Eliminated .0000 and .5000 decimal artifacts
+- Full 15-16 significant digit precision
+- **Impact**: Professional, accurate price display
+
+### 6️⃣ **Aggregated Market Data** (V0.99k)
+- CoinPaprika (200+ exchanges) as primary price source
+- CoinGecko (500+ exchanges) for historical data
+- Max 4 decimals display, dynamic precision detection
+- 5 update intervals (30s, 1m, 3m, 5m, 10m)
+- **Impact**: Real market prices, cleaner display, flexible updates
+
 ---
 
 ## Migration Guide
@@ -230,48 +307,67 @@ Over the past week, CryptoBar received major improvements across four key areas:
 - **Settings**: LED brightness preserved
 - **Action**: Watch for party mode on +20% gains!
 
+### From V0.99h → V0.99j
+- **Precision**: Float → double (automatic upgrade)
+- **Settings**: No changes needed
+- **Action**: Enjoy accurate decimal display without artifacts
+
+### From V0.99j → V0.99k
+- **Data source**: Single exchange → aggregated market data
+- **Update intervals**: 2m preset removed, 30s and 10m added
+- **Settings**: Update interval may auto-adjust to nearest preset
+- **Action**: Enjoy real market prices with clean 4-decimal display
+
 ---
 
 ## Upgrade Recommendations
 
 ### From V0.97 or earlier
-**Recommended**: Upgrade to V0.99h for all improvements
+**Strongly Recommended**: Upgrade to V0.99k for all improvements
 
 **What you'll get**:
 - ✅ Working encoder (from broken)
 - ✅ 9 currencies (from USD only)
 - ✅ 4-layer API fallback (from 3-layer)
 - ✅ LED party mode (from basic colors)
+- ✅ Double precision (from float)
+- ✅ Aggregated market data (from single exchange)
 - ✅ 56% smaller main.cpp (better maintainability)
 
 ### From V0.98
-**Recommended**: Upgrade to V0.99h
+**Strongly Recommended**: Upgrade to V0.99k
 
 **What you'll get**:
 - ✅ Encoder fixes (critical)
 - ✅ Multi-currency support
 - ✅ Binance API reliability
 - ✅ LED improvements
+- ✅ Double precision accuracy
+- ✅ Real market prices
 
-### From V0.99a-g
-**Optional**: Upgrade to V0.99h for LED improvements
+### From V0.99a-h
+**Recommended**: Upgrade to V0.99k for precision and market data
 
 **What you'll get**:
-- ✅ Party mode celebration
-- ✅ Better error color coding
-- ✅ Cleaner code (easier to customize)
+- ✅ Double precision (no .0000 artifacts)
+- ✅ Aggregated market prices (200+ exchanges)
+- ✅ Cleaner display (max 4 decimals)
+- ✅ Flexible update intervals (30s-10min)
 
 ---
 
 ## Known Issues
 
-### V0.99h
+### V0.99k
 - None currently known
 
-### V0.99g
+### V0.99j
 - None currently known
 
-### V0.99f
+### V0.99i-h
+- None currently known
+
+### V0.99g-f
 - None currently known
 
 ### V0.99a
@@ -280,6 +376,8 @@ Over the past week, CryptoBar received major improvements across four key areas:
 ### V0.98 and earlier
 - ⚠️ **Encoder broken on ESP32-S3** (fixed in V0.99a)
 - ⚠️ **GPIO 5/6 incompatible with PCNT** (fixed in V0.99a)
+- ⚠️ **Float precision artifacts** (fixed in V0.99j)
+- ⚠️ **Single exchange prices** (fixed in V0.99k)
 
 ---
 
@@ -298,6 +396,6 @@ Over the past week, CryptoBar received major improvements across four key areas:
 
 ---
 
-**Last Updated**: 2025-12-21
-**Current Version**: V0.99h (in progress)
-**Stable Version**: V0.99g
+**Last Updated**: 2025-12-23
+**Current Version**: V0.99k
+**Stable Version**: V0.99k

@@ -403,8 +403,9 @@ static void drawPriceCenter(double priceUsd) {
   const CurrencyInfo& curr = CURRENCY_INFO[g_displayCurrency];
 
   // V0.99p: Length-based decimal precision (auto-adjust for display width)
+  // All currencies use same logic: 4 → 2 → 0 decimals based on total length
   // CoinGecko precision=full provides 14+ decimals, display max 4 for readability
-  int maxDecimals = curr.noDecimals ? 0 : 4;  // Max 4 decimals for user-friendly display
+  int maxDecimals = 4;  // All currencies (including JPY/KRW) use length-based logic
   int actualDecimals = detectDecimalPlaces(price, maxDecimals);
 
   // Start with 18pt font (may downgrade to 12pt if needed)

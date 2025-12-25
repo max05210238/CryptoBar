@@ -95,8 +95,12 @@ void updateAvgLineReference(time_t nowUtc) {
   if (ok) {
     g_prevDayRefPrice = mean;
     g_prevDayRefValid = true;
+    // V0.99p DEBUG: Log rolling mean calculation
+    int sampleCount = dayAvgRollingCount();
+    Serial.printf("[DEBUG] Rolling 24h mean: $%.8f (from %d samples)\n", mean, sampleCount);
   } else {
     g_prevDayRefValid = false;
+    Serial.println("[DEBUG] Rolling 24h mean: FAILED (no data)");
   }
 }
 

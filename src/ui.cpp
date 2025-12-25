@@ -952,34 +952,32 @@ void drawMainScreen(double priceUsd, double change24h, bool fullRefresh) {
   } while (display.nextPage());
 }
 
-// V0.99q: Time-only refresh
-// Updates only the date/time area (top ~50 pixels of white panel)
-// This allows the clock to update every minute without affecting price/chart
-// and without counting toward the partial refresh limit
+// V0.99q: Time-only refresh (full-area partial refresh)
+// Updates the entire white panel with partial refresh, but only the time actually changes
+// GxEPD2 will only refresh pixels that differ from the previous state
+// This avoids artifacts around the price area and ensures clean time updates
 void drawMainScreenTimeOnly(bool fullRefresh) {
-  // Time refresh area: top portion of white panel (right side only)
-  // Height: 50 pixels is enough for both Small and Large date/time modes
-  const int TIME_AREA_HEIGHT = 50;
-
   if (fullRefresh) {
     display.setFullWindow();
   } else {
-    // Partial window: only the time display area
+    // Partial window: entire right-side panel (not just time area)
+    // This prevents partial refresh artifacts bleeding into price/chart areas
     display.setPartialWindow(SYMBOL_PANEL_WIDTH, 0,
                              display.width() - SYMBOL_PANEL_WIDTH,
-                             TIME_AREA_HEIGHT);
+                             display.height());
   }
 
   display.firstPage();
   do {
-    // Only clear and redraw the time area (white background)
-    display.fillRect(SYMBOL_PANEL_WIDTH, 0,
-                     display.width() - SYMBOL_PANEL_WIDTH,
-                     TIME_AREA_HEIGHT,
-                     GxEPD_WHITE);
+    // Clear and redraw the entire white panel
+    // GxEPD2 compares old vs new pixels and only refreshes what changed (time area)
+    display.fillScreen(GxEPD_WHITE);
 
-    // Draw only the date/time (no symbol panel, price, or chart)
-    drawHeaderDateTime();
+    // Redraw all content with current data
+    // Only time will change, price/chart data remains the same
+    drawHeaderDateTime();           // Time updates (changes)
+    drawPriceCenter(g_lastPriceUsd);    // Price stays same (no refresh)
+    drawHistoryChart();             // Chart stays same (no refresh)
 
   } while (display.nextPage());
 }

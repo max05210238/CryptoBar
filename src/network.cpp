@@ -580,9 +580,10 @@ static bool bootstrapHistoryFromCoingeckoMarketChart() {
     double price = row[1].as<double>();
     if (price <= 0.0) continue;
 
- // Rolling 24h mean uses full last-day window (seeded from CoinGecko)
-    dayAvgRollingAdd(tUtc, price);
+ // V0.99p: Filter to 24h window BEFORE adding to rolling buffer
+ // This ensures rolling mean uses same data range as chart
     if (tUtc < windowStartUtc || tUtc > windowEndUtc) continue;
+    dayAvgRollingAdd(tUtc, price);
     addChartSampleUtc(tUtc, price);
     kept++;
   }
@@ -702,11 +703,10 @@ static bool bootstrapHistoryFromBinanceKlines() {
 
     if (closePrice <= 0.0) continue;
 
-    // Rolling 24h mean uses full last-day window
-    dayAvgRollingAdd(tUtc, closePrice);
-
-    // Only add points within this cycle to the chart
+    // V0.99p: Filter to 24h window BEFORE adding to rolling buffer
+    // This ensures rolling mean uses same data range as chart
     if (tUtc < windowStartUtc || tUtc > windowEndUtc) continue;
+    dayAvgRollingAdd(tUtc, closePrice);
     addChartSampleUtc(tUtc, closePrice);
     kept++;
   }
@@ -866,7 +866,8 @@ void bootstrapHistoryFromKrakenOHLC() {
     if (tUtc < minT) minT = tUtc;
     if (tUtc > maxT) maxT = tUtc;
 
- // Only add points within this cycle to the chart
+ // V0.99p: Filter to 24h window BEFORE adding to rolling buffer
+ // This ensures rolling mean uses same data range as chart
     if (tUtc < windowStartUtc || tUtc > windowEndUtc) continue;
 
     double closePrice = atof(closeStr);

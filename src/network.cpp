@@ -61,17 +61,27 @@ void updateEtCycle() {
 }
 
 // Internal: add a sample to chart buffer at specified UTC time
+// V0.99p: Chart uses 24h window (not ET cycle) to match rolling 24h mean
 static void addChartSampleUtc(time_t sampleUtc, double price) {
-  if (!g_cycleInit) {
-    updateEtCycle();
-    if (!g_cycleInit) return;
+  time_t nowUtc = time(nullptr);
+  if (nowUtc <= 0) {
+    // Fallback to ET cycle if time is not available
+    if (!g_cycleInit) {
+      updateEtCycle();
+      if (!g_cycleInit) return;
+    }
+    nowUtc = g_cycleEndUtc;
   }
 
-  if (sampleUtc < g_cycleStartUtc) return;
-  if (sampleUtc > g_cycleEndUtc)   sampleUtc = g_cycleEndUtc;
+  // V0.99p: Use 24h window instead of ET cycle
+  time_t windowStartUtc = nowUtc - (24 * 3600);
+  time_t windowEndUtc = nowUtc;
 
-  float pos = float(sampleUtc - g_cycleStartUtc) /
-              float(g_cycleEndUtc - g_cycleStartUtc);
+  if (sampleUtc < windowStartUtc) return;
+  if (sampleUtc > windowEndUtc)   sampleUtc = windowEndUtc;
+
+  float pos = float(sampleUtc - windowStartUtc) /
+              float(windowEndUtc - windowStartUtc);
   if (pos < 0.0f) pos = 0.0f;
   if (pos > 1.0f) pos = 1.0f;
 

@@ -9,27 +9,40 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [V0.99p] - 2025-12-24
 
-### Changed - CoinGecko Precision Parameter Test
-- 🔍 **CoinGecko API precision parameter**:
+### Changed - High-Precision Price Display
+- 🔍 **CoinGecko API precision enhancement**:
   - Added `precision=full` parameter to `/simple/price` endpoint
-  - Testing if CoinGecko supports higher precision for price data
-  - Goal: Display XRP with 4 decimals, BTC with at least 2 decimals
-- 📊 **Enhanced debug logging**:
-  - Complete raw JSON response now printed to Serial monitor
-  - Price values shown with up to 10 decimal places for precision verification
-  - Helps identify if API returns higher precision data
+  - API now returns 14-16 decimal places (e.g., XRP: 1.86350365846271)
+  - Verified working with free CoinGecko API (no additional limits)
+- 📏 **Length-based decimal display (max 10 characters)**:
+  - Displays 4 decimals when total length ≤ 10 characters
+  - Auto-degrades to 2 decimals if 4-decimal format exceeds limit
+  - Auto-degrades to 0 decimals (integer) if 2-decimal format exceeds limit
+  - Font downgrade to 12pt if even integer format exceeds width
+- 🔢 **Trailing zeros preserved**:
+  - Displays "1.8600" instead of "1.86" to indicate API precision limit
+  - Helps users identify when fallback APIs (Kraken/Binance) are used
+  - Example: "87620.00" indicates low-precision API vs "87619.36" high-precision
+- 📊 **Enhanced debug logging** (temporary):
+  - Complete raw JSON response printed to Serial monitor
+  - Price values shown with up to 10 decimal places for verification
 
 ### Technical Details
-- **Files modified**: 2 files (network.cpp, main.cpp, CHANGELOG.md)
+- **Files modified**: 3 files (network.cpp, ui.cpp, main.cpp, CHANGELOG.md)
 - **API URL change**: Added `&precision=full` query parameter
 - **Buffer size**: Increased from 192 to 256 bytes for longer URL
+- **Display logic**: Length-based algorithm replaces trailing-zero detection
 - **Debug format**: `%.10f` to show up to 10 decimal places
 
-### Testing Instructions
-1. Monitor Serial output during price fetch
-2. Check "RAW JSON RESPONSE" section for actual API data
-3. Verify if BTC shows decimals and XRP shows 4+ decimals
-4. If `precision=full` not supported, will fallback to /coins/{id}/tickers endpoint
+### Display Examples
+| Price (USD) | Total Length | Display |
+|-------------|--------------|---------|
+| 1.8635      | 6 chars      | 1.8635 (4 decimals) |
+| 888.5000    | 8 chars      | 888.5000 (4 decimals) |
+| 87619.3624  | 10 chars     | 87619.3624 (4 decimals) |
+| 134222.2088 | 11 chars     | 134222.21 (2 decimals) |
+| 1342220.21  | 10 chars     | 1342220.21 (2 decimals) |
+| 13422202.21 | 11 chars     | 13422202 (0 decimals) |
 
 ---
 

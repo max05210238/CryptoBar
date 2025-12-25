@@ -358,29 +358,33 @@ static void drawSymbolPanel(const char* symbol, float change24h) {
   display.setTextColor(GxEPD_BLACK);
 }
 
-// V0.99o: Detect decimal precision with intelligent 0/2/4 display modes
-// Truncates to 4 decimals (no rounding), then displays 0, 2, or 4 decimals
+// V0.99p: Length-based decimal precision (max 10 chars: 9 digits + 1 decimal point)
+// Try 4 decimals first, degrade to 2/0 if total length exceeds display limit
+// Trailing zeros are preserved (e.g., "1.8600" indicates API precision limit)
 static int detectDecimalPlaces(double price, int maxDecimals) {
-  double fractional = price - floor(price);
-
-  // Integer check (tolerance for floating point errors)
-  // 0.0001 = one ten-thousandth, safe threshold for price precision
-  if (fabs(fractional) < 0.0001) {
-    return 0;  // Display as integer (e.g., "107234")
-  }
-
-  // Truncate to 4 decimals using floor (no rounding)
-  // Example: 0.56789 → floor(5678.9) = 5678
-  int64_t scaled = (int64_t)floor(fractional * 10000.0);
-
-  // Check if last 2 digits (decimals 3-4) are zero
-  // Example: 5600 % 100 = 0 → display 2 decimals ("107234.56")
-  //          5678 % 100 = 78 → display 4 decimals ("107234.5678")
-  if (scaled % 100 == 0) {
-    return 2;  // Display 2 decimals (e.g., "107234.56", "107234.90")
+  // Calculate integer part digit count
+  // For price < 1.0, integer part is "0" (1 digit)
+  int intDigits;
+  if (price < 1.0) {
+    intDigits = 1;  // "0.xxxx"
   } else {
-    return 4;  // Display 4 decimals (e.g., "107234.5678", "107234.5670")
+    intDigits = (int)floor(log10(price)) + 1;
   }
+
+  // Try decimal places in descending order: 4 → 2 → 0
+  // Total length = integer digits + decimal point (if any) + decimal digits
+  const int decimals[] = {4, 2, 0};
+  for (int i = 0; i < 3; ++i) {
+    int dec = decimals[i];
+    if (dec > maxDecimals) continue;  // Skip if exceeds currency's max decimals
+
+    int totalLen = intDigits + (dec > 0 ? 1 : 0) + dec;
+    if (totalLen <= 10) {
+      return dec;
+    }
+  }
+
+  return 0;  // Fallback: no decimals (will trigger font downgrade if still too long)
 }
 
 // V0.99f: Center price display with multi-currency support (number only)
@@ -398,8 +402,8 @@ static void drawPriceCenter(double priceUsd) {
   // Get currency metadata
   const CurrencyInfo& curr = CURRENCY_INFO[g_displayCurrency];
 
-  // V0.99k: Dynamically detect actual decimal precision
-  // CoinPaprika provides up to 6 decimals, but max 4 for cleaner display
+  // V0.99p: Length-based decimal precision (auto-adjust for display width)
+  // CoinGecko precision=full provides 14+ decimals, display max 4 for readability
   int maxDecimals = curr.noDecimals ? 0 : 4;  // Max 4 decimals for user-friendly display
   int actualDecimals = detectDecimalPlaces(price, maxDecimals);
 
@@ -412,7 +416,7 @@ static void drawPriceCenter(double priceUsd) {
   int maxNumberW = panelWidth - 8;  // 4px margin on each side
   if (maxNumberW < 10) maxNumberW = 10;
 
-  // V0.99k: Use actual decimal places (no trailing zeros)
+  // V0.99p: Trailing zeros preserved (indicates API precision)
   // Adaptive decimals: start at actualDecimals, reduce until it fits
   char numBuf[32];
   int16_t x1, y1;

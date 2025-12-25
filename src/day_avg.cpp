@@ -79,26 +79,10 @@ void dayAvgRollingAdd(time_t sampleUtc, double price) {
 static void trimTo24h(time_t nowUtc) {
   if (nowUtc <= 0 || s_count <= 0) return;
   time_t cutoff = nowUtc - kWindowSec;
-
-  // V0.99p DEBUG: Track trimming
-  int trimmed = 0;
-  double trimmedSum = 0.0;
-
   while (s_count > 0) {
     time_t t0 = s_buf[s_head].tUtc;
     if (t0 >= cutoff) break;
-
-    // V0.99p DEBUG: Track what we're removing
-    trimmedSum += s_buf[s_head].price;
-    trimmed++;
-
     popOldest();
-  }
-
-  if (trimmed > 0) {
-    double avgTrimmed = trimmedSum / trimmed;
-    Serial.printf("[DEBUG] trimTo24h: Removed %d samples, avg=$%.2f, cutoff=%ld\n",
-                  trimmed, avgTrimmed, (long)cutoff);
   }
 }
 
@@ -106,26 +90,6 @@ bool dayAvgRollingGet(time_t nowUtc, double& outMean) {
   trimTo24h(nowUtc);
   if (s_count <= 0) return false;
   outMean = s_sum / (double)s_count;
-
-  // V0.99p DEBUG: Show rolling buffer price range
-  double minPrice = s_buf[s_head].price;
-  double maxPrice = s_buf[s_head].price;
-  time_t oldestTime = s_buf[s_head].tUtc;
-  time_t newestTime = s_buf[s_head].tUtc;
-
-  for (int i = 0; i < s_count; i++) {
-    int idx = idxAt(i);
-    double p = s_buf[idx].price;
-    time_t t = s_buf[idx].tUtc;
-    if (p < minPrice) minPrice = p;
-    if (p > maxPrice) maxPrice = p;
-    if (t < oldestTime) oldestTime = t;
-    if (t > newestTime) newestTime = t;
-  }
-
-  Serial.printf("[DEBUG] Rolling buffer: min=$%.2f max=$%.2f mean=$%.2f (span: %ld sec)\n",
-                minPrice, maxPrice, outMean, (long)(newestTime - oldestTime));
-
   return true;
 }
 

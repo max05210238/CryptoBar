@@ -571,15 +571,6 @@ static bool bootstrapHistoryFromCoingeckoMarketChart() {
   dayAvgRollingReset();
   int kept = 0;
 
-  // V0.99p DEBUG: Track CoinGecko data range
-  time_t firstTimestamp = 0;
-  time_t lastTimestamp = 0;
-  double firstPrice = 0.0;
-  double lastPrice = 0.0;
-  double minPrice = 999999.0;
-  double maxPrice = 0.0;
-  int totalSamples = 0;
-
   for (JsonVariant v : prices) {
     JsonArray row = v.as<JsonArray>();
     if (row.isNull() || row.size() < 2) continue;
@@ -590,45 +581,14 @@ static bool bootstrapHistoryFromCoingeckoMarketChart() {
     double price = row[1].as<double>();
     if (price <= 0.0) continue;
 
-    // V0.99p DEBUG: Track first and last
-    if (totalSamples == 0) {
-      firstTimestamp = tUtc;
-      firstPrice = price;
-    }
-    lastTimestamp = tUtc;
-    lastPrice = price;
-    if (price < minPrice) minPrice = price;
-    if (price > maxPrice) maxPrice = price;
-    totalSamples++;
-
- // V0.99o: Rolling 24h mean uses full last-day window (seeded from CoinGecko)
+ // Rolling 24h mean uses full last-day window (seeded from CoinGecko)
     dayAvgRollingAdd(tUtc, price);
     if (tUtc < windowStartUtc || tUtc > windowEndUtc) continue;
     addChartSampleUtc(tUtc, price);
     kept++;
   }
 
-  // V0.99p DEBUG: Show CoinGecko data range
-  long spanSec = lastTimestamp - firstTimestamp;
-  long hoursAgo = nowUtc - firstTimestamp;
-  Serial.printf("[DEBUG] CoinGecko returned %d samples, span: %ld sec (%.1f hrs)\n",
-                totalSamples, spanSec, spanSec / 3600.0);
-  Serial.printf("[DEBUG] First: $%.2f at %ld (%ld sec ago, %.1f hrs ago)\n",
-                firstPrice, (long)firstTimestamp, hoursAgo, hoursAgo / 3600.0);
-  Serial.printf("[DEBUG] Last:  $%.2f at %ld\n", lastPrice, (long)lastTimestamp);
-  Serial.printf("[DEBUG] Range: $%.2f - $%.2f\n", minPrice, maxPrice);
-
   Serial.printf("[History][CG] Kept %d samples into chart.\n", kept);
-
-  // V0.99p DEBUG: Show rolling buffer stats
-  int rollingCount = dayAvgRollingCount();
-  Serial.printf("[DEBUG] Rolling buffer has %d samples after bootstrap\n", rollingCount);
-  if (rollingCount > 0) {
-    double testMean = 0.0;
-    if (dayAvgRollingGet(nowUtc, testMean)) {
-      Serial.printf("[DEBUG] Initial rolling mean: $%.8f\n", testMean);
-    }
-  }
 
   // V0.99m: Track successful history API source
   if (kept > 0) {

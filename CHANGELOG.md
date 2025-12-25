@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [V0.99p] - 2025-12-24
+## [V0.99p] - 2025-12-25
 
 ### Changed - High-Precision Price Display
 - 🔍 **CoinGecko API precision enhancement**:
@@ -23,16 +23,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Displays "1.8600" instead of "1.86" to indicate API precision limit
   - Helps users identify when fallback APIs (Kraken/Binance) are used
   - Example: "87620.00" indicates low-precision API vs "87619.36" high-precision
-- 📊 **Enhanced debug logging** (temporary):
-  - Complete raw JSON response printed to Serial monitor
-  - Price values shown with up to 10 decimal places for verification
+- 🌐 **JPY/KRW decimal support**:
+  - Removed special restriction that forced JPY/KRW to display only integers
+  - Now applies unified length-based logic to all currencies
+  - Example: ETH in KRW now shows decimals when appropriate
 
 ### Technical Details
-- **Files modified**: 3 files (network.cpp, ui.cpp, main.cpp, CHANGELOG.md)
+- **Files modified**: network.cpp, ui.cpp, main.cpp, day_avg.cpp
 - **API URL change**: Added `&precision=full` query parameter
-- **Buffer size**: Increased from 192 to 256 bytes for longer URL
 - **Display logic**: Length-based algorithm replaces trailing-zero detection
-- **Debug format**: `%.10f` to show up to 10 decimal places
+- **Currency handling**: Unified decimal logic for all currencies (removed `noDecimals` flag)
 
 ### Display Examples
 | Price (USD) | Total Length | Display |

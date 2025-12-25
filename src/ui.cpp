@@ -488,13 +488,8 @@ static void drawHistoryChart() {
     if (p0 > maxP) maxP = p0;
   }
 
-  // V0.99p DEBUG: Log chart range before avg line expansion
-  Serial.printf("[DEBUG] Chart range BEFORE avg: min=%.2f max=%.2f (samples=%d)\n",
-                minP, maxP, g_chartSampleCount);
-
   if (g_dayAvgMode != DAYAVG_OFF && g_prevDayRefValid) {
         double p = g_prevDayRefPrice * fx;
-    Serial.printf("[DEBUG] Avg line price: %.8f (before range expansion)\n", p);
     if (p < minP) minP = p;
     if (p > maxP) maxP = p;
   }
@@ -503,20 +498,15 @@ static void drawHistoryChart() {
     maxP = minP + 1.0;
   }
 
-  Serial.printf("[DEBUG] Chart range AFTER avg: min=%.2f max=%.2f\n", minP, maxP);
-
   int chartHeight = chartBottom - chartTop;
   int chartWidth  = panelRight - panelLeft - 4;
 
   int yDayAvg = -1;
   if (g_dayAvgMode != DAYAVG_OFF && g_prevDayRefValid) {
         double norm = ((g_prevDayRefPrice * fx) - minP) / (maxP - minP);
-    Serial.printf("[DEBUG] Avg line norm: %.4f (before clamp)\n", norm);
     if (norm < 0.0) norm = 0.0;
     if (norm > 1.0) norm = 1.0;
     yDayAvg = chartBottom - int(norm * chartHeight);
-    Serial.printf("[DEBUG] Avg line Y: %d (chartBottom=%d height=%d norm=%.4f)\n",
-                  yDayAvg, chartBottom, chartHeight, norm);
   }
 
   if (yDayAvg >= chartTop && yDayAvg <= chartBottom) {

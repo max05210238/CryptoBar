@@ -1,4 +1,4 @@
-// CryptoBar V0.99p (CoinGecko Precision Parameter Test)
+// CryptoBar V0.99p (High-Precision Price Display)
 #include <Arduino.h>
 #include <WiFi.h>
 #include <HTTPClient.h>

@@ -79,10 +79,26 @@ void dayAvgRollingAdd(time_t sampleUtc, double price) {
 static void trimTo24h(time_t nowUtc) {
   if (nowUtc <= 0 || s_count <= 0) return;
   time_t cutoff = nowUtc - kWindowSec;
+
+  // V0.99p DEBUG: Track trimming
+  int trimmed = 0;
+  double trimmedSum = 0.0;
+
   while (s_count > 0) {
     time_t t0 = s_buf[s_head].tUtc;
     if (t0 >= cutoff) break;
+
+    // V0.99p DEBUG: Track what we're removing
+    trimmedSum += s_buf[s_head].price;
+    trimmed++;
+
     popOldest();
+  }
+
+  if (trimmed > 0) {
+    double avgTrimmed = trimmedSum / trimmed;
+    Serial.printf("[DEBUG] trimTo24h: Removed %d samples, avg=$%.2f, cutoff=%ld\n",
+                  trimmed, avgTrimmed, (long)cutoff);
   }
 }
 

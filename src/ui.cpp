@@ -952,6 +952,38 @@ void drawMainScreen(double priceUsd, double change24h, bool fullRefresh) {
   } while (display.nextPage());
 }
 
+// V0.99q: Time-only refresh
+// Updates only the date/time area (top ~50 pixels of white panel)
+// This allows the clock to update every minute without affecting price/chart
+// and without counting toward the partial refresh limit
+void drawMainScreenTimeOnly(bool fullRefresh) {
+  // Time refresh area: top portion of white panel (right side only)
+  // Height: 50 pixels is enough for both Small and Large date/time modes
+  const int TIME_AREA_HEIGHT = 50;
+
+  if (fullRefresh) {
+    display.setFullWindow();
+  } else {
+    // Partial window: only the time display area
+    display.setPartialWindow(SYMBOL_PANEL_WIDTH, 0,
+                             display.width() - SYMBOL_PANEL_WIDTH,
+                             TIME_AREA_HEIGHT);
+  }
+
+  display.firstPage();
+  do {
+    // Only clear and redraw the time area (white background)
+    display.fillRect(SYMBOL_PANEL_WIDTH, 0,
+                     display.width() - SYMBOL_PANEL_WIDTH,
+                     TIME_AREA_HEIGHT,
+                     GxEPD_WHITE);
+
+    // Draw only the date/time (no symbol panel, price, or chart)
+    drawHeaderDateTime();
+
+  } while (display.nextPage());
+}
+
 // Draw scrollbar (shared by menu / tz menu)
 // Settings main menu: keep cursor in visible range
 // Settings main menu screen

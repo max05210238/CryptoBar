@@ -1,10 +1,10 @@
-// CryptoBar V0.99p (High-Precision Price Display)
+// CryptoBar V0.99q (UI/UX Improvements: Time Refresh & Settings Fix)
 // app_state.cpp - Global application state definitions
 #include "app_state.h"
 #include "day_avg.h"  // for DAYAVG_ROLLING constant
 
 // ==================== Version =====================
-const char* CRYPTOBAR_VERSION = "V0.99p";
+const char* CRYPTOBAR_VERSION = "V0.99q";
 
 // ==================== Constants =====================
 
@@ -197,3 +197,7 @@ volatile bool   g_ntpEventPending = false;
 volatile int64_t g_ntpEventUtc = 0;
 portMUX_TYPE    g_ntpMux = portMUX_INITIALIZER_UNLOCKED;
 time_t g_nextNtpResyncUtc = 0;
+
+// ==================== Independent Time Refresh (V0.99q) =====================
+time_t g_nextTimeRefreshUtc = 0;
+bool   g_timeRefreshEnabled = true;

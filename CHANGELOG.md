@@ -7,6 +7,79 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [V0.99q] - 2025-12-25
+
+### Fixed - UI/UX Improvements: Time Refresh & Settings
+- ⚙️ **WiFi portal settings now apply correctly**:
+  - Fixed critical bug where advanced settings submitted through WiFi portal were never applied
+  - All 9 settings now properly configure device during initial setup
+  - Working settings: Refresh mode, Update interval, Brightness, Time format, Date format, Currency, Timezone, Day average mode
+  - Previously only coin selection and date/time size worked
+- 🌐 **Timezone menu UTC ordering consistency**:
+  - Web portal timezone dropdown now displays in UTC-sorted order (UTC-12 → UTC+14)
+  - Matches device settings menu ordering
+  - Uses `TIMEZONE_DISPLAY_ORDER[]` array for consistent display
+- ⏰ **Independent time refresh mechanism**:
+  - Clock updates every minute regardless of price update interval
+  - Perfect for desk clock usage with conservative 5-10 minute price intervals
+  - Time refreshes do NOT count toward 20-refresh partial limit
+  - Minute-aligned refresh: `(nowUtc / 60 + 1) * 60`
+
+### Post-Release Hotfixes
+- 🖼️ **Fixed display artifacts during time refresh** (Issue #1):
+  - Changed from 50-pixel partial window to full-area partial refresh
+  - GxEPD2 framebuffer comparison only refreshes changed pixels (time area)
+  - Prevents artifacts around price/chart areas
+- 🔄 **Fixed duplicate refresh coordination** (Issue #2):
+  - Time refresh now executes only when price refresh is NOT scheduled (`!doUpdate`)
+  - Moved time refresh logic after `doUpdate` check
+  - Price refresh resets time schedule to next minute boundary
+  - Prevents wasted refreshes at same timestamp
+- ⏱️ **Fixed early price refresh timing** (Issue #3):
+  - Removed incorrect jitter from `g_nextUpdateUtc` (screen refresh time)
+  - Price refresh now executes at minute boundary (10:00, 10:05, 10:10...)
+  - Prefetch mechanism handles API jitter independently (6s before display)
+  - All devices refresh screens simultaneously (synchronized display)
+
+### Changed
+- **Time refresh coordination priority**:
+  1. Check if price refresh needed (`doUpdate`)
+  2. If `!doUpdate`, check if time refresh needed
+  3. Execute price refresh (if needed) and reset time schedule
+  4. Time and price refreshes never execute at same timestamp
+- **Scheduler timing separation**:
+  - `g_nextUpdateUtc`: Minute-aligned screen refresh (10:05:00)
+  - Prefetch: 6 seconds before screen refresh (10:04:54)
+  - MAC jitter applies only to API requests, not display timing
+
+### Technical Details
+- **Files modified**: 7 files (main.cpp, wifi_portal.cpp, app_state.h/cpp, ui.h/cpp, app_scheduler.cpp)
+- **New global variables**: `g_nextTimeRefreshUtc`, `g_timeRefreshEnabled`
+- **New UI function**: `drawMainScreenTimeOnly()` - full-area partial refresh
+- **Documentation**: V0.99q_UI_UX_IMPROVEMENTS.md (comprehensive changelog with hotfix details)
+- **Commits**: `6eae520`, `51c6053`, `3767435`
+
+### Example Timeline (5-minute interval, Full refresh mode)
+```
+10:00:00 → doUpdate=true  → Price refresh (includes time) ✅
+10:01:00 → doUpdate=false → Time partial refresh
+10:02:00 → doUpdate=false → Time partial refresh
+10:03:00 → doUpdate=false → Time partial refresh
+10:04:00 → doUpdate=false → Time partial refresh
+10:04:54 → Prefetch API call (6s early, with MAC jitter)
+10:05:00 → doUpdate=true  → Price refresh (uses prefetched data) ✅
+```
+
+### User Benefits
+- ✅ **Complete first-time setup**: All device settings now configurable through WiFi portal
+- ✅ **Consistent timezone selection**: No confusion between device and portal ordering
+- ✅ **Desk clock functionality**: Reliable minute-by-minute time updates
+- ✅ **Battery-friendly**: Time refreshes use efficient partial updates
+- ✅ **Synchronized display**: All devices refresh at same minute boundaries
+- ✅ **Distributed API load**: Prefetch requests staggered 6-16 seconds before display
+
+---
+
 ## [V0.99p] - 2025-12-25
 
 ### Changed - High-Precision Price Display
@@ -434,6 +507,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **V0.99j_PRECISION_FIX.md** - Price precision fix (V0.99j)
 - **V0.99k_AGGREGATED_DATA.md** - Aggregated market data priority (V0.99k)
 - **V0.99l_DISPLAY_REFRESH.md** - Display refresh optimization (V0.99l)
+- **V0.99p_High-PRECISION_PRICE_DISPLAY.md** - High-precision price display (V0.99p)
+- **V0.99q_UI_UX_IMPROVEMENTS.md** - UI/UX improvements: time refresh & settings fix (V0.99q)
 
 ### User Guides
 - **LED_DISPLAY_GUIDE.md** - Complete LED color and animation reference
@@ -609,6 +684,6 @@ Over the past week, CryptoBar received major improvements across six key areas:
 
 ---
 
-**Last Updated**: 2025-12-24
-**Current Version**: V0.99l
-**Stable Version**: V0.99l
+**Last Updated**: 2025-12-25
+**Current Version**: V0.99q
+**Stable Version**: V0.99q

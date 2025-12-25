@@ -7,7 +7,7 @@
 
 ## 📋 Documentation Completion Checklist
 
-### High Priority (Needed for Full Launch)
+### High Priority (Needed for Full Project Completion)
 
 - [ ] **Product Photos/Videos**
   - [ ] Assembled device photo (front view)
@@ -26,20 +26,6 @@
   - [ ] Add printing instructions (material, layer height, supports)
   - [ ] Add assembly instructions with photos
   - **Files needed:** Base, cover, any mounting parts
-
-- [ ] **Product Page/Purchase Link**
-  - [ ] Complete DIY kit product page
-  - [ ] Add product URL to README.md
-  - [ ] Add product URL to HARDWARE_GUIDE.md
-  - **Product description draft:**
-    > Professional DIY Kit with pre-configured components:
-    > - ✅ ESP32-S3 with 5V-out pad pre-soldered
-    > - ✅ Latest firmware pre-flashed (V0.99q)
-    > - ✅ Encoder module with ribbon cable pre-soldered (correct orientation)
-    > - ✅ Heat set inserts pre-installed in enclosure
-    > - ✅ Optional: Laser-engraved backplate (premium finish)
-    > - 🔧 Assembly required: Plug-and-play component installation
-    > - ⏱️ Assembly time: 15-30 minutes
 
 ### Medium Priority (Can be added later)
 
@@ -77,16 +63,20 @@
 
 ### Hardware Components (from Amazon links)
 
-| Component | Qty/Device | Amazon Link | Notes |
-|-----------|------------|-------------|-------|
-| ESP32-S3 N16R8 | 1 | https://amzn.to/4952HZK | 16MB Flash, 8MB PSRAM |
-| WaveShare 2.9" e-Paper | 1 | https://amzn.to/4pdoJj1 | B&W display module |
-| KY-040 Rotary Encoder | 1 | https://amzn.to/3Lip1Hm | With ribbon cable kit |
-| WS2812B LED Strip | 1 LED | https://amzn.to/3YPYPXD | Only need 1 LED per device |
-| M3 x 8mm Hex Screws | 2 | https://amzn.to/3L2rsOg | Kit contains many |
-| M2 x 5mm Flat Head Screws | 4 | https://amzn.to/44HXbLf | Kit contains many |
-| M3 Heat Set Inserts | 2 | https://amzn.to/44HXbLf | - |
-| M2 Heat Set Inserts | 4 | https://amzn.to/49rPdbL | - |
+| Component | Qty/Device | Est. Cost | Amazon Link |
+|-----------|------------|-----------|-------------|
+| ESP32-S3 N16R8 | 1 | ~$6 | https://amzn.to/4952HZK |
+| WaveShare 2.9" e-Paper | 1 | ~$27 | https://amzn.to/4pdoJj1 |
+| KY-040 Rotary Encoder | 1 | ~$2 | https://amzn.to/3Lip1Hm |
+| WS2812B LED Strip | 1 LED | ~$2 | https://amzn.to/3YPYPXD |
+| M3 x 8mm Hex Screws | 2 | Kit | https://amzn.to/3L2rsOg |
+| M2 x 5mm Flat Head Screws | 4 | Kit | https://amzn.to/44HXbLf |
+| M3 Heat Set Inserts | 2 | Kit | https://amzn.to/44HXbLf |
+| M2 Heat Set Inserts | 4 | Kit | https://amzn.to/49rPdbL |
+| PolyMaker Matte Black PLA | ~50g | ~$2 | https://amzn.to/4atrUPS |
+| USB-C Cable & Adapter | 1 | ~$5-8 | https://amzn.to/3KO9BKZ |
+
+**Total Cost:** ~$35 USD (extremely affordable!)
 
 **Note:** Many components come in multi-packs. Recommend users to build multiple units.
 
@@ -106,32 +96,22 @@
 
 **Power:** 5V via USB-C
 
-### DIY Kit Pre-Configuration Details
+### Important Assembly Notes
 
-Components pre-configured when purchased from official kit:
+1. **ESP32-S3 Board Modification (REQUIRED)**
+   - 5V-out soldering pad must be short-circuited
+   - This powers the e-ink display and LED from USB 5V
+   - Use soldering iron to bridge the two pads on back of board
 
-1. **ESP32-S3 Board Modification**
-   - 5V-out soldering pad short-circuited (required for display power)
-   - Latest firmware pre-flashed (currently V0.99q)
+2. **KY-040 Encoder Module Modification (May Be Required)**
+   - Ribbon cable pins may be in wrong orientation
+   - Check against GPIO pin table before connecting
+   - May need to desolder and reverse ribbon cable connector
 
-2. **Encoder Module Modification**
-   - Ribbon cable re-soldered in correct orientation
-   - KY-040 module pins reversed for proper connection
-
-3. **Enclosure Preparation**
-   - M3 heat set inserts installed (2x)
-   - M2 heat set inserts installed (4x)
-   - Ready for component mounting
-
-4. **Optional Premium Add-on**
-   - Laser-engraved backplate (professional finish)
-   - Custom branding/designs available
-
-**User Assembly Required:**
-- Install components into enclosure
-- Connect ribbon cables
-- Secure with screws
-- Estimated time: 15-30 minutes
+3. **3D Printing Enclosure**
+   - M3 heat set inserts (2x) must be installed with soldering iron
+   - M2 heat set inserts (4x) must be installed with soldering iron
+   - Use PolyMaker Matte Black PLA for best finish
 
 ---
 
@@ -149,32 +129,33 @@ Components pre-configured when purchased from official kit:
 ### Option 4: Technical & Honest
 > **CryptoBar**: ESP32-S3 cryptocurrency display that started as a personal challenge to build a better, cheaper alternative to Tickrmeter. Now open-sourced for the maker community, featuring encoder-based navigation (no phone app needed), multi-API reliability, and complete hardware/software customization.
 
-**Recommended:** Option 4 (authentic story + technical credibility)
+**Recommended:** Option 4 (authentic story + technical credibility) ✅ **Used in README.md**
 
-**One-sentence version:**
+**One-sentence version (used in README):**
 > Open-source ESP32-S3 crypto price display with e-ink screen and encoder control—an affordable, customizable alternative to overpriced commercial tickers.
 
 ---
 
 ## 🎯 Next Actions
 
-1. **Immediate (this session):**
+1. **Immediate:**
    - [x] Create tracking checklist ✅
-   - [ ] Create `hardware/3d-printed-case/` directory
-   - [ ] Implement Phase 1 documentation improvements
+   - [x] Create `hardware/3d-printed-case/` directory ✅
+   - [x] Implement Phase 1 documentation improvements ✅
 
 2. **User to provide (when available):**
    - [ ] Upload 3D printing STL files
-   - [ ] Provide product photos
-   - [ ] Complete DIY kit product page
-   - [ ] Share product purchase URL
+   - [ ] Provide product photos/videos
+   - [ ] Review and approve documentation
 
 3. **Future enhancements:**
    - [ ] Create wiring diagram
-   - [ ] Record assembly tutorial
+   - [ ] Record assembly tutorial video
    - [ ] Expand troubleshooting guide
+   - [ ] Add configuration guide
+   - [ ] Add more example use cases
 
 ---
 
-**Status:** Phase 1 documentation improvements in progress
-**Blocker:** None (proceeding with available information)
+**Status:** Phase 1 complete ✅ Ready for launch
+**Next Phase:** Add photos, STL files, and visual documentation

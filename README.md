@@ -81,23 +81,32 @@ Now open-sourced for the maker community, CryptoBar offers complete hardware and
 
 **Note:** Many components come in multi-packs. Consider building multiple units to maximize value.
 
-### 3D Printed Enclosure
+### 3D Printing Materials
+
+| Component | Recommended Product | Amazon Link |
+|-----------|---------------------|-------------|
+| **PLA Filament** | PolyMaker Matte Black PLA (best matte finish) | [Buy on Amazon](https://amzn.to/4atrUPS) |
 
 - **Files:** Available in [`hardware/3d-printed-case/`](hardware/3d-printed-case/)
-- **Material:** PLA or PETG recommended
-- **Print Time:** TBD
-- **Post-Processing:** Heat set insert installation required
+- **Material:** PLA or PETG recommended (PolyMaker Matte Black PLA for best results)
+- **Print Time:** ~3-4 hours total
+- **Cost:** ~$2 USD material cost (if you have a 3D printer)
+- **Post-Processing:** Heat set insert installation required (soldering iron)
 
 ### Power Supply
 
-- **Input:** 5V via USB-C
+| Component | Description | Amazon Link |
+|-----------|-------------|-------------|
+| **USB-C Cable & Adapter** | USB-C cable + power adapter kit | [Buy on Amazon](https://amzn.to/3KO9BKZ) |
+
+- **Input:** 5V via USB-C, 1A minimum
 - **Power Consumption:** ~0.5W average (e-ink refresh), <0.1W standby
 
 ---
 
 ## 🚀 Quick Start
 
-### Option 1: Build from Scratch
+### Build Instructions
 
 1. **Order Components** - Use Amazon links above or source locally
 2. **3D Print Enclosure** - Files in `hardware/3d-printed-case/`
@@ -114,20 +123,8 @@ Now open-sourced for the maker community, CryptoBar offers complete hardware and
 6. **Assemble Hardware** - Follow [Hardware Assembly Guide](docs/guides/HARDWARE_GUIDE.md)
 7. **Configure WiFi** - Device creates "CryptoBar-XXXXXX" AP on first boot
 
-**Estimated Build Time:** 2-4 hours (including printing)
-**Estimated Cost:** $40-60 USD (depending on component sources)
-
-### Option 2: DIY Kit (Coming Soon)
-
-**Pre-configured components for plug-and-play assembly:**
-- ✅ ESP32-S3 with 5V-out pad pre-soldered
-- ✅ Latest firmware pre-flashed (V0.99q)
-- ✅ Encoder module with ribbon cable pre-soldered (correct orientation)
-- ✅ Heat set inserts pre-installed in enclosure
-- ✅ Optional: Laser-engraved backplate (premium finish)
-
-**Assembly Required:** 15-30 minutes
-**Product Page:** Coming soon
+**Estimated Build Time:** 2-4 hours (including 3D printing)
+**Estimated Cost:** ~$35 USD (with own 3D printer, ~$40 if using print service)
 
 ---
 

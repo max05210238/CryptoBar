@@ -26,38 +26,40 @@ Complete guide for building your CryptoBar cryptocurrency display device.
 
 ### Additional Required Items
 
-| Item | Description | Source |
-|------|-------------|--------|
-| USB-C Cable | For power and programming | Any electronics supplier |
-| 5V Power Supply | USB power adapter, 1A minimum | Any electronics supplier |
-| 3D Printed Enclosure | See [`hardware/3d-printed-case/`](../../hardware/3d-printed-case/) | 3D printer or service |
+| Item | Description | Amazon Link |
+|------|-------------|-------------|
+| **PLA Filament** | PolyMaker Matte Black PLA (best matte finish on market) | [Buy on Amazon](https://amzn.to/4atrUPS) |
+| **USB-C Cable & Adapter** | USB-C cable + 5V power adapter kit | [Buy on Amazon](https://amzn.to/3KO9BKZ) |
+| **3D Printed Enclosure** | STL files in [`hardware/3d-printed-case/`](../../hardware/3d-printed-case/) | Print yourself or use service |
 
-### Optional
+### Tools Required
 
-| Item | Purpose | Cost |
-|------|---------|------|
-| Laser-Engraved Backplate | Professional finish | Available with DIY kit |
-| Soldering Iron | For heat set inserts | $20-50 |
-| Wire/Ribbon Cable | Only if kit doesn't include | $5-10 |
+| Tool | Purpose | Est. Cost |
+|------|---------|-----------|
+| Soldering Iron | Heat set insert installation, ESP32-S3 5V-out mod | $20-50 |
+| Small Phillips Screwdriver | Assembly | $5-10 |
+| Wire Strippers | Custom cables (if needed) | $10-15 |
+| Multimeter | Testing connections (optional) | $15-30 |
 
 ---
 
 ## 💰 Cost Breakdown
 
-### DIY Build (from scratch)
-- **Core Electronics:** $40-60 USD
-- **Hardware/Fasteners:** $5-10 USD (kits contain extras)
-- **3D Printing:** $5-15 USD (material cost)
-- **Shipping:** Varies by location
+### Complete Build Cost (with own 3D printer)
+- **ESP32-S3 N16R8:** ~$6 USD
+- **WaveShare 2.9" E-ink Display:** ~$27 USD
+- **KY-040 Rotary Encoder:** ~$2 USD
+- **WS2812B LED:** ~$2 USD (strip, need 1 LED)
+- **M3/M2 Screws & Heat Set Inserts:** ~$0.50 USD (from kits)
+- **3D Printing Material:** ~$2 USD (PLA)
+- **USB-C Cable & Adapter:** ~$5-8 USD (if needed)
 
-**Total Estimated Cost:** **$50-85 USD**
+**Total Estimated Cost:** **~$35 USD** (extremely affordable!)
 
-**Note:** Hardware kits come with many extras - consider building multiple units with friends to maximize value!
-
-### DIY Kit Option (Coming Soon)
-- **Pre-configured kit:** TBD
-- **Includes:** Pre-soldered ESP32-S3, pre-flashed firmware, pre-installed inserts
-- **Assembly time:** 15-30 minutes vs 2-4 hours
+**Note:**
+- Hardware kits (screws, inserts) come in multi-packs - consider building multiple units with friends to maximize value!
+- Shipping costs vary by location
+- If using 3D printing service instead of own printer: add ~$5-10 USD
 
 ---
 
@@ -97,12 +99,12 @@ Complete guide for building your CryptoBar cryptocurrency display device.
    - ESP32-S3 dev boards may NOT have 5V-out by default
    - **Required modification:** Short the 5V-out solder jumper on the back
    - This powers the e-ink display and LED from USB 5V
-   - **DIY kit users:** This is pre-soldered for you ✅
+   - Use soldering iron to bridge the two pads (see Step 2 below for details)
 
 3. **KY-040 Encoder Module**
    - Kit may have ribbon cable pins in wrong orientation
    - **May require:** Desoldering and reversing ribbon cable connector
-   - **DIY kit users:** This is pre-modified for you ✅
+   - Check pin order against GPIO table before connecting (see Step 3 below)
 
 ---
 
@@ -130,8 +132,6 @@ Complete guide for building your CryptoBar cryptocurrency display device.
    - Hold straight while plastic melts around insert
    - Allow to cool for 1-2 minutes
 
-   **DIY kit users:** Skip this step - inserts pre-installed ✅
-
 3. **Test Fit Components**
    - Dry-fit ESP32-S3 board
    - Check e-ink display mounting area
@@ -148,15 +148,11 @@ Complete guide for building your CryptoBar cryptocurrency display device.
    - Apply small amount of solder to bridge the two pads
    - Verify continuity with multimeter between 5V pin and USB 5V
 
-   **DIY kit users:** Skip this step - pre-soldered ✅
-
-3. **Flash Firmware** (if building from scratch)
+3. **Flash Firmware**
    ```bash
    cd CryptoBar
    pio run -t upload
    ```
-
-   **DIY kit users:** Skip this step - firmware pre-flashed ✅
 
 ### Step 3: Prepare KY-040 Encoder Module
 
@@ -168,8 +164,6 @@ Complete guide for building your CryptoBar cryptocurrency display device.
    - Desolder existing ribbon cable connector (if wrong orientation)
    - Reverse and re-solder ribbon cable
    - Verify pin order: GND, VCC, SW, DT, CLK
-
-   **DIY kit users:** Skip this step - pre-modified ✅
 
 ### Step 4: Connect Components
 
@@ -364,19 +358,15 @@ For now, refer to the GPIO Pin Connection table above.
 
 ---
 
-## 🛒 Where to Buy
+## 🛒 Where to Buy Components
 
-### Individual Components
-All components available via Amazon links in BOM table above.
+All components are readily available via the Amazon links provided in the BOM table at the top of this guide.
 
-### DIY Kit (Coming Soon)
-Pre-configured kit with plug-and-play assembly:
-- ESP32-S3: 5V-out pre-soldered, firmware pre-flashed
-- Encoder: Ribbon cable pre-modified
-- Enclosure: Heat set inserts pre-installed
-- Optional: Laser-engraved backplate
-
-**Product page:** Coming soon
+**Recommended Sources:**
+- **Electronics:** Amazon (affiliate links provided)
+- **3D Printing Filament:** [PolyMaker Matte Black PLA](https://amzn.to/4atrUPS) for best finish
+- **USB-C Cable & Adapter:** [USB-C kit](https://amzn.to/3KO9BKZ)
+- **Alternative Sources:** AliExpress, local electronics suppliers (longer shipping, lower cost)
 
 ---
 

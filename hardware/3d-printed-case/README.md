@@ -17,12 +17,16 @@ Expected files:
 
 ## 🖨️ Printing Recommendations
 
-### Settings
-- **Material:** PLA or PETG recommended
+### Recommended Filament
+- **[PolyMaker Matte Black PLA](https://amzn.to/4atrUPS)** - Best matte finish on the market
+- Alternative: Any PLA or PETG filament
+
+### Print Settings
+- **Material:** PLA (recommended) or PETG
 - **Layer Height:** 0.2mm (standard quality)
 - **Infill:** 20% (sufficient strength)
 - **Supports:** May be required depending on design
-- **Print Time:** TBD
+- **Print Time:** ~3-4 hours total
 
 ### Post-Processing
 - Heat set inserts required:
@@ -49,9 +53,8 @@ Basic steps:
 The enclosure design can be modified for:
 - Different display sizes
 - Alternative mounting options
-- Custom branding/logos
-
-**Note:** Laser-engraved backplates available from official DIY kit.
+- Custom branding/logos (3D print your own text/designs)
+- Paint or finish variations
 
 ---
 

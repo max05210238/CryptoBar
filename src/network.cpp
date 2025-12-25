@@ -61,27 +61,18 @@ void updateEtCycle() {
 }
 
 // Internal: add a sample to chart buffer at specified UTC time
-// V0.99p: Chart uses 24h window (not ET cycle) to match rolling 24h mean
+// V0.99p: Chart displays ET Cycle (7pm-7pm), not 24h rolling window
 static void addChartSampleUtc(time_t sampleUtc, double price) {
-  time_t nowUtc = time(nullptr);
-  if (nowUtc <= 0) {
-    // Fallback to ET cycle if time is not available
-    if (!g_cycleInit) {
-      updateEtCycle();
-      if (!g_cycleInit) return;
-    }
-    nowUtc = g_cycleEndUtc;
+  if (!g_cycleInit) {
+    updateEtCycle();
+    if (!g_cycleInit) return;
   }
 
-  // V0.99p: Use 24h window instead of ET cycle
-  time_t windowStartUtc = nowUtc - (24 * 3600);
-  time_t windowEndUtc = nowUtc;
+  if (sampleUtc < g_cycleStartUtc) return;
+  if (sampleUtc > g_cycleEndUtc)   sampleUtc = g_cycleEndUtc;
 
-  if (sampleUtc < windowStartUtc) return;
-  if (sampleUtc > windowEndUtc)   sampleUtc = windowEndUtc;
-
-  float pos = float(sampleUtc - windowStartUtc) /
-              float(windowEndUtc - windowStartUtc);
+  float pos = float(sampleUtc - g_cycleStartUtc) /
+              float(g_cycleEndUtc - g_cycleStartUtc);
   if (pos < 0.0f) pos = 0.0f;
   if (pos > 1.0f) pos = 1.0f;
 
@@ -590,11 +581,12 @@ static bool bootstrapHistoryFromCoingeckoMarketChart() {
     double price = row[1].as<double>();
     if (price <= 0.0) continue;
 
- // V0.99p: Filter to 24h window BEFORE adding to rolling buffer
- // This ensures rolling mean uses same data range as chart
+ // V0.99p: Filter to 24h window for rolling buffer seed
+ // - Rolling buffer gets all 24h data (for accurate 24h mean)
+ // - Chart gets only ET Cycle data (addChartSampleUtc filters internally)
     if (tUtc < windowStartUtc || tUtc > windowEndUtc) continue;
     dayAvgRollingAdd(tUtc, price);
-    addChartSampleUtc(tUtc, price);
+    addChartSampleUtc(tUtc, price);  // Will filter to ET Cycle internally
     kept++;
   }
 
@@ -723,11 +715,12 @@ static bool bootstrapHistoryFromBinanceKlines() {
 
     if (closePrice <= 0.0) continue;
 
-    // V0.99p: Filter to 24h window BEFORE adding to rolling buffer
-    // This ensures rolling mean uses same data range as chart
+    // V0.99p: Filter to 24h window for rolling buffer seed
+    // - Rolling buffer gets all 24h data (for accurate 24h mean)
+    // - Chart gets only ET Cycle data (addChartSampleUtc filters internally)
     if (tUtc < windowStartUtc || tUtc > windowEndUtc) continue;
     dayAvgRollingAdd(tUtc, closePrice);
-    addChartSampleUtc(tUtc, closePrice);
+    addChartSampleUtc(tUtc, closePrice);  // Will filter to ET Cycle internally
     kept++;
   }
 
@@ -886,13 +879,14 @@ void bootstrapHistoryFromKrakenOHLC() {
     if (tUtc < minT) minT = tUtc;
     if (tUtc > maxT) maxT = tUtc;
 
- // V0.99p: Filter to 24h window BEFORE adding to rolling buffer
- // This ensures rolling mean uses same data range as chart
+ // V0.99p: Filter to 24h window for rolling buffer seed
+ // - Rolling buffer gets all 24h data (for accurate 24h mean)
+ // - Chart gets only ET Cycle data (addChartSampleUtc filters internally)
     if (tUtc < windowStartUtc || tUtc > windowEndUtc) continue;
 
     double closePrice = atof(closeStr);
     dayAvgRollingAdd((time_t)tUtc, closePrice);
-    addChartSampleUtc((time_t)tUtc, closePrice);
+    addChartSampleUtc((time_t)tUtc, closePrice);  // Will filter to ET Cycle internally
     kept++;
   }
 

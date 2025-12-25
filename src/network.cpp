@@ -500,7 +500,7 @@ static bool bootstrapHistoryFromCoingeckoMarketChart() {
     return false;
   }
 
- // Ensure 7pm ET cycle exists.
+ // Ensure 7pm ET cycle exists (still needed for Cycle mean mode).
   updateEtCycle();
   if (!g_cycleInit) {
     Serial.println("[History][CG] cycle not initialized.");
@@ -513,9 +513,10 @@ static bool bootstrapHistoryFromCoingeckoMarketChart() {
     return false;
   }
 
-  time_t windowStartUtc = g_cycleStartUtc;
-  time_t windowEndUtc   = g_cycleEndUtc;
-  if (nowUtc < windowEndUtc) windowEndUtc = nowUtc;
+  // V0.99p: Chart always shows past 24 hours (not limited to ET cycle)
+  // This ensures rolling 24h average line position is correct
+  time_t windowStartUtc = nowUtc - (24 * 3600);
+  time_t windowEndUtc   = nowUtc;
 
   HTTPClient http;
   // V0.99b: Avoid String concatenation (heap fragmentation)
@@ -608,7 +609,7 @@ static bool bootstrapHistoryFromBinanceKlines() {
     return false;
   }
 
-  // Ensure 7pm ET cycle exists
+  // Ensure 7pm ET cycle exists (still needed for Cycle mean mode)
   updateEtCycle();
   if (!g_cycleInit) {
     Serial.println("[History][Binance] cycle not initialized.");
@@ -621,16 +622,12 @@ static bool bootstrapHistoryFromBinanceKlines() {
     return false;
   }
 
-  time_t windowStartUtc = g_cycleStartUtc;
-  time_t windowEndUtc   = g_cycleEndUtc;
-  if (nowUtc < windowEndUtc) windowEndUtc = nowUtc;
+  // V0.99p: Chart always shows past 24 hours (not limited to ET cycle)
+  time_t windowStartUtc = nowUtc - (24 * 3600);
+  time_t windowEndUtc   = nowUtc;
 
-  // Calculate start time (24h ago for rolling average seed)
+  // Start time for API request (same as window start for 24h data)
   time_t sinceUtc = windowStartUtc;
-  if (nowUtc > 100000) {
-    time_t rollSince = nowUtc - (24 * 3600);
-    if (rollSince < sinceUtc) sinceUtc = rollSince;
-  }
 
   // Convert to milliseconds for Binance API
   long long startTimeMs = (long long)sinceUtc * 1000LL;
@@ -732,7 +729,7 @@ void bootstrapHistoryFromKrakenOHLC() {
     return;
   }
 
- // Ensure 7pm ET cycle is established first
+ // Ensure 7pm ET cycle is established first (still needed for Cycle mean mode)
   updateEtCycle();
   if (!g_cycleInit) {
     Serial.println("[History] cycle not initialized, abort.");
@@ -745,14 +742,11 @@ void bootstrapHistoryFromKrakenOHLC() {
     return;
   }
 
- // UTC window for this 7pm ET cycle
-  time_t windowStartUtc = g_cycleStartUtc;
-  time_t windowEndUtc   = g_cycleEndUtc;
-  if (nowUtc < windowEndUtc) {
-    windowEndUtc = nowUtc;
-  }
+ // V0.99p: Chart always shows past 24 hours (not limited to ET cycle)
+  time_t windowStartUtc = nowUtc - (24 * 3600);
+  time_t windowEndUtc   = nowUtc;
 
-  Serial.printf("[History] cycle UTC window: %ld .. %ld\n",
+  Serial.printf("[History] 24h UTC window: %ld .. %ld\n",
                 (long)windowStartUtc, (long)windowEndUtc);
 
   // V0.99k: Prioritize aggregated market data for history
@@ -775,17 +769,13 @@ void bootstrapHistoryFromKrakenOHLC() {
   Serial.println("[History] Falling back to Kraken OHLC...");
   // Continue to Kraken OHLC below
 
- // Seed rolling 24h mean buffer (independent of chart window)
+ // Seed rolling 24h mean buffer with same 24h window
   dayAvgRollingReset();
   time_t sinceUtc = windowStartUtc;
-  if (nowUtc > 100000) {
-    time_t rollSince = nowUtc - (24 * 3600);
-    if (rollSince < sinceUtc) sinceUtc = rollSince;
-  }
 
   HTTPClient http;
   // V0.99b: Avoid String concatenation (heap fragmentation)
-  // Only fetch data after this cycle's start timestamp to avoid oversized JSON
+  // V0.99p: Fetch past 24h data to match chart window
   char url[192];
   snprintf(url, sizeof(url),
            "https://api.kraken.com/0/public/OHLC?pair=%s&interval=5&since=%ld",

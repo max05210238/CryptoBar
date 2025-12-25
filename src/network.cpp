@@ -514,10 +514,10 @@ static bool bootstrapHistoryFromCoingeckoMarketChart() {
     return false;
   }
 
-  // V0.99p: Chart always shows past 24 hours (not limited to ET cycle)
-  // This ensures rolling 24h average line position is correct
-  time_t windowStartUtc = nowUtc - (24 * 3600);
-  time_t windowEndUtc   = nowUtc;
+  // V0.99p: Bootstrap uses ET Cycle window
+  time_t windowStartUtc = g_cycleStartUtc;
+  time_t windowEndUtc   = g_cycleEndUtc;
+  if (nowUtc < windowEndUtc) windowEndUtc = nowUtc;
 
   HTTPClient http;
   // V0.99b: Avoid String concatenation (heap fragmentation)
@@ -581,12 +581,10 @@ static bool bootstrapHistoryFromCoingeckoMarketChart() {
     double price = row[1].as<double>();
     if (price <= 0.0) continue;
 
- // V0.99p: Filter to 24h window for rolling buffer seed
- // - Rolling buffer gets all 24h data (for accurate 24h mean)
- // - Chart gets only ET Cycle data (addChartSampleUtc filters internally)
-    if (tUtc < windowStartUtc || tUtc > windowEndUtc) continue;
+ // V0.99p: Rolling 24h mean uses full last-day window (seeded from CoinGecko)
     dayAvgRollingAdd(tUtc, price);
-    addChartSampleUtc(tUtc, price);  // Will filter to ET Cycle internally
+    if (tUtc < windowStartUtc || tUtc > windowEndUtc) continue;
+    addChartSampleUtc(tUtc, price);
     kept++;
   }
 
@@ -635,11 +633,12 @@ static bool bootstrapHistoryFromBinanceKlines() {
     return false;
   }
 
-  // V0.99p: Chart always shows past 24 hours (not limited to ET cycle)
-  time_t windowStartUtc = nowUtc - (24 * 3600);
-  time_t windowEndUtc   = nowUtc;
+  // V0.99p: Bootstrap uses ET Cycle window
+  time_t windowStartUtc = g_cycleStartUtc;
+  time_t windowEndUtc   = g_cycleEndUtc;
+  if (nowUtc < windowEndUtc) windowEndUtc = nowUtc;
 
-  // Start time for API request (same as window start for 24h data)
+  // Start time for API request
   time_t sinceUtc = windowStartUtc;
 
   // Convert to milliseconds for Binance API
@@ -715,12 +714,12 @@ static bool bootstrapHistoryFromBinanceKlines() {
 
     if (closePrice <= 0.0) continue;
 
-    // V0.99p: Filter to 24h window for rolling buffer seed
-    // - Rolling buffer gets all 24h data (for accurate 24h mean)
-    // - Chart gets only ET Cycle data (addChartSampleUtc filters internally)
-    if (tUtc < windowStartUtc || tUtc > windowEndUtc) continue;
+    // V0.99p: Rolling 24h mean uses full last-day window
     dayAvgRollingAdd(tUtc, closePrice);
-    addChartSampleUtc(tUtc, closePrice);  // Will filter to ET Cycle internally
+
+    // Only add points within this cycle to the chart
+    if (tUtc < windowStartUtc || tUtc > windowEndUtc) continue;
+    addChartSampleUtc(tUtc, closePrice);
     kept++;
   }
 
@@ -755,11 +754,12 @@ void bootstrapHistoryFromKrakenOHLC() {
     return;
   }
 
- // V0.99p: Chart always shows past 24 hours (not limited to ET cycle)
-  time_t windowStartUtc = nowUtc - (24 * 3600);
-  time_t windowEndUtc   = nowUtc;
+ // V0.99p: Bootstrap uses ET Cycle window
+  time_t windowStartUtc = g_cycleStartUtc;
+  time_t windowEndUtc   = g_cycleEndUtc;
+  if (nowUtc < windowEndUtc) windowEndUtc = nowUtc;
 
-  Serial.printf("[History] 24h UTC window: %ld .. %ld\n",
+  Serial.printf("[History] ET Cycle window: %ld .. %ld\n",
                 (long)windowStartUtc, (long)windowEndUtc);
 
   // V0.99k: Prioritize aggregated market data for history
@@ -879,14 +879,12 @@ void bootstrapHistoryFromKrakenOHLC() {
     if (tUtc < minT) minT = tUtc;
     if (tUtc > maxT) maxT = tUtc;
 
- // V0.99p: Filter to 24h window for rolling buffer seed
- // - Rolling buffer gets all 24h data (for accurate 24h mean)
- // - Chart gets only ET Cycle data (addChartSampleUtc filters internally)
+ // Only add points within this cycle to the chart
     if (tUtc < windowStartUtc || tUtc > windowEndUtc) continue;
 
     double closePrice = atof(closeStr);
     dayAvgRollingAdd((time_t)tUtc, closePrice);
-    addChartSampleUtc((time_t)tUtc, closePrice);  // Will filter to ET Cycle internally
+    addChartSampleUtc((time_t)tUtc, closePrice);
     kept++;
   }
 

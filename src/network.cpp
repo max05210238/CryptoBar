@@ -590,6 +590,16 @@ static bool bootstrapHistoryFromCoingeckoMarketChart() {
 
   Serial.printf("[History][CG] Kept %d samples into chart.\n", kept);
 
+  // V0.99p DEBUG: Show rolling buffer stats
+  int rollingCount = dayAvgRollingCount();
+  Serial.printf("[DEBUG] Rolling buffer has %d samples after bootstrap\n", rollingCount);
+  if (rollingCount > 0) {
+    double testMean = 0.0;
+    if (dayAvgRollingGet(nowUtc, testMean)) {
+      Serial.printf("[DEBUG] Initial rolling mean: $%.8f\n", testMean);
+    }
+  }
+
   // V0.99m: Track successful history API source
   if (kept > 0) {
     g_currentHistoryApi = "CoinGecko";

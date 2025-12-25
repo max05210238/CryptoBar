@@ -514,10 +514,15 @@ static bool bootstrapHistoryFromCoingeckoMarketChart() {
     return false;
   }
 
-  // V0.99p: Bootstrap uses ET Cycle window
-  time_t windowStartUtc = g_cycleStartUtc;
-  time_t windowEndUtc   = g_cycleEndUtc;
-  if (nowUtc < windowEndUtc) windowEndUtc = nowUtc;
+  // V0.99p: Two windows for bootstrap
+  // 1. ET Cycle window for chart display (7pm-7pm)
+  time_t chartStartUtc = g_cycleStartUtc;
+  time_t chartEndUtc   = g_cycleEndUtc;
+  if (nowUtc < chartEndUtc) chartEndUtc = nowUtc;
+
+  // 2. 24h window for rolling buffer (accurate rolling mean)
+  time_t rollingStartUtc = nowUtc - (24 * 3600);
+  time_t rollingEndUtc   = nowUtc;
 
   HTTPClient http;
   // V0.99b: Avoid String concatenation (heap fragmentation)
@@ -581,11 +586,16 @@ static bool bootstrapHistoryFromCoingeckoMarketChart() {
     double price = row[1].as<double>();
     if (price <= 0.0) continue;
 
- // V0.99p: Rolling 24h mean uses full last-day window (seeded from CoinGecko)
-    dayAvgRollingAdd(tUtc, price);
-    if (tUtc < windowStartUtc || tUtc > windowEndUtc) continue;
-    addChartSampleUtc(tUtc, price);
-    kept++;
+ // V0.99p: Add to rolling buffer if within 24h window
+    if (tUtc >= rollingStartUtc && tUtc <= rollingEndUtc) {
+      dayAvgRollingAdd(tUtc, price);
+    }
+
+    // Add to chart if within ET Cycle window
+    if (tUtc >= chartStartUtc && tUtc <= chartEndUtc) {
+      addChartSampleUtc(tUtc, price);
+      kept++;
+    }
   }
 
   Serial.printf("[History][CG] Kept %d samples into chart.\n", kept);
@@ -633,13 +643,18 @@ static bool bootstrapHistoryFromBinanceKlines() {
     return false;
   }
 
-  // V0.99p: Bootstrap uses ET Cycle window
-  time_t windowStartUtc = g_cycleStartUtc;
-  time_t windowEndUtc   = g_cycleEndUtc;
-  if (nowUtc < windowEndUtc) windowEndUtc = nowUtc;
+  // V0.99p: Two windows for bootstrap
+  // 1. ET Cycle window for chart display (7pm-7pm)
+  time_t chartStartUtc = g_cycleStartUtc;
+  time_t chartEndUtc   = g_cycleEndUtc;
+  if (nowUtc < chartEndUtc) chartEndUtc = nowUtc;
 
-  // Start time for API request
-  time_t sinceUtc = windowStartUtc;
+  // 2. 24h window for rolling buffer (accurate rolling mean)
+  time_t rollingStartUtc = nowUtc - (24 * 3600);
+  time_t rollingEndUtc   = nowUtc;
+
+  // Start time for API request (use earlier of two windows)
+  time_t sinceUtc = (rollingStartUtc < chartStartUtc) ? rollingStartUtc : chartStartUtc;
 
   // Convert to milliseconds for Binance API
   long long startTimeMs = (long long)sinceUtc * 1000LL;
@@ -714,13 +729,16 @@ static bool bootstrapHistoryFromBinanceKlines() {
 
     if (closePrice <= 0.0) continue;
 
-    // V0.99p: Rolling 24h mean uses full last-day window
-    dayAvgRollingAdd(tUtc, closePrice);
+    // V0.99p: Add to rolling buffer if within 24h window
+    if (tUtc >= rollingStartUtc && tUtc <= rollingEndUtc) {
+      dayAvgRollingAdd(tUtc, closePrice);
+    }
 
-    // Only add points within this cycle to the chart
-    if (tUtc < windowStartUtc || tUtc > windowEndUtc) continue;
-    addChartSampleUtc(tUtc, closePrice);
-    kept++;
+    // Add to chart if within ET Cycle window
+    if (tUtc >= chartStartUtc && tUtc <= chartEndUtc) {
+      addChartSampleUtc(tUtc, closePrice);
+      kept++;
+    }
   }
 
   Serial.printf("[History][Binance] Kept %d samples into chart.\n", kept);
@@ -754,13 +772,19 @@ void bootstrapHistoryFromKrakenOHLC() {
     return;
   }
 
- // V0.99p: Bootstrap uses ET Cycle window
-  time_t windowStartUtc = g_cycleStartUtc;
-  time_t windowEndUtc   = g_cycleEndUtc;
-  if (nowUtc < windowEndUtc) windowEndUtc = nowUtc;
+ // V0.99p: Two windows for bootstrap
+  // 1. ET Cycle window for chart display (7pm-7pm)
+  time_t chartStartUtc = g_cycleStartUtc;
+  time_t chartEndUtc   = g_cycleEndUtc;
+  if (nowUtc < chartEndUtc) chartEndUtc = nowUtc;
 
-  Serial.printf("[History] ET Cycle window: %ld .. %ld\n",
-                (long)windowStartUtc, (long)windowEndUtc);
+  // 2. 24h window for rolling buffer (accurate rolling mean)
+  time_t rollingStartUtc = nowUtc - (24 * 3600);
+  time_t rollingEndUtc   = nowUtc;
+
+  Serial.printf("[History] ET Cycle: %ld .. %ld, Rolling 24h: %ld .. %ld\n",
+                (long)chartStartUtc, (long)chartEndUtc,
+                (long)rollingStartUtc, (long)rollingEndUtc);
 
   // V0.99k: Prioritize aggregated market data for history
   // Try CoinGecko first (aggregated), then Binance (single exchange) as fallback
@@ -782,9 +806,11 @@ void bootstrapHistoryFromKrakenOHLC() {
   Serial.println("[History] Falling back to Kraken OHLC...");
   // Continue to Kraken OHLC below
 
- // Seed rolling 24h mean buffer with same 24h window
+ // Seed rolling 24h mean buffer
   dayAvgRollingReset();
-  time_t sinceUtc = windowStartUtc;
+
+  // Start time for API request (use earlier of two windows)
+  time_t sinceUtc = (rollingStartUtc < chartStartUtc) ? rollingStartUtc : chartStartUtc;
 
   HTTPClient http;
   // V0.99b: Avoid String concatenation (heap fragmentation)
@@ -879,13 +905,18 @@ void bootstrapHistoryFromKrakenOHLC() {
     if (tUtc < minT) minT = tUtc;
     if (tUtc > maxT) maxT = tUtc;
 
- // Only add points within this cycle to the chart
-    if (tUtc < windowStartUtc || tUtc > windowEndUtc) continue;
-
     double closePrice = atof(closeStr);
-    dayAvgRollingAdd((time_t)tUtc, closePrice);
-    addChartSampleUtc((time_t)tUtc, closePrice);
-    kept++;
+
+    // V0.99p: Add to rolling buffer if within 24h window
+    if (tUtc >= rollingStartUtc && tUtc <= rollingEndUtc) {
+      dayAvgRollingAdd((time_t)tUtc, closePrice);
+    }
+
+    // Add to chart if within ET Cycle window
+    if (tUtc >= chartStartUtc && tUtc <= chartEndUtc) {
+      addChartSampleUtc((time_t)tUtc, closePrice);
+      kept++;
+    }
   }
 
   Serial.printf("[History] OHLC timestamp range UTC: %ld .. %ld\n",

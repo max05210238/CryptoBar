@@ -378,12 +378,13 @@ for (int i = 0; i < (int)CURR_COUNT; i++) {
 }
 page += "</select>";
 
-// Timezone
+// Timezone (UTC-sorted order)
 page += "<label>Timezone (tz)</label><select name='tz'>";
 appendOption(page, "", "Keep current", s_defTz < 0);
-for (int i = 0; i < TIMEZONE_COUNT; ++i) {
-  String label = String(i) + " = " + htmlEscape(TIMEZONES[i].label);
-  appendOption(page, String(i), label, s_defTz == i);
+for (int displayPos = 0; displayPos < TIMEZONE_COUNT; ++displayPos) {
+  int tzIdx = TIMEZONE_DISPLAY_ORDER[displayPos];
+  String label = String(tzIdx) + " = " + htmlEscape(TIMEZONES[tzIdx].label);
+  appendOption(page, String(tzIdx), label, s_defTz == tzIdx);
 }
 page += "</select>";
 

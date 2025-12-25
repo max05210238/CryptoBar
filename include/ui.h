@@ -55,6 +55,10 @@ void drawFirmwareUpdateApScreen(const char* version, const char* apSsid, const c
 // Main price display screen: coin symbol from currentCoin()
 void drawMainScreen(double priceUsd, double change24h, bool fullRefresh);
 
+// V0.99q: Time-only refresh (updates only date/time area, not price/chart)
+// This allows the clock to stay current even with long price update intervals
+void drawMainScreenTimeOnly(bool fullRefresh = false);
+
 // Main settings menu
 void drawMenuScreen(bool fullRefresh);
 void ensureMainMenuVisible();

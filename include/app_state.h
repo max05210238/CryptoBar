@@ -220,3 +220,8 @@ extern volatile bool   g_ntpEventPending;
 extern volatile int64_t g_ntpEventUtc;
 extern portMUX_TYPE    g_ntpMux;
 extern time_t g_nextNtpResyncUtc;
+
+// ==================== Independent Time Refresh (V0.99q) =====================
+// Refresh time display every minute (independent of price update interval)
+extern time_t g_nextTimeRefreshUtc;   // Next scheduled time-only refresh (UTC timestamp)
+extern bool   g_timeRefreshEnabled;    // Enable/disable independent time refresh (default: true)

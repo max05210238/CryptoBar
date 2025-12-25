@@ -1,4 +1,4 @@
-// CryptoBar V0.99p (High-Precision Price Display)
+// CryptoBar V0.99q (UI/UX Improvements: Time Refresh & Settings Fix)
 #include <Arduino.h>
 #include <WiFi.h>
 #include <HTTPClient.h>
@@ -504,6 +504,68 @@ void loop() {
         Serial.printf("[Settings] Provisioned dtSize: %s\n", DTSIZE_LABELS[g_dtSize]);
       }
 
+ // Optional: Refresh Mode (rfMode)
+      if (sub.rfMode == 0 || sub.rfMode == 1) {
+        g_refreshMode = sub.rfMode;
+        anySettingChanged = true;
+        Serial.printf("[Settings] Provisioned refresh mode: %s\n", REFRESH_MODE_LABELS[g_refreshMode]);
+      }
+
+ // Optional: Update Preset (updPreset)
+      if (sub.updPreset >= 0 && sub.updPreset < UPDATE_PRESETS_COUNT) {
+        g_updatePresetIndex = sub.updPreset;
+        g_updateIntervalMs = UPDATE_PRESETS_MS[g_updatePresetIndex];
+        anySettingChanged = true;
+        Serial.printf("[Settings] Provisioned update interval: %s\n", UPDATE_PRESET_LABELS[g_updatePresetIndex]);
+      }
+
+ // Optional: Brightness Preset (briPreset)
+      if (sub.briPreset >= 0 && sub.briPreset < BRIGHTNESS_PRESETS_COUNT) {
+        g_brightnessPresetIndex = sub.briPreset;
+        g_ledBrightness = BRIGHTNESS_PRESETS[g_brightnessPresetIndex];
+        ledStatusSetMasterBrightness(g_ledBrightness);
+        anySettingChanged = true;
+        Serial.printf("[Settings] Provisioned brightness: %s\n", BRIGHTNESS_LABELS[g_brightnessPresetIndex]);
+      }
+
+ // Optional: Time Format (timeFmt)
+      if (sub.timeFmt == 0 || sub.timeFmt == 1) {
+        g_timeFormat = sub.timeFmt;
+        anySettingChanged = true;
+        Serial.printf("[Settings] Provisioned time format: %s\n", (g_timeFormat == TIME_24H ? "24h" : "12h"));
+      }
+
+ // Optional: Date Format (dateFmt)
+      if (sub.dateFmt >= 0 && sub.dateFmt < DATE_FORMAT_COUNT) {
+        g_dateFormatIndex = sub.dateFmt;
+        anySettingChanged = true;
+        Serial.printf("[Settings] Provisioned date format: %s\n", DATE_FORMAT_LABELS[g_dateFormatIndex]);
+      }
+
+ // Optional: Display Currency (dispCur)
+      if (sub.dispCur >= 0 && sub.dispCur < (int)CURR_COUNT) {
+        g_displayCurrency = sub.dispCur;
+        anySettingChanged = true;
+        Serial.printf("[Settings] Provisioned currency: %s\n", CURRENCY_INFO[g_displayCurrency].code);
+      }
+
+ // Optional: Timezone (tzIndex)
+      if (sub.tzIndex >= 0 && sub.tzIndex < TIMEZONE_COUNT) {
+        g_timezoneIndex = sub.tzIndex;
+        applyTimezone();
+        anySettingChanged = true;
+        Serial.printf("[Settings] Provisioned timezone: %s (UTC%+d)\n",
+                      TIMEZONES[g_timezoneIndex].label,
+                      (int)TIMEZONES[g_timezoneIndex].utcOffsetHours);
+      }
+
+ // Optional: Day Average Mode (dayAvg)
+      if (sub.dayAvg >= 0 && sub.dayAvg <= 2) {
+        g_dayAvgMode = (uint8_t)sub.dayAvg;
+        anySettingChanged = true;
+        Serial.printf("[Settings] Provisioned day avg mode: %d\n", (int)g_dayAvgMode);
+      }
+
       if (anySettingChanged) {
         saveSettings();
       }
@@ -748,6 +810,32 @@ String apIp = WiFi.softAPIP().toString();
     }
   }
 
+ // ===== V0.99q: Independent time refresh (every minute) =====
+ // Refresh time display every minute, independent of price update interval
+ // This keeps the clock current even with long price update intervals (e.g., 5-10 minutes)
+ // Time refreshes do NOT count toward the partial refresh limit
+  if (nowUtc >= TIME_VALID_MIN_UTC && g_timeRefreshEnabled && g_uiMode == UI_MODE_NORMAL) {
+    // Initialize time refresh schedule (align to next minute boundary)
+    if (g_nextTimeRefreshUtc == 0) {
+      g_nextTimeRefreshUtc = (nowUtc / 60 + 1) * 60;
+      Serial.printf("[Time] Time refresh scheduled at next minute: %ld\n", (long)g_nextTimeRefreshUtc);
+    }
+
+    // Check if it's time for a time-only refresh
+    if (nowUtc >= g_nextTimeRefreshUtc) {
+      Serial.printf("[Time] Time refresh triggered (UTC: %ld)\n", (long)nowUtc);
+
+      // Perform time-only partial refresh
+      drawMainScreenTimeOnly(false);
+
+      // Schedule next time refresh (next minute boundary)
+      g_nextTimeRefreshUtc = (nowUtc / 60 + 1) * 60;
+
+      // Note: Do NOT increment g_partialRefreshCount
+      // Time refreshes are independent and don't count toward the limit
+    }
+  }
+
  // --- Prefetch-to-tick () ---
  // If we're within a small lead window before the next scheduled tick, fetch
  // the price early. When the tick triggers, reuse the prefetched result so
@@ -906,6 +994,12 @@ if (doUpdate) {
           else        g_partialRefreshCount++;
         } else {
           g_partialRefreshCount = 0;
+        }
+
+ // V0.99q: Reset time refresh schedule after price update
+ // (since time was also updated with the price)
+        if (nowUtc >= TIME_VALID_MIN_UTC && g_timeRefreshEnabled) {
+          g_nextTimeRefreshUtc = (nowUtc / 60 + 1) * 60;
         }
       }
     } else {

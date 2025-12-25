@@ -810,32 +810,6 @@ String apIp = WiFi.softAPIP().toString();
     }
   }
 
- // ===== V0.99q: Independent time refresh (every minute) =====
- // Refresh time display every minute, independent of price update interval
- // This keeps the clock current even with long price update intervals (e.g., 5-10 minutes)
- // Time refreshes do NOT count toward the partial refresh limit
-  if (nowUtc >= TIME_VALID_MIN_UTC && g_timeRefreshEnabled && g_uiMode == UI_MODE_NORMAL) {
-    // Initialize time refresh schedule (align to next minute boundary)
-    if (g_nextTimeRefreshUtc == 0) {
-      g_nextTimeRefreshUtc = (nowUtc / 60 + 1) * 60;
-      Serial.printf("[Time] Time refresh scheduled at next minute: %ld\n", (long)g_nextTimeRefreshUtc);
-    }
-
-    // Check if it's time for a time-only refresh
-    if (nowUtc >= g_nextTimeRefreshUtc) {
-      Serial.printf("[Time] Time refresh triggered (UTC: %ld)\n", (long)nowUtc);
-
-      // Perform time-only partial refresh
-      drawMainScreenTimeOnly(false);
-
-      // Schedule next time refresh (next minute boundary)
-      g_nextTimeRefreshUtc = (nowUtc / 60 + 1) * 60;
-
-      // Note: Do NOT increment g_partialRefreshCount
-      // Time refreshes are independent and don't count toward the limit
-    }
-  }
-
  // --- Prefetch-to-tick () ---
  // If we're within a small lead window before the next scheduled tick, fetch
  // the price early. When the tick triggers, reuse the prefetched result so
@@ -903,6 +877,34 @@ String apIp = WiFi.softAPIP().toString();
         Serial.println("[FX] Multi-currency update failed");
       }
       g_nextFxUpdateUtc = nowFxUtc + 3600; // 1 hour (V0.99f: reduced API load)
+    }
+  }
+
+ // ===== V0.99q: Independent time refresh (coordinated with price refresh) =====
+ // Refresh time display every minute, but only when price refresh is NOT scheduled
+ // This prevents duplicate refreshes at the same timestamp
+ // Time refreshes do NOT count toward the partial refresh limit
+  if (!doUpdate && nowUtc >= TIME_VALID_MIN_UTC && g_timeRefreshEnabled && g_uiMode == UI_MODE_NORMAL) {
+    // Initialize time refresh schedule (align to next minute boundary)
+    if (g_nextTimeRefreshUtc == 0) {
+      g_nextTimeRefreshUtc = (nowUtc / 60 + 1) * 60;
+      Serial.printf("[Time] Time refresh scheduled at next minute: %ld\n", (long)g_nextTimeRefreshUtc);
+    }
+
+    // Check if it's time for a time-only refresh
+    // Only execute if doUpdate=false (no price refresh scheduled)
+    if (nowUtc >= g_nextTimeRefreshUtc) {
+      Serial.printf("[Time] Time-only refresh (UTC: %ld, next price: %ld)\n",
+                    (long)nowUtc, (long)g_nextUpdateUtc);
+
+      // Perform time-only partial refresh (full-area, only time changes)
+      drawMainScreenTimeOnly(false);
+
+      // Schedule next time refresh (next minute boundary)
+      g_nextTimeRefreshUtc = (nowUtc / 60 + 1) * 60;
+
+      // Note: Do NOT increment g_partialRefreshCount
+      // Time refreshes are independent and don't count toward the limit
     }
   }
 

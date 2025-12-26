@@ -6,17 +6,18 @@ This directory contains production-ready STL files for direct 3D printing.
 
 ## 📁 Files
 
-**STL files will be uploaded here:**
-
 ### Main Enclosure (Black Matte PLA)
-- `cryptobar_base.stl` - Main enclosure base
-- `cryptobar_cover.stl` - Top cover/faceplate
-- Additional mounting parts (if applicable)
+- `Matte_Black_Front_Case_V1.stl` - Front enclosure case (371 KB)
+- `Matte_Black_Back_Cover_V1.stl` - Back cover plate (82 KB)
+- `Matte_Black_Knob_V1.stl` - Rotary encoder knob (157 KB)
+- `Matte_Black_PCB_Strap_V1.stl` - PCB mounting strap (54 KB)
 
 ### LED Lens (White Matte PLA - REQUIRED)
-- `cryptobar_led_lens.stl` - LED light diffuser lens
+- `Matte_White_LED_Lens_V1.stl` - LED light diffuser lens (42 KB)
 
 **Important:** LED lens MUST be printed in white matte finish PLA for optimal light diffusion!
+
+**Total:** 5 STL files (~706 KB total)
 
 ---
 

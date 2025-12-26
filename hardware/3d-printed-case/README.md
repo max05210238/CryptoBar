@@ -17,13 +17,15 @@ This directory contains 3D printable files for the CryptoBar enclosure.
 
 ### File Organization
 
-- **STL/** - Production-ready files for direct 3D printing
-  - Main enclosure parts (black)
+- **STL/** - Production-ready files for direct 3D printing (5 files, ~706 KB)
+  - Front case, back cover, knob, PCB strap (black matte)
   - LED lens (white matte - CRITICAL!)
+  - See [`STL/README.md`](STL/README.md) for complete file list and printing instructions
 
-- **STEP/** - Source CAD files for users who want to modify the design
+- **STEP/** - Source CAD files for users who want to modify the design (coming soon)
   - Editable in Fusion 360, FreeCAD, SolidWorks, etc.
   - Customize for different displays, add branding, etc.
+  - See [`STEP/README.md`](STEP/README.md) for editing guide
 
 ---
 

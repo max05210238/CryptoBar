@@ -525,6 +525,7 @@ All user guides moved to [`docs/guides/`](docs/guides/):
 - **[HARDWARE_GUIDE.md](docs/guides/HARDWARE_GUIDE.md)** - Hardware assembly and GPIO wiring
 - **[DISPLAY_GUIDE.md](docs/guides/DISPLAY_GUIDE.md)** - UI layout, navigation, screen elements explained
 - **[LED_DISPLAY_GUIDE.md](docs/guides/LED_DISPLAY_GUIDE.md)** - Complete LED color and animation reference
+- **[OTA_UPDATE_GUIDE.md](docs/guides/OTA_UPDATE_GUIDE.md)** - Firmware update process and security considerations
 
 ### Technical Documentation
 - **[V0.98_STATUS.md](docs/release-notes/V0.98_STATUS.md)** - Code refactoring details

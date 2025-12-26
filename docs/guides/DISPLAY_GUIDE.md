@@ -315,9 +315,29 @@ The Coin Selection menu uses a **submenu system**:
 4. **Confirm selection** with short press
 5. **Returns to main screen** with new coin displayed
 
-**Available cryptocurrencies (alphabetical):**
-- BTC, ETH, XRP, ADA, SOL, DOGE, DOT, MATIC, LTC, UNI
-- LINK, ATOM, XLM, ALGO, VET, FIL, HBAR, ICP, APT, INJ
+**Available cryptocurrencies (by market cap rank):**
+1. BTC (Bitcoin)
+2. ETH (Ethereum)
+3. BNB (Binance Coin)
+4. XRP (Ripple)
+5. SOL (Solana)
+6. TRX (Tron)
+7. DOGE (Dogecoin)
+8. ADA (Cardano)
+9. BCH (Bitcoin Cash)
+10. LINK (Chainlink)
+11. XMR (Monero)
+12. XLM (Stellar)
+13. LTC (Litecoin)
+14. AVAX (Avalanche)
+15. HBAR (Hedera)
+16. SHIB (Shiba Inu)
+17. TON (Toncoin)
+18. UNI (Uniswap)
+19. DOT (Polkadot)
+20. KAS (Kaspa)
+
+**Note:** List ordered by market cap ranking (as of device firmware). Stablecoins (USDT/USDC) intentionally excluded.
 
 #### Timezone Selection (27 Timezones)
 ```

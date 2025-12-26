@@ -34,7 +34,7 @@ Now open-sourced for the maker community, CryptoBar offers complete hardware and
 - ⏰ **Timezone-Aware Clock** - Auto-detection with 27 timezone options (UTC-12 to UTC+14)
 
 ### Cryptocurrency Support
-- 🪙 **20 Cryptocurrencies**: BTC, ETH, XRP, ADA, SOL, DOGE, DOT, MATIC, LTC, UNI, LINK, ATOM, XLM, ALGO, VET, FIL, HBAR, ICP, APT, INJ
+- 🪙 **20 Cryptocurrencies**: BTC, ETH, BNB, XRP, SOL, TRX, DOGE, ADA, BCH, LINK, XMR, XLM, LTC, AVAX, HBAR, SHIB, TON, UNI, DOT, KAS (sorted by market cap)
 - 💱 **9 Display Currencies**: USD, TWD, EUR, GBP, CAD, JPY, KRW, SGD, AUD
 - 📈 **24-Hour Price Charts** - Visual price history on e-ink display
 - 📊 **24h Change Percentage** - Real-time gain/loss tracking
@@ -149,7 +149,9 @@ Now open-sourced for the maker community, CryptoBar offers complete hardware and
 ## ⚙️ Configuration
 
 ### Supported Cryptocurrencies (20)
-BTC, ETH, XRP, ADA, SOL, DOGE, DOT, MATIC, LTC, UNI, LINK, ATOM, XLM, ALGO, VET, FIL, HBAR, ICP, APT, INJ
+BTC, ETH, BNB, XRP, SOL, TRX, DOGE, ADA, BCH, LINK, XMR, XLM, LTC, AVAX, HBAR, SHIB, TON, UNI, DOT, KAS
+
+**Sorted by market cap rank.** Stablecoins (USDT/USDC) intentionally excluded.
 
 ### Display Currencies (9)
 USD, TWD, EUR, GBP, CAD, JPY, KRW, SGD, AUD

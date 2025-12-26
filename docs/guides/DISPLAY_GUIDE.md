@@ -7,35 +7,36 @@
 ## 📖 Table of Contents
 
 ### Core Display Elements
-1. [📺 Main Display Overview](#-main-display-overview)
-2. [🖤 Left Panel: Symbol Information](#-left-panel-symbol-information-black-background)
-3. [🤍 Right Panel: Live Data Display](#-right-panel-live-data-display-white-background)
-4. [🔄 Why Two API Labels?](#-why-two-api-labels)
+1. [📺 Main Display Overview](#main-display-overview)
+2. [🖤 Left Panel: Symbol Information](#left-panel-symbol-information-black-background)
+3. [🤍 Right Panel: Live Data Display](#right-panel-live-data-display-white-background)
+4. [🔄 Why Two API Labels?](#why-two-api-labels)
 
 ### Data Visualization
-5. [📊 24-Hour Price Chart](#-24-hour-price-chart)
-6. [━ ━ ━ Reference Line (Day Average)](#-----reference-line-dashed)
-7. [⏰ Date & Time Display](#-date--time-display)
-8. [💰 Price Display](#-price-display)
-9. [💱 Multi-Currency Display](#-multi-currency-display)
+5. [📊 24-Hour Price Chart](#24-hour-price-chart)
+6. [━ ━ ━ Reference Line (Day Average)](#------reference-line-dashed)
+7. [⏰ Date & Time Display](#date--time-display)
+8. [💰 Price Display](#price-display)
+9. [💱 Multi-Currency Display](#multi-currency-display)
 
 ### Navigation & Control
-10. [🎛️ Menu Navigation](#️-menu-navigation)
+10. [🔄 E-ink Refresh Mode](#e-ink-refresh-mode)
+11. [🎛️ Menu Navigation](#menu-navigation)
     - Main Menu Items (All 12 Options)
     - Coin Selection (20+ Cryptocurrencies)
     - Timezone Selection (27 Timezones)
 
 ### System Screens
-11. [🎨 Screen States](#-screen-states)
+12. [🎨 Screen States](#screen-states)
     - Boot Sequence
     - WiFi Configuration Portal
     - OTA Firmware Update Mode
 
 ### Reference
-12. [🔧 Display Settings Summary](#-display-settings-summary)
-13. [💡 Pro Tips](#-pro-tips)
-14. [🚨 Troubleshooting Display Issues](#-troubleshooting-display-issues)
-15. [📚 Related Guides](#-related-guides)
+13. [🔧 Display Settings Summary](#display-settings-summary)
+14. [💡 Pro Tips](#pro-tips)
+15. [🚨 Troubleshooting Display Issues](#troubleshooting-display-issues)
+16. [📚 Related Guides](#related-guides)
 
 ---
 
@@ -137,6 +138,101 @@ CryptoBar uses **separate APIs for different data types**:
 - ✅ **Transparency** - You always know your data source
 - ✅ **Reliability** - 4-layer fallback ensures continuous operation
 - ✅ **Debugging** - Identify API issues at a glance
+
+---
+
+### Detailed Fallback Chain
+
+#### Price API (4-Layer Fallback)
+
+```
+Layer 1: Binance → Layer 2: Kraken → Layer 3: Paprika → Layer 4: CoinGecko
+```
+
+**Each layer tries for 10 seconds before moving to next:**
+
+| Layer | API | Best For | Timeout Action |
+|-------|-----|----------|----------------|
+| **1** | **Binance** | Real-time prices for major coins | → Try Kraken |
+| **2** | **Kraken** | Coins with krakenPair configured | → Try Paprika |
+| **3** | **Paprika** | General use (30s refresh) | → Try CoinGecko |
+| **4** | **CoinGecko** | Backup for all coins | → Show "----" |
+
+**Fallback Triggers:**
+- ❌ HTTP error (4xx/5xx)
+- ❌ Timeout (10 seconds)
+- ❌ JSON parse failure
+- ❌ Invalid/missing data
+- ❌ Network disconnected
+
+---
+
+#### History API (3-Layer Fallback)
+
+```
+Layer 1: Kraken OHLC → Layer 2: Binance Klines → Layer 3: CoinGecko
+```
+
+| Layer | API | Data Points | Resolution |
+|-------|-----|-------------|------------|
+| **1** | **Kraken OHLC** | 288 candles | 5-min intervals |
+| **2** | **Binance Klines** | 288 candles | 5-min intervals |
+| **3** | **CoinGecko** | 24 samples | Hourly (lower resolution) |
+
+**If all fail:** Chart shows "Collecting data..."
+
+---
+
+### API Selection Examples
+
+**Scenario 1: Optimal (BTC with krakenPair)**
+```
+[Binance]  ← Fastest real-time price
+   BTC
+  +2.3%
+[Kraken]   ← High-quality OHLC chart data
+```
+
+**Scenario 2: Altcoin (no Binance/Kraken support)**
+```
+[Paprika]  ← Skipped layers 1-2, using CoinPaprika
+   DOGE
+  +5.1%
+[CoinGecko] ← No Kraken/Binance klines, using CoinGecko
+```
+
+**Scenario 3: Network Issues**
+```
+[CoinGecko] ← All faster APIs failed
+   XRP
+  +1.2%
+[CoinGecko] ← Last resort for chart data
+```
+
+**Scenario 4: Complete Failure**
+```
+[--Error--]
+   BTC
+   ----     ← No price available
+[--Error--]
+
+Chart: "Collecting data..."
+LED: Yellow (API error)
+```
+
+---
+
+### Understanding API Labels
+
+**What the labels tell you:**
+
+| Display | Meaning | Action Needed? |
+|---------|---------|---------------|
+| `[Binance]` / `[Kraken]` | Optimal performance | ✅ None |
+| `[Paprika]` | Normal fallback for altcoins | ✅ None |
+| `[CoinGecko]` | Backup mode (rate limit or network issue) | ⚠️ Check WiFi if persists |
+| Different labels (top/bottom) | Independent fallback (normal) | ✅ None |
+| `[--Error--]` / `----` | All APIs failed | ❌ Check WiFi connection |
 
 ---
 
@@ -311,6 +407,75 @@ CryptoBar shows local date and time based on your timezone settings.
 
 ---
 
+### Time Accuracy & NTP Sync
+
+CryptoBar maintains highly accurate time through automatic NTP synchronization.
+
+#### How Time Synchronization Works
+
+```
+┌──────────────────────────────────────────────────┐
+│ 1. WiFi Connects                                 │
+│    → Immediate NTP sync                          │
+└──────────────────────────────────────────────────┘
+         ↓
+┌──────────────────────────────────────────────────┐
+│ 2. Every 10 Minutes                              │
+│    → Automatic background NTP resync             │
+│    → No display interruption                     │
+└──────────────────────────────────────────────────┘
+         ↓
+┌──────────────────────────────────────────────────┐
+│ 3. Time Stays Accurate                           │
+│    → ESP32 RTC drift corrected continuously      │
+│    → Error kept under 0.1 seconds               │
+└──────────────────────────────────────────────────┘
+```
+
+#### NTP Sync Details
+
+| Parameter | Value | Why? |
+|-----------|-------|------|
+| **Sync Interval** | 10 minutes | ESP32 RTC drifts ~1-5 sec/day, this ensures < 0.1s error |
+| **Initial Sync** | On WiFi connect | Get accurate time immediately |
+| **Primary Server** | `pool.ntp.org` | Global NTP pool, low latency |
+| **Backup Server** | `time.nist.gov` | US government atomic clock |
+| **Timeout** | 10 seconds | Retry if no response |
+
+**Time Accuracy Guarantee:**
+- ✅ **< 0.1 second error** under normal conditions
+- ✅ **< 1 second error** even if NTP unreachable for 24 hours (RTC drift)
+
+#### What You'll See
+
+**During Normal Operation:**
+- Time updates every minute (independent refresh)
+- NTP sync happens silently in background (every 10 min)
+- No user indication (transparent operation)
+
+**If NTP Fails:**
+- Time continues using ESP32 internal RTC
+- Accuracy degrades slowly (~1-5 sec/day drift)
+- Next successful sync corrects any drift
+
+**After Power Loss:**
+- ESP32 RTC resets to default (incorrect time)
+- On WiFi reconnect → immediate NTP sync
+- Time becomes accurate within ~1 second
+
+#### Troubleshooting Time Issues
+
+| Issue | Likely Cause | Solution |
+|-------|--------------|----------|
+| **Time off by hours** | Wrong timezone selected | Change timezone in Menu [9] |
+| **Time off by minutes** | NTP sync failed, using RTC drift | Check WiFi connection, wait for next sync |
+| **Time resets after power loss** | Normal ESP32 behavior | Time will correct on next WiFi connect |
+| **Date shows year 1970** | No NTP sync yet since boot | Ensure WiFi connected, wait 10 seconds |
+
+**💡 Pro Tip:** If you need exact time synchronization (within milliseconds), wait at least 1 minute after WiFi connects to ensure NTP has completed successfully.
+
+---
+
 ## 💰 Price Display
 
 The center of the white panel shows the current cryptocurrency price in large font.
@@ -449,6 +614,128 @@ Display: NT 2,816,962 (= 87,619.36 × 32.15)
 
 ---
 
+## 🔄 E-ink Refresh Mode
+
+CryptoBar's e-ink display offers two refresh modes with different trade-offs between speed and visual quality.
+
+### Refresh Mode Options
+
+**Configured in Menu [4] "Refresh Mode"**
+
+| Mode | Speed | Image Quality | Ghosting | Power | Best For |
+|------|-------|---------------|----------|-------|----------|
+| **Partial** | ⚡ Fast (~300ms) | Good | Minor ghosting after many updates | Lower | Frequent updates (1-3 min) |
+| **Full** | 🐢 Slow (~2s) | ✨ Perfect | No ghosting | Higher | Clean display priority |
+
+---
+
+### Partial Refresh Mode
+
+**How it works:**
+- Updates only changed pixels (fast, low power)
+- Skips the full screen clearing cycle
+- Ideal for frequent price updates
+
+**Automatic Full Refresh Safety:**
+- **After 20 partial refreshes** → automatic full refresh
+- Prevents ghosting buildup
+- Counter resets after each full refresh
+- Transparent to user (happens automatically)
+
+**Visual characteristics:**
+```
+Update 1-19:  Fast updates, minor ghosting may accumulate
+Update 20:    Automatic full refresh (clears ghosting)
+Update 21-40: Cycle repeats...
+```
+
+**⚡ When to use Partial mode:**
+- Update interval ≤ 3 minutes
+- You prioritize responsiveness over perfect clarity
+- Battery conservation is important
+- You don't mind occasional brief full refreshes
+
+---
+
+### Full Refresh Mode (Default)
+
+**How it works:**
+- Clears entire screen to white, then redraws content
+- Takes ~2 seconds per update (visible flicker)
+- Eliminates all ghosting artifacts
+
+**Visual characteristics:**
+```
+Every update: White flash → Black content → Perfect clarity
+```
+
+**✨ When to use Full mode:**
+- You want pristine display quality
+- Update interval ≥ 5 minutes (flicker less noticeable)
+- Display is visible to others (professional appearance)
+- Power consumption is not a concern
+
+---
+
+### Comparison Examples
+
+**Scenario 1: Day trader (1-min updates)**
+```
+Recommended: Partial mode
+- 60 updates/hour with Full mode = 120 seconds of flicker/hour
+- Partial mode: smooth updates, auto-full every 20× keeps display clean
+```
+
+**Scenario 2: Casual monitoring (5-min updates)**
+```
+Recommended: Full mode
+- Only 12 updates/hour = 24 seconds of flicker/hour
+- Always perfect clarity, no ghosting
+```
+
+**Scenario 3: Office display (3-min updates)**
+```
+Either mode works:
+- Full: Professional appearance, occasional flicker acceptable
+- Partial: Faster response, automatic cleanup every ~60 minutes
+```
+
+---
+
+### Technical Details
+
+**Partial Refresh:**
+- Update time: ~300ms
+- Power draw: ~15mA during update
+- Automatic full refresh trigger: 20 partial updates (configurable in code: `PARTIAL_REFRESH_LIMIT`)
+
+**Full Refresh:**
+- Update time: ~2000ms
+- Power draw: ~30mA during update
+- Phases: Clear (white) → Draw (black) → Stabilize
+
+**Ghosting explanation:**
+E-ink pixels don't always return to perfect white/black without a full clear cycle. Partial refresh leaves microscopic charge residue that accumulates over many updates. The 20× auto-full rule prevents this from becoming visible.
+
+---
+
+### Configuration
+
+**To change refresh mode:**
+
+1. Long-press encoder to enter menu
+2. Rotate to menu item [4] "Refresh Mode"
+3. Short-press to toggle: `Partial` ↔ `Full`
+4. Long-press to save and exit
+
+**Default:** Full (prioritizes visual quality)
+
+**⭐ Recommended:**
+- Use **Full** if unsure
+- Switch to **Partial** only if you need faster updates and don't mind occasional flicker
+
+---
+
 ## 🎛️ Menu Navigation
 
 CryptoBar uses a **rotary encoder** (knob) for all navigation.
@@ -551,16 +838,71 @@ The Coin Selection menu uses a **submenu system**:
 **Note:** List ordered by market cap ranking (as of device firmware). Stablecoins (USDT/USDC) intentionally excluded.
 
 #### Timezone Selection (27 Timezones)
+
+**Available timezones:**
 ```
 UTC-12 Baker Island
 UTC-11 American Samoa
-...
+UTC-10 Honolulu
+UTC-09 Anchorage
+UTC-08 Seattle (Default)
+UTC-07 Denver
+UTC-06 Chicago
+UTC-05 New York
+UTC-04 Halifax
+UTC-03 São Paulo
+UTC-02 South Georgia
+UTC-01 Azores
 UTC+00 London
-...
+UTC+01 Paris
+UTC+02 Cairo
+UTC+03 Moscow
+UTC+04 Dubai
+UTC+05 Karachi
+UTC+06 Dhaka
+UTC+07 Bangkok
 UTC+08 Taipei
-...
+UTC+09 Tokyo
+UTC+10 Sydney
+UTC+11 Noumea
+UTC+12 Auckland
+UTC+13 Samoa
 UTC+14 Kiritimati
 ```
+
+**Automatic Timezone Detection (First Boot):**
+
+On first boot, CryptoBar attempts to automatically detect your timezone:
+
+1. **Trigger Condition:**
+   - No timezone saved in settings (first boot)
+   - WiFi successfully connected
+   - One-time attempt only
+
+2. **Detection Method:**
+   - Uses IP-based geolocation (worldtimeapi.org API)
+   - Returns UTC offset for your current IP address
+   - Matches to closest timezone in the 27-timezone list
+   - Saves detected timezone to settings
+
+3. **Fallback Behavior:**
+   - **Auto-detection fails** → defaults to UTC-08 (Seattle)
+   - **No network** → defaults to UTC-08 (Seattle)
+   - You can always manually change timezone later via Menu [9]
+
+**⚠️ Important Notes for VPN Users:**
+
+If you're using a VPN during first boot:
+- Auto-detection will use **VPN exit location** timezone (not your physical location)
+- **Recommendation:** Disable VPN during initial setup, or manually set timezone in Menu [9]
+
+**Manual Override:**
+
+Even after auto-detection, you can change timezone anytime:
+1. Long-press encoder → Menu
+2. Navigate to [9] Timezone
+3. Select your preferred timezone
+4. Long-press to save
 
 ---
 
@@ -703,6 +1045,108 @@ Quick reference for all display-related settings:
    - Normally both labels show `CoinGecko` (best quality data)
    - If you see different APIs, system is using fallback (still reliable)
    - Common fallback order: CoinGecko → CoinPaprika → Binance → Kraken
+
+---
+
+## 📶 WiFi Connection Management
+
+CryptoBar includes intelligent WiFi reconnection to handle network interruptions.
+
+### Automatic Reconnection Strategy
+
+When WiFi connection is lost during normal operation, CryptoBar automatically attempts to reconnect:
+
+```
+┌──────────────────────────────────────────────────┐
+│ WiFi Connection Lost                             │
+│ (Router reboot, signal loss, etc.)               │
+└──────────────────────────────────────────────────┘
+         ↓
+┌──────────────────────────────────────────────────┐
+│ Wait 5 Minutes (Cooldown Period)                 │
+│ → Prevents aggressive battery drain              │
+│ → Allows temporary issues to resolve             │
+└──────────────────────────────────────────────────┘
+         ↓
+┌──────────────────────────────────────────────────┐
+│ Reconnection Batch: 3 Attempts                   │
+│ → Attempt 1: Try connect (30s timeout)           │
+│ → Attempt 2: Try connect (30s timeout)           │
+│ → Attempt 3: Try connect (30s timeout)           │
+└──────────────────────────────────────────────────┘
+         ↓
+    ┌─── Success? ───┐
+    │                 │
+   YES               NO
+    │                 │
+    ↓                 ↓
+  Resume         Wait 5 Minutes
+  Operation      → Try Next Batch
+```
+
+### Reconnection Behavior
+
+| Parameter | Value | Purpose |
+|-----------|-------|---------|
+| **Cooldown Period** | 5 minutes | Prevents battery drain from continuous retry |
+| **Attempts per Batch** | 3 | Reasonable retry without being aggressive |
+| **Timeout per Attempt** | 30 seconds | Long enough for slow routers |
+| **Batch Interval** | 5 minutes | Exponential backoff strategy |
+
+### What You'll See
+
+**During WiFi Disconnection:**
+- Display shows last known price (frozen)
+- LED may turn yellow (API error after ~40s timeout)
+- Time continues updating (ESP32 RTC)
+- Device does NOT create WiFi portal (runtime mode)
+
+**During Reconnection:**
+- No visual indication (background process)
+- On success → LED returns to price color
+- On success → Price updates resume within 1-3 minutes
+
+**If Reconnection Fails:**
+- Device continues retrying every 5 minutes
+- Display remains functional (shows last known data)
+- Manual reboot may help if router changed settings
+
+### Protection Against Battery Drain
+
+**Why the 5-minute cooldown?**
+- WiFi radio consumes significant power when scanning/connecting
+- Continuous retry would drain battery in USB-powered setup
+- Gives router time to fully reboot (~2-3 minutes typical)
+
+**First-Boot Exception:**
+- If device has **never connected** to WiFi since boot → **NO automatic reconnection**
+- Rationale: Wrong password or out-of-range scenarios
+- Solution: Device creates WiFi portal for reconfiguration
+
+### Manual Intervention
+
+**If automatic reconnection isn't working:**
+
+1. **Check router status** - Ensure WiFi network is actually available
+2. **Power cycle device** - Sometimes helps clear WiFi stack issues
+3. **Reconfigure WiFi** - Long-press encoder → Menu [11] WiFi Info → Follow instructions
+
+**WiFi credential change:**
+- If router SSID/password changed → device won't reconnect automatically
+- Must reconfigure via WiFi portal (see Menu [11])
+
+### Common Scenarios
+
+| Scenario | Device Behavior | Action Needed |
+|----------|----------------|---------------|
+| **Router reboots (2-3 min)** | Waits 5 min, reconnects on 1st attempt | ✅ None (automatic) |
+| **Brief signal loss (< 1 min)** | Waits 5 min, reconnects immediately | ✅ None (automatic) |
+| **Router SSID changed** | Retries forever, never succeeds | ⚠️ Reconfigure WiFi |
+| **Router password changed** | Retries forever, never succeeds | ⚠️ Reconfigure WiFi |
+| **Moved device out of range** | Retries every 5 min, no success | ⚠️ Move closer or reconfigure |
+| **First boot, wrong password** | NO auto-retry, shows WiFi portal | ⚠️ Enter correct password |
+
+**💡 Pro Tip:** If you see persistent yellow LED + frozen price for > 15 minutes, check your WiFi router status. Device is likely retrying in background.
 
 ---
 

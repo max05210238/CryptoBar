@@ -419,18 +419,30 @@ CryptoBar displays different screens based on its current state:
 
 ### OTA Firmware Update Mode
 
-**Access:** Select "Firmware Update" from main menu.
+**Access:** Select "Firmware Update" from main menu (Menu [12]).
 
+**Overview:**
+- Device creates dedicated WiFi hotspot: `CryptoBar_MAINT_XXXX`
+- Connect to hotspot with phone/tablet
+- Upload .bin firmware file via web browser
+- Device automatically reboots with new firmware
+
+**Display shows:**
 ```
 ┌─────────────────────────┐
-│ OTA Update Mode         │
+│ Firmware Update         │
 │                         │
-│ Connect to:             │
-│ http://192.168.x.x      │  ← Device IP address
+│ 1) Connect phone to:    │
+│    CryptoBar_MAINT_XXXX │
 │                         │
-│ Upload .bin file        │
+│ 2) Open browser to:     │
+│    http://192.168.4.1   │
+│                         │
+│ 3) Upload .bin file     │
 └─────────────────────────┘
 ```
+
+**📘 Complete Guide:** See [OTA Update Guide](OTA_UPDATE_GUIDE.md) for detailed step-by-step instructions, security considerations, and troubleshooting.
 
 ---
 

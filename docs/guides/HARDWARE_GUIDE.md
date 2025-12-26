@@ -48,6 +48,7 @@ Complete guide for building your CryptoBar cryptocurrency display device.
 | M2 Flat Screws | M2 x 5mm Flat Head | 4 | Multi-pack | [Buy Kit](https://amzn.to/44HXbLf) |
 | M3 Heat Set Inserts | Brass, M3 size | 2 | Multi-pack | [Buy](https://amzn.to/44HXbLf) |
 | M2 Heat Set Inserts | Brass, M2 size | 4 | Multi-pack | [Buy](https://amzn.to/49rPdbL) |
+| Small Magnets | 4mm x 6mm (enclosure closure) | 4 | Multi-pack | [Buy](https://amzn.to/4sjNFIy) |
 
 ### Additional Required Items
 
@@ -79,10 +80,11 @@ Complete guide for building your CryptoBar cryptocurrency display device.
 - **KY-040 Rotary Encoder:** ~$2 USD
 - **WS2812B LED:** ~$2 USD (strip, need 1 LED)
 - **M3/M2 Screws & Heat Set Inserts:** ~$0.50 USD (from kits)
+- **Small Magnets (4mm x 6mm):** ~$0.50 USD (from multi-pack)
 - **3D Printing Material:** ~$2 USD (PLA)
 - **USB-C Cable & Adapter:** ~$5-8 USD (if needed)
 
-**Total Estimated Cost:** **~$35 USD** (extremely affordable!)
+**Total Estimated Cost:** **~$35-36 USD** (extremely affordable!)
 
 **Note:**
 - Hardware kits (screws, inserts) come in multi-packs - consider building multiple units with friends to maximize value!

@@ -293,7 +293,7 @@ CryptoBar uses a **rotary encoder** (knob) for all navigation.
 │ [8] Date Format             │ ← MM/DD, DD/MM, or YYYY-MM-DD
 │ [9] Timezone                │ ← Select from 27 timezones
 │ [10] Day Average Mode       │ ← Reference line (Off/Rolling/ET 7pm)
-│ [11] WiFi Reconnect         │ ← Force WiFi reconnection
+│ [11] WiFi Info             │ ← View WiFi connection information
 │ [12] Firmware Update        │ ← OTA update mode
 └─────────────────────────────┘
 ```
@@ -306,11 +306,18 @@ CryptoBar uses a **rotary encoder** (knob) for all navigation.
 - Long press to exit menu at any time
 
 #### Coin Selection (20 Coins)
-```
-BTC  → ETH  → XRP  → ADA  → SOL  → DOGE → DOT
-↓                                             ↓
-INJ ← APT ← ICP ← HBAR ← FIL ← VET ← ALGO ← XLM
-```
+
+The Coin Selection menu uses a **submenu system**:
+
+1. **Select "Coin Selection"** from main menu (short press)
+2. **Submenu appears** with 20 cryptocurrency options
+3. **Navigate** using rotary encoder (up/down)
+4. **Confirm selection** with short press
+5. **Returns to main screen** with new coin displayed
+
+**Available cryptocurrencies (alphabetical):**
+- BTC, ETH, XRP, ADA, SOL, DOGE, DOT, MATIC, LTC, UNI
+- LINK, ATOM, XLM, ALGO, VET, FIL, HBAR, ICP, APT, INJ
 
 #### Timezone Selection (27 Timezones)
 ```
@@ -347,7 +354,7 @@ CryptoBar displays different screens based on its current state:
     │ WiFi Setup          │  ← If not configured
     │ Preparing AP...     │
     │ Connect to:         │
-    │ CryptoBar-XXXXXX    │
+    │ CryptoBar-XXXX      │
     └─────────────────────┘
     OR
     ┌─────────────────────┐
@@ -374,7 +381,7 @@ CryptoBar displays different screens based on its current state:
 
 **When to access:** First boot or when WiFi credentials not saved.
 
-**Device creates AP:** `CryptoBar-XXXXXX` (XXXXXX = last 6 digits of MAC address)
+**Device creates AP:** `CryptoBar-XXXX` (XXXX = last 4 digits of MAC address)
 
 **Portal Features:**
 - WiFi network selection and password entry
@@ -416,7 +423,7 @@ Quick reference for all display-related settings:
 | **Date/Time Size** | Small, Large | Small | Menu [6] |
 | **Time Format** | 24h, 12h | 24h | Menu [7] |
 | **Date Format** | MM/DD, DD/MM, YYYY-MM-DD | MM/DD | Menu [8] |
-| **Refresh Mode** | Partial, Full | Partial | Menu [4] |
+| **Refresh Mode** | Partial, Full | Full | Menu [4] |
 | **Update Interval** | 1min, 3min, 5min, 10min | 3min | Menu [3] |
 | **Day Average Line** | Off, Rolling 24h, ET 7pm | Off | Menu [10] |
 | **Display Currency** | 9 currencies | USD | Menu [2] |
@@ -429,8 +436,9 @@ Quick reference for all display-related settings:
 
 1. **Partial vs Full Refresh:**
    - **Partial** - Fast updates (1-2 seconds), may accumulate ghosting over time
-   - **Full** - Complete refresh (5-6 seconds), eliminates all ghosting
-   - **Recommendation:** Use Partial mode, device automatically does full refresh every 20 updates
+   - **Full** - Complete refresh (5-6 seconds), eliminates all ghosting, **recommended default**
+   - **Default Setting:** Full refresh mode (prevents ghosting)
+   - **Note:** Device automatically does full refresh every 20 partial updates if using Partial mode
 
 2. **Desk Clock Mode:**
    - Set update interval to 5 or 10 minutes to reduce API calls

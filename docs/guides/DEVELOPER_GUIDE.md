@@ -9,18 +9,18 @@ This guide covers internal mechanisms, architectural decisions, and advanced deb
 ## 📖 Table of Contents
 
 ### Core Mechanisms
-1. [⏱️ Prefetch Scheduling Mechanism](#prefetch-scheduling-mechanism)
-2. [🏗️ Architecture Design Decisions](#architecture-design-decisions)
-3. [🐛 Advanced Debugging Techniques](#advanced-debugging-techniques)
+1. [⏱️ Prefetch Scheduling Mechanism](#️-prefetch-scheduling-mechanism)
+2. [🏗️ Architecture Design Decisions](#️-architecture-design-decisions)
+3. [🐛 Advanced Debugging Techniques](#-advanced-debugging-techniques)
 
 ### Development Workflows
-4. [🔧 Building and Flashing](#building-and-flashing)
-5. [📊 Performance Profiling](#performance-profiling)
-6. [🧪 Testing Strategies](#testing-strategies)
+4. [🔧 Building and Flashing](#-building-and-flashing)
+5. [📊 Performance Profiling](#-performance-profiling)
+6. [🧪 Testing Strategies](#-testing-strategies)
 
 ### Reference
-7. [📚 Code Organization](#code-organization)
-8. [🔗 Related Documentation](#related-documentation)
+7. [📚 Code Organization](#-code-organization)
+8. [🔗 Related Documentation](#-related-documentation)
 
 ---
 

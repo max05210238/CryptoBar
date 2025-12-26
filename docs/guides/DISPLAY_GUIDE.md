@@ -7,36 +7,36 @@
 ## 📖 Table of Contents
 
 ### Core Display Elements
-1. [📺 Main Display Overview](#main-display-overview)
-2. [🖤 Left Panel: Symbol Information](#left-panel-symbol-information-black-background)
-3. [🤍 Right Panel: Live Data Display](#right-panel-live-data-display-white-background)
-4. [🔄 Why Two API Labels?](#why-two-api-labels)
+1. [📺 Main Display Overview](#-main-display-overview)
+2. [🖤 Left Panel: Symbol Information](#-left-panel-symbol-information-black-background)
+3. [🤍 Right Panel: Live Data Display](#-right-panel-live-data-display-white-background)
+4. [🔄 Why Two API Labels?](#-why-two-api-labels)
 
 ### Data Visualization
-5. [📊 24-Hour Price Chart](#24-hour-price-chart)
-6. [━ ━ ━ Reference Line (Day Average)](#------reference-line-dashed)
-7. [⏰ Date & Time Display](#date--time-display)
-8. [💰 Price Display](#price-display)
-9. [💱 Multi-Currency Display](#multi-currency-display)
+5. [📊 24-Hour Price Chart](#-24-hour-price-chart)
+6. [━ ━ ━ Reference Line (Day Average)](#--reference-line-dashed)
+7. [⏰ Date & Time Display](#-date--time-display)
+8. [💰 Price Display](#-price-display)
+9. [💱 Multi-Currency Display](#-multi-currency-display)
 
 ### Navigation & Control
-10. [🔄 E-ink Refresh Mode](#e-ink-refresh-mode)
-11. [🎛️ Menu Navigation](#menu-navigation)
+10. [🔄 E-ink Refresh Mode](#-e-ink-refresh-mode)
+11. [🎛️ Menu Navigation](#️-menu-navigation)
     - Main Menu Items (All 12 Options)
     - Coin Selection (20+ Cryptocurrencies)
     - Timezone Selection (27 Timezones)
 
 ### System Screens
-12. [🎨 Screen States](#screen-states)
+12. [🎨 Screen States](#-screen-states)
     - Boot Sequence
     - WiFi Configuration Portal
     - OTA Firmware Update Mode
 
 ### Reference
-13. [🔧 Display Settings Summary](#display-settings-summary)
-14. [💡 Pro Tips](#pro-tips)
-15. [🚨 Troubleshooting Display Issues](#troubleshooting-display-issues)
-16. [📚 Related Guides](#related-guides)
+13. [🔧 Display Settings Summary](#-display-settings-summary)
+14. [💡 Pro Tips](#-pro-tips)
+15. [🚨 Troubleshooting Display Issues](#-troubleshooting-display-issues)
+16. [📚 Related Guides](#-related-guides)
 
 ---
 

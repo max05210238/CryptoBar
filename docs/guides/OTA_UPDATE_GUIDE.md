@@ -9,16 +9,16 @@ This guide includes critical security information about firmware updates. Please
 
 ## 📖 Table of Contents
 
-1. [🔄 What is OTA Update?](#what-is-ota-update)
+1. [🔄 What is OTA Update?](#-what-is-ota-update)
 2. [🛡️ OTA Rollback Safety (Anti-Brick Protection)](#️-ota-rollback-safety-anti-brick-protection)
-3. [🕒 When to Update](#when-to-update)
-4. [✅ Prerequisites](#prerequisites)
-5. [🚪 How to Enter Maintenance Mode](#how-to-enter-maintenance-mode)
-6. [📋 Step-by-Step Update Process](#step-by-step-update-process)
-7. [🔒 Security Considerations](#security-considerations)
-8. [🔧 Troubleshooting](#troubleshooting)
+3. [🕒 When to Update](#-when-to-update)
+4. [✅ Prerequisites](#-prerequisites)
+5. [🚪 How to Enter Maintenance Mode](#-how-to-enter-maintenance-mode)
+6. [📋 Step-by-Step Update Process](#-step-by-step-update-process)
+7. [🔒 Security Considerations](#-security-considerations)
+8. [🔧 Troubleshooting](#-troubleshooting)
 9. [↩️ Reverting to Previous Version](#️-reverting-to-previous-version)
-10. [📚 Additional Resources](#additional-resources)
+10. [📚 Additional Resources](#-additional-resources)
 11. [⚠️ Final Security Reminder](#️-final-security-reminder)
 
 ---

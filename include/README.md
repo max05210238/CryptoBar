@@ -58,7 +58,7 @@ enum DisplayCurrency : uint8_t {
 struct CurrencyInfo {
   const char* code;        // 3-letter ISO code (e.g., "USD")
   const char* symbol;      // Display symbol (e.g., "$")
-  bool        noDecimals;  // true for JPY, KRW (no fractional units)
+  bool        noDecimals;  // DEPRECATED: V0.99p unified length-based logic for all currencies
   bool        twoCharSym;  // true for NT, C$, S$, A$ (use smaller font)
 };
 extern const CurrencyInfo CURRENCY_INFO[CURR_COUNT];
@@ -202,10 +202,10 @@ extern const char* NTP_SERVER_1;              // "pool.ntp.org"
 extern const char* NTP_SERVER_2;              // "time.nist.gov"
 
 // Partial refresh limit (reset threshold for full refresh)
-extern const uint16_t PARTIAL_REFRESH_LIMIT;  // 100
+extern const uint16_t PARTIAL_REFRESH_LIMIT;  // 20
 
-// NTP resync interval (6 hours)
-extern const uint32_t NTP_RESYNC_INTERVAL_SEC;
+// NTP resync interval (10 minutes)
+extern const uint32_t NTP_RESYNC_INTERVAL_SEC;  // 600 seconds
 ```
 
 **When to modify:** Adding new global state or hardware pins.

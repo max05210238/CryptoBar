@@ -145,11 +145,64 @@ The **dashed horizontal line** represents the **Previous Day Average Price**.
 
 ### What Is It?
 
-- **Visual Benchmark** - Shows average price from the previous trading day
-- **Optional Feature** - Can be enabled/disabled in settings
-- **Two Modes:**
-  1. **Rolling 24h Average** - Continuously updated 24-hour rolling average
-  2. **ET 7pm Cycle** - Resets at 7:00 PM Eastern Time (traditional trading day boundary)
+- **Visual Benchmark** - Shows average price reference for context
+- **Optional Feature** - Can be enabled/disabled in Menu [10] "Day Average Mode"
+- **Three Modes:**
+  1. **Off** - No reference line displayed
+  2. **Rolling 24h Mean** - Continuously updated 24-hour rolling average (default)
+  3. **ET 7pm Cycle Mean** - Resets at 7:00 PM Eastern Time (traditional trading day boundary)
+
+### How It Works
+
+#### Mode 1: Rolling 24-Hour Mean (Default)
+
+**Technical Details:**
+- Uses **288 five-minute buckets** (24 hours × 60 minutes ÷ 5 min)
+- Each bucket stores the average price for that 5-minute window
+- Calculates mean across all valid buckets from the last 24 hours
+- **Continuously updating** - oldest bucket is replaced every 5 minutes
+
+**Example:**
+```
+Current time: 2:30 PM
+Reference line = Average of all prices from 2:30 PM yesterday → 2:30 PM today
+```
+
+**When to use:**
+- ✅ **Recommended for most users** - provides smooth, continuous reference
+- ✅ Day trading - see if price is above/below recent average
+- ✅ Longer update intervals (5-10 min) - still meaningful reference
+
+#### Mode 2: ET 7pm Cycle Mean
+
+**Technical Details:**
+- Resets at **7:00 PM Eastern Time** daily
+- Calculates mean of all chart samples since last 7pm ET
+- Synchronized with the 24-hour chart cycle
+
+**Why 7pm ET?**
+- Traditional crypto trading day boundary
+- Post-US market close (4pm ET)
+- Aligns with many exchange daily settlement times
+- Provides consistent daily baseline
+
+**Example:**
+```
+Current time: 2:30 PM ET
+Last reset: Yesterday 7:00 PM ET
+Reference line = Average from 7pm yesterday → 2:30pm today (19.5 hours of data)
+```
+
+**When to use:**
+- ✅ Tracking daily performance vs. cycle start
+- ✅ Comparing to exchange "daily" metrics
+- ✅ Prefer fixed reset time over rolling window
+
+#### Mode 0: Off
+
+**When to use:**
+- ✅ Prefer clean chart without reference
+- ✅ Focus only on price trend, not average comparison
 
 ### How to Read It
 
@@ -264,6 +317,103 @@ All 9 supported currencies use the same auto-decimal logic:
 
 ---
 
+## 💱 Multi-Currency Display
+
+CryptoBar supports **9 global currencies** for price display. All cryptocurrencies can be displayed in any currency.
+
+### Supported Currencies
+
+| Code | Name | Symbol | Decimal Logic | Example |
+|------|------|--------|---------------|---------|
+| **USD** | US Dollar | $ | Length-based (0-4) | $42,350.2588 |
+| **TWD** | Taiwan Dollar | NT | Length-based (0-4) | NT1,350,245 |
+| **EUR** | Euro | EUR | Length-based (0-4) | EUR39,850.50 |
+| **GBP** | British Pound | GBP | Length-based (0-4) | GBP33,250.75 |
+| **CAD** | Canadian Dollar | C$ | Length-based (0-4) | C$58,900.00 |
+| **JPY** | Japanese Yen | JPY | Length-based (0-4) | JPY6,350,125 |
+| **KRW** | Korean Won | KRW | Length-based (0-4) | KRW56,812,500 |
+| **SGD** | Singapore Dollar | S$ | Length-based (0-4) | S$57,100.25 |
+| **AUD** | Australian Dollar | A$ | Length-based (0-4) | A$63,500.00 |
+
+### Length-Based Decimal Display (V0.99p)
+
+**All currencies use unified 10-character length limit:**
+
+| Total Display Length | Decimals Shown | Example (BTC in USD) |
+|---------------------|----------------|----------------------|
+| ≤ 10 characters | **4 decimals** | `$1,234.5678` (10 chars) |
+| 11-12 characters | **2 decimals** | `$123,456.78` (11 chars) |
+| ≥ 13 characters | **0 decimals** | `$12,345,678` (12 chars) |
+
+**Important:** V0.99p removed the old restriction that forced JPY/KRW to always show integers. Now **all currencies** (including JPY/KRW) can show decimals when appropriate based on length.
+
+**Examples with different currencies:**
+
+```
+BTC in USD:  $87,619.3624  (10 chars, 4 decimals)
+BTC in JPY:  JPY13,422,202 (13 chars, 0 decimals)
+ETH in KRW:  KRW5,248.3621 (12 chars, 4 decimals) ← KRW can have decimals!
+XRP in EUR:  EUR1.8635     (9 chars, 4 decimals)
+```
+
+### Exchange Rate Updates
+
+**How it works:**
+- Exchange rates fetched from **ExchangeRate-API.com**
+- Updates **synchronized with price updates** (every 1-10 minutes based on your setting)
+- Cryptocurrency price fetched in USD, then converted to display currency
+- Formula: `Display Price = USD Price × Exchange Rate`
+
+**Example:**
+```
+BTC Price: $87,619.36 USD
+USD→TWD Rate: 32.15
+Display: NT 2,816,962 (= 87,619.36 × 32.15)
+```
+
+**Fallback behavior:**
+- If exchange rate fetch fails, display shows `----` until successful fetch
+- Crypto price and FX rate must both be valid for display
+
+### How to Change Display Currency
+
+1. **Enter Menu** - Short press encoder from main screen
+2. **Navigate to [2] "Display Currency"**
+3. **Short press to enter** currency selection submenu
+4. **Scroll through 9 currencies** using encoder
+5. **Short press to select** - Returns to main screen with new currency
+
+**Saved to NVS:** Your currency preference is saved and persists across reboots.
+
+### Multi-Currency Tips
+
+**💡 Best Practices:**
+
+1. **Local Currency Preference**
+   - Use your local currency for easier mental conversion
+   - Taiwan users: TWD shows as "NT" (compressed for space)
+
+2. **Decimal Precision Varies**
+   - Higher-value currencies (USD, EUR, GBP) show more decimals
+   - Lower-value currencies (JPY, KRW) often show fewer decimals (due to larger numbers)
+
+3. **Exchange Rate Freshness**
+   - FX rates update with crypto prices (1-10 min intervals)
+   - More frequent than traditional FX sources (daily updates)
+   - Good for approximate conversions, not for arbitrage trading
+
+4. **Symbol Rendering**
+   - Single-character symbols ($, €, £, ¥, ₩): Full-size font
+   - Two-character symbols (NT, C$, S$, A$, EUR, GBP, JPY, KRW): Compressed font
+
+**⚠️ Important Notes:**
+
+- **Exchange rates are approximate** - sourced from aggregated market data
+- **Not for financial decisions** - use official exchange sources for trading
+- **Network required** - both crypto price AND FX rate need internet connection
+
+---
+
 ## 🎛️ Menu Navigation
 
 CryptoBar uses a **rotary encoder** (knob) for all navigation.
@@ -282,21 +432,47 @@ CryptoBar uses a **rotary encoder** (knob) for all navigation.
 **Access:** Short press from main screen to enter menu.
 
 ```
-┌─────────────────────────────┐
-│ [1] Coin Selection          │ ← Choose cryptocurrency
-│ [2] Display Currency        │ ← Choose display currency (USD, TWD, etc.)
-│ [3] Update Preset           │ ← Price refresh interval (1/3/5/10 min)
-│ [4] Refresh Mode            │ ← Partial or Full e-ink refresh
-│ [5] Brightness              │ ← LED brightness (Low/Med/High)
-│ [6] Date/Time Size          │ ← Small or Large date/time display
-│ [7] Time Format             │ ← 24h or 12h
-│ [8] Date Format             │ ← MM/DD, DD/MM, or YYYY-MM-DD
-│ [9] Timezone                │ ← Select from 27 timezones
-│ [10] Day Average Mode       │ ← Reference line (Off/Rolling/ET 7pm)
-│ [11] WiFi Info             │ ← View WiFi connection information
-│ [12] Firmware Update        │ ← OTA update mode
-└─────────────────────────────┘
+┌─────────────────────────────────────────────────────────────┐
+│ [1]  Coin Selection      │ Choose cryptocurrency            │
+│                          │ → Default: BTC                   │
+│ [2]  Display Currency    │ Choose display currency          │
+│                          │ → Default: USD                   │
+│                          │ → Options: USD/TWD/EUR/GBP/CAD/  │
+│                          │            JPY/KRW/SGD/AUD       │
+│ [3]  Update Preset       │ Price refresh interval           │
+│                          │ → Default: 3 min ⭐ Recommended  │
+│                          │ → Options: 1 min / 3 min /       │
+│                          │            5 min / 10 min        │
+│ [4]  Refresh Mode        │ Partial or Full e-ink refresh    │
+│                          │ → Default: Full                  │
+│                          │ → Partial: Auto full every 20×   │
+│ [5]  Brightness          │ LED brightness                   │
+│                          │ → Default: Medium                │
+│                          │ → Options: Low / Med / High      │
+│ [6]  Date/Time Size      │ Small or Large date/time display │
+│                          │ → Default: Large                 │
+│ [7]  Time Format         │ 24-hour or 12-hour clock         │
+│                          │ → Default: 12h                   │
+│ [8]  Date Format         │ Date display format              │
+│                          │ → Default: MM/DD                 │
+│                          │ → Options: MM/DD / DD/MM /       │
+│                          │            YYYY-MM-DD            │
+│ [9]  Timezone            │ Select from 27 timezones         │
+│                          │ → Default: UTC-08 Seattle        │
+│                          │ → Auto-detect on first boot      │
+│ [10] Day Average Mode    │ Reference line on chart          │
+│                          │ → Default: Rolling 24h Mean      │
+│                          │ → Options: Off / Rolling /       │
+│                          │            ET 7pm Cycle          │
+│ [11] WiFi Info          │ View WiFi connection details     │
+│ [12] Firmware Update     │ Enter OTA update mode            │
+└─────────────────────────────────────────────────────────────┘
 ```
+
+**⭐ Recommended Settings:**
+- **Update Interval:** 3 minutes (balances API limits and timeliness)
+- **Refresh Mode:** Full (clean display, no ghosting)
+- **Day Average:** Rolling 24h Mean (smooth continuous reference)
 
 ### Navigation Tips
 

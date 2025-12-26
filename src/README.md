@@ -109,7 +109,7 @@ This directory contains all source code (`.cpp` files) for the CryptoBar firmwar
 - **Purpose:** Keep system time accurate via NTP
 - **Key functions:**
   - `appTimeBegin()` - Initialize NTP client
-  - `appTimeLoop()` - Periodic NTP resync (every 6 hours)
+  - `appTimeLoop()` - Periodic NTP resync (every 10 minutes)
   - Timezone auto-detection (worldtimeapi.org) on first boot
 - **NTP servers:**
   - Primary: `pool.ntp.org`

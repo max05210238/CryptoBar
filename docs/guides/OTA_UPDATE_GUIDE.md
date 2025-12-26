@@ -353,6 +353,96 @@ pio run
 
 ---
 
+## 🚪 How to Enter Maintenance Mode
+
+There are **two ways** to enter OTA maintenance mode. Choose the method that works best for you:
+
+### Method 1: Via Menu (Standard Method)
+
+**When to use:** Normal firmware updates, device is working properly
+
+**Steps:**
+1. **From main display** - Short press encoder to enter menu
+2. **Navigate to [12] "Firmware Update"**
+3. **Short press to select** - Confirmation screen appears
+4. **Confirm with short press** - Device enters maintenance mode
+
+**Display shows:**
+```
+┌─────────────────────────┐
+│ Firmware Update         │
+│                         │
+│ Device will reboot into │
+│ maintenance mode.       │
+│                         │
+│ Press to confirm        │
+│ Hold to cancel          │
+└─────────────────────────┘
+```
+
+---
+
+### Method 2: Boot-Time Entry (Quick Access)
+
+**When to use:**
+- ✅ **Quick updates** - Skip navigating through menu
+- ✅ **Emergency recovery** - Firmware corruption prevents normal menu access
+- ✅ **Troubleshooting** - Device boots but UI is broken
+
+**Steps:**
+
+1. **Disconnect power** from CryptoBar (unplug USB)
+
+2. **Press and HOLD encoder button**
+   - Push down the rotary encoder knob
+   - Keep holding (don't release yet)
+
+3. **While holding button, reconnect power**
+   - Plug in USB cable
+   - Keep button pressed
+
+4. **Hold for 1-2 seconds after power connected**
+   - Wait for display to show maintenance screen
+   - Then release button
+
+5. **Device boots directly into maintenance mode**
+   - Skips normal startup
+   - Creates WiFi hotspot immediately
+
+**Visual Guide:**
+
+```
+┌──────────────────────────────────────────┐
+│  1. Unplug USB              [Disconnect] │
+│         ↓                                │
+│  2. Press & Hold Button     [●] ← Hold   │
+│         ↓                                │
+│  3. Plug in USB (keep holding)           │
+│         ↓                                │
+│  4. Wait 1-2 seconds        [Display ⚡] │
+│         ↓                                │
+│  5. Release button          [Maintenance]│
+└──────────────────────────────────────────┘
+```
+
+**Troubleshooting Boot-Time Entry:**
+
+| Issue | Solution |
+|-------|----------|
+| **Device boots normally** | Hold button earlier - press BEFORE plugging in power |
+| **Nothing happens** | Ensure button is fully pressed down (you should feel click) |
+| **Display stays blank** | Wait longer (2-3 seconds) before releasing button |
+| **Not sure if it worked** | Check for WiFi hotspot `CryptoBar_MAINT_XXXX` on phone |
+
+**⚡ Pro Tip:** This method is faster than menu navigation if you're doing multiple firmware updates (testing/development).
+
+**⚠️ Important:**
+- This does NOT bypass any security - it's an official recovery mechanism
+- Same OTA safety features apply (rollback protection, etc.)
+- Use when normal menu access isn't convenient or possible
+
+---
+
 ## 📋 Step-by-Step Update Process
 
 ### Step 1: Enter Firmware Update Confirmation

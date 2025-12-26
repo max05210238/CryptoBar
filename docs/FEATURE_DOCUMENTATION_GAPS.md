@@ -48,22 +48,24 @@ enum DisplayCurrency : uint8_t {
   CURR_EUR = 2,  // Euro (€)
   CURR_GBP = 3,  // British Pound (£)
   CURR_CAD = 4,  // Canadian Dollar (C$)
-  CURR_JPY = 5,  // Japanese Yen (¥) - no decimals
-  CURR_KRW = 6,  // Korean Won (₩) - no decimals
+  CURR_JPY = 5,  // Japanese Yen (¥)
+  CURR_KRW = 6,  // Korean Won (₩)
   CURR_SGD = 7,  // Singapore Dollar (S$)
   CURR_AUD = 8,  // Australian Dollar (A$)
 };
 ```
 
 **特殊處理:**
-- **JPY/KRW:** 無小數點顯示（`noDecimals = true`）
+- **長度限制顯示:** 所有貨幣使用統一的長度限制算法（最多 10 字符）
+- **自動調整小數位:** 4 位 → 2 位 → 0 位（根據總長度自動調整）
+- **V0.99p 改進:** 移除了 JPY/KRW 強制整數限制，現在也可顯示小數（基於長度限制）
 - **2字符符號:** NT, C$, S$, A$, EUR, GBP, JPY, KRW 使用壓縮字體
 - **匯率來源:** ExchangeRate-API.com
 - **更新頻率:** 與價格更新同步
 
 **文檔中的缺失:**
 - 支持的 9 種貨幣完整列表
-- JPY/KRW 無小數點的說明
+- V0.99p 長度限制算法說明（所有貨幣統一邏輯）
 - 匯率更新機制和來源
 - 貨幣符號的特殊渲染邏輯
 
@@ -309,11 +311,11 @@ extern uint8_t  g_runtimeReconnectBatch;    // 當前重連批次計數
 **機制說明:**
 ```cpp
 extern uint16_t g_partialRefreshCount;           // Partial refresh 計數器
-extern const uint16_t PARTIAL_REFRESH_LIMIT;     // 100 次後自動 Full Refresh
+extern const uint16_t PARTIAL_REFRESH_LIMIT;     // 20 次後自動 Full Refresh
 ```
 
 **自動 Full Refresh 規則:**
-- **Partial 模式下:** 每 100 次 partial refresh 後自動執行 1 次 full refresh
+- **Partial 模式下:** 每 20 次 partial refresh 後自動執行 1 次 full refresh
 - **目的:** 清除累積的殘影（ghosting）
 - **Full 模式下:** 每次都執行 full refresh（無計數器）
 
@@ -327,7 +329,7 @@ extern const uint16_t PARTIAL_REFRESH_LIMIT;     // 100 次後自動 Full Refres
 | 推薦場景 | 頻繁更新 | 長時間靜態顯示 |
 
 **文檔中的缺失:**
-- 自動 Full Refresh 的 100 次規則
+- 自動 Full Refresh 的 20 次規則
 - Partial/Full 的詳細比較
 - 何時選擇哪種模式
 
@@ -390,20 +392,20 @@ extern const uint16_t PARTIAL_REFRESH_LIMIT;     // 100 次後自動 Full Refres
 
 **機制說明:**
 ```cpp
-extern const uint32_t NTP_RESYNC_INTERVAL_SEC;  // 6 小時（21600 秒）
+extern const uint32_t NTP_RESYNC_INTERVAL_SEC;  // 10 分鐘（600 秒）
 extern time_t g_nextNtpResyncUtc;               // 下次 NTP 同步時刻
 ```
 
 **NTP 同步策略:**
 1. **首次啟動:** WiFi 連接後立即同步
-2. **定期同步:** 每 6 小時自動重新同步
+2. **定期同步:** 每 10 分鐘自動重新同步
 3. **NTP 服務器:**
    - Primary: `pool.ntp.org`
    - Secondary: `time.nist.gov`
 
 **時間精度:**
 - ESP32 內部 RTC 漂移：~1-5 秒/天
-- 6 小時同步間隔確保誤差 < 1 秒
+- 10 分鐘同步間隔確保時間始終精確（誤差 < 0.1 秒）
 
 **文檔中的缺失:**
 - 定期 NTP 同步機制
@@ -495,7 +497,7 @@ void ledAnimStartTask(uint16_t hz = 30, uint8_t core = 0);
 
 1. **多幣種顯示系統** - 在 DISPLAY_GUIDE.md 添加專門章節
    - 9 種貨幣完整列表
-   - JPY/KRW 無小數點說明
+   - V0.99p 長度限制算法說明（統一邏輯，所有貨幣都可顯示小數）
    - 匯率更新機制
 
 2. **Day Average Mode 詳細說明** - 擴展 DISPLAY_GUIDE.md "Reference Line" 章節
@@ -522,7 +524,7 @@ void ledAnimStartTask(uint16_t hz = 30, uint8_t core = 0);
    - 斷線後的行為
 
 7. **Partial/Full Refresh 詳細說明** - 擴展 DISPLAY_GUIDE.md "Refresh Mode"
-   - 100 次 Partial 後自動 Full Refresh
+   - 20 次 Partial 後自動 Full Refresh
    - 兩種模式的詳細比較表
    - 推薦使用場景
 
@@ -532,8 +534,8 @@ void ledAnimStartTask(uint16_t hz = 30, uint8_t core = 0);
    - Fallback 觸發條件
 
 9. **NTP 同步機制** - 在 DISPLAY_GUIDE.md 添加 "Time Accuracy"
-   - 每 6 小時自動同步
-   - 時間精度保證（< 1 秒）
+   - 每 10 分鐘自動同步
+   - 時間精度保證（< 0.1 秒）
 
 10. **Timezone 自動檢測** - 在 WiFi Portal 說明中添加
     - 首次啟動自動檢測

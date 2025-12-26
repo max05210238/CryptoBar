@@ -60,6 +60,241 @@ This guide includes critical security information about firmware updates. Please
 
 ---
 
+## 🛡️ OTA Rollback Safety (Anti-Brick Protection)
+
+CryptoBar uses a **dual-partition OTA system** to prevent bricking your device.
+
+### How Dual Partitions Work
+
+Your ESP32-S3 has **TWO firmware slots** (A/B partitions):
+
+```
+┌─────────────────────────────────────────────┐
+│  ESP32-S3 Flash Memory (16MB)               │
+├─────────────────────────────────────────────┤
+│  Partition: app0 (ota_0)  ← Slot A          │
+│  Size: ~1.5MB                               │
+│  Status: Running (current firmware)         │
+├─────────────────────────────────────────────┤
+│  Partition: app1 (ota_1)  ← Slot B          │
+│  Size: ~1.5MB                               │
+│  Status: Inactive (backup/update target)    │
+└─────────────────────────────────────────────┘
+```
+
+**How it protects you:**
+- Only ONE partition runs at a time
+- The OTHER partition is used for updates
+- If new firmware fails → device automatically boots from old partition
+
+---
+
+### Automatic Rollback Mechanism
+
+CryptoBar has **two layers** of protection:
+
+#### Layer 1: OTA Safety Guard (NVS-based)
+
+**Policy:** 2 failed boots → automatic rollback
+
+```
+Upload new firmware (V1.01)
+        ↓
+Writes to inactive partition (app1)
+        ↓
+Reboot and try to run V1.01
+        ↓
+┌─────────────────────────────────┐
+│  Boot Attempt #1                │
+│  - Firmware starts              │
+│  - Crashes or won't boot        │
+│  → Counter: attempts = 1        │
+└─────────────────────────────────┘
+        ↓
+Device reboots automatically
+        ↓
+┌─────────────────────────────────┐
+│  Boot Attempt #2                │
+│  - Firmware starts again        │
+│  - Still crashes                │
+│  → Counter: attempts = 2        │
+│  → TRIGGER ROLLBACK!            │
+└─────────────────────────────────┘
+        ↓
+Device switches back to app0 (old firmware)
+        ↓
+Boots successfully with V1.00 (previous version)
+```
+
+**Rollback triggers:**
+- 2 consecutive boot failures
+- Firmware crashes before 25-second mark
+- Watchdog timer resets
+
+**Success criteria (new firmware marked valid):**
+- Device runs stably for **25 seconds**
+- All systems initialized (WiFi, display, encoder)
+- No crashes or panics
+
+---
+
+#### Layer 2: ESP-IDF Native Rollback (Bootloader-level)
+
+**Built into ESP32-S3 bootloader:**
+- Validates firmware signature before boot
+- Checks partition table integrity
+- Hardware-level protection
+
+---
+
+### What You See During Rollback
+
+**Scenario: You upload corrupted firmware**
+
+1. **Upload completes:**
+   ```
+   Upload Progress: [████████████████] 100%
+   Writing firmware to app1...
+   Success! Device will reboot in 3 seconds...
+   ```
+
+2. **First boot attempt fails:**
+   ```
+   [Display shows nothing or freezes]
+   → Device auto-reboots after watchdog timeout (~10s)
+   ```
+
+3. **Second boot attempt fails:**
+   ```
+   [Still won't boot properly]
+   → Rollback triggered!
+   ```
+
+4. **Device boots old firmware:**
+   ```
+   ┌─────────────────────────┐
+   │ CryptoBar V1.00         │  ← Previous version
+   │ Connecting WiFi...      │
+   │ [Normal operation]      │
+   └─────────────────────────┘
+   ```
+
+**LED indicator during rollback:**
+- 🔵 **Blue** - Attempting to boot (may flash multiple times)
+- ⚠️ **Pattern:** Blue → crash → Blue → crash → Blue (success with old firmware)
+
+---
+
+### Checking OTA Status
+
+**On maintenance web page (`http://192.168.4.1`):**
+
+```
+┌─────────────────────────────────────┐
+│ CryptoBar Firmware Update           │
+│                                     │
+│ Current: V1.00 (2025-12-25 10:30)   │
+│ OTA slot: running app0 → target app1│ ← Shows A/B status
+│                                     │
+│ OTA safety guard: Enabled           │ ← Rollback protection
+│ (2 failed boots → rollback)         │
+└─────────────────────────────────────┘
+```
+
+**Via Menu [11] WiFi Info:**
+- Shows current firmware version
+- If rollback occurred, version will be old version
+
+**Serial output (if USB connected):**
+```
+[OTA] Boot attempt 1
+[OTA] Boot attempt 2
+[OTA] Rollback to app0 (2 failed attempts)
+[OTA] Running app0 (previous firmware)
+```
+
+---
+
+### Manual Recovery (If Needed)
+
+**Extremely rare, but if both partitions fail:**
+
+1. **Connect USB cable to computer**
+
+2. **Re-flash via PlatformIO:**
+   ```bash
+   cd CryptoBar
+   pio run -t upload
+   ```
+
+3. **Or use esptool (if PlatformIO not available):**
+   ```bash
+   pip install esptool
+   esptool.py --chip esp32s3 --port /dev/ttyUSB0 write_flash 0x0 firmware.bin
+   ```
+
+**This will overwrite both partitions with working firmware.**
+
+---
+
+### Technical Details
+
+**OTA partition layout (platformio.ini):**
+```ini
+board_build.partitions = default_16MB.csv
+```
+
+**Partition table:**
+```
+# Name,     Type, SubType, Offset,  Size
+nvs,        data, nvs,     0x9000,  0x5000
+otadata,    data, ota,     0xe000,  0x2000
+app0,       app,  ota_0,   0x10000, 0x180000  ← Slot A (1.5MB)
+app1,       app,  ota_1,   0x190000,0x180000  ← Slot B (1.5MB)
+spiffs,     data, spiffs,  0x310000,0xF0000
+```
+
+**OTA safety guard (ota_guard.cpp):**
+- Max boot attempts before rollback: **2**
+- Stability verification time: **25 seconds**
+- Storage: NVS (non-volatile memory)
+- Automatic: No user intervention needed
+
+---
+
+### Best Practices
+
+**To minimize rollback risk:**
+
+1. ✅ **Only upload firmware from official releases**
+   - Verified builds from GitHub
+   - GPG-signed releases (V1.00+)
+
+2. ✅ **Check file size before upload**
+   - Valid firmware: 800KB - 1.2MB
+   - Too small (<500KB) → likely incomplete download
+   - Too large (>2MB) → wrong file or corrupted
+
+3. ✅ **Wait for "Success!" message**
+   - Don't interrupt upload mid-process
+   - Keep phone/browser page open until complete
+
+4. ✅ **Don't disconnect power during update**
+   - Keep USB cable connected throughout process
+   - Wait for device to fully reboot
+
+5. ✅ **Test new firmware before major updates**
+   - If building from source, test locally first
+   - Check GitHub issues for reported problems
+
+**If rollback occurs:**
+- ❌ **Don't panic** - Your device is still working (old firmware)
+- ✅ **Download firmware again** - Previous download may be corrupted
+- ✅ **Verify SHA256 checksum** (V1.00+)
+- ✅ **Report issue on GitHub** - Help improve firmware quality
+
+---
+
 ## 🕒 When to Update
 
 Update your CryptoBar firmware when:
@@ -595,13 +830,20 @@ esptool.py image_info firmware.bin
 
 **Solutions:**
 
-1. **Check IP address**
-   - Verify IP shown on display matches what you typed
-   - Try adding `:80` to URL: `http://192.168.1.100:80`
+1. **Verify connection to maintenance hotspot**
+   - Check WiFi settings - should be connected to `CryptoBar_MAINT_XXXX`
+   - If not connected, go back to Step 3
+   - Ensure you didn't auto-switch back to home WiFi
 
-2. **Same network**
-   - Ensure computer/phone is on same WiFi as CryptoBar
-   - Disable VPN if active
+2. **Check IP address**
+   - Maintenance AP always uses: `http://192.168.4.1`
+   - Try adding `:80` to URL: `http://192.168.4.1:80`
+   - **DO NOT use HTTPS** - device only supports HTTP
+
+3. **Phone/tablet auto-disconnect**
+   - Some devices disconnect from "no internet" networks
+   - iPhone: Tap "Use Without Internet" when prompted
+   - Android: Tap "Stay connected" or disable "Auto-switch network"
 
 3. **Firewall**
    - Temporarily disable firewall on computer

@@ -154,10 +154,25 @@ BTC, ETH, XRP, ADA, SOL, DOGE, DOT, MATIC, LTC, UNI, LINK, ATOM, XLM, ALGO, VET,
 USD, TWD, EUR, GBP, CAD, JPY, KRW, SGD, AUD
 
 ### Update Intervals
-- **1 minute** - For active traders
-- **3 minutes** - ⭐ Recommended (balances freshness and API limits)
-- **5 minutes** - Battery-friendly
-- **10 minutes** - Maximum battery savings
+
+Choose your update frequency based on your needs and number of devices:
+
+| Interval | Best For | CoinGecko API Usage | Notes |
+|----------|----------|---------------------|-------|
+| **1 minute** | Active traders, 1-4 devices | ~60 requests/hour per device | ⚡ Real-time tracking |
+| **3 minutes** ⭐ | 5-8 devices, general use | ~20 requests/hour per device | **Recommended** - balances freshness and API limits |
+| **5 minutes** | 9+ devices, battery-friendly | ~12 requests/hour per device | 🔋 Extended uptime |
+| **10 minutes** | 9+ devices, maximum savings | ~6 requests/hour per device | 🔋🔋 Maximum battery life |
+
+**⚠️ CoinGecko API Limit:** The free tier allows **30 requests/minute** across all your devices sharing the same network. If you exceed this limit, you may experience temporary API blocks.
+
+**Multi-Device Calculation:**
+- **1-4 devices @ 1min**: 4 devices × 1 req/min = 4 req/min ✅ Safe
+- **8 devices @ 3min**: 8 devices ÷ 3 min = ~2.7 req/min ✅ Safe
+- **10 devices @ 1min**: 10 devices × 1 req/min = 10 req/min ⚠️ Approaching limit
+- **10 devices @ 5min**: 10 devices ÷ 5 min = 2 req/min ✅ Safe
+
+**Note:** CryptoBar includes MAC-based jitter (0-10 second random delay) to distribute API requests and prevent rate limit issues even with multiple devices.
 
 ### Refresh Modes
 - **Partial Refresh** - Fast updates, minimal ghosting, battery-friendly

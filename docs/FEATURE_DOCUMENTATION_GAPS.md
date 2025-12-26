@@ -1,83 +1,83 @@
-# CryptoBar 未記錄功能與機制分析報告
+# CryptoBar Undocumented Features & Mechanisms Analysis Report
 
-**生成時間:** 2025-12-26
-**分析範圍:** 源代碼 vs. 現有用戶文檔
-**目的:** 識別已實現但未充分記錄的功能和內部機制
-
----
-
-## 📖 目錄
-
-### 概覽與分析
-1. [📊 現有文檔概覽](#-現有文檔概覽)
-2. [🔍 功能差距分析](#-功能差距分析)
-
-### 高優先級（用戶直接可見）
-- [1.1 多幣種顯示系統（9種貨幣）](#11-多幣種顯示系統9種貨幣) ✅ **已完成**
-- [1.2 Day Average Mode（日均價參考線）](#12-day-average-mode日均價參考線) ✅ **已完成**
-- [1.3 獨立時間刷新機制](#13-獨立時間刷新機制v099q-新功能) ✅ **已確認**
-- [1.4 更新間隔預設值修正](#14-更新間隔預設值修正) ✅ **已完成**
-- [1.5 維護模式啟動方式](#15-維護模式啟動方式boot-time-trigger) ✅ **已完成**
-
-### 中優先級（內部機制）
-- [2.1 Prefetch 調度機制](#21-prefetch-調度機制預取優化) ✅ **已完成**
-- [2.2 Runtime WiFi 重連機制](#22-runtime-wifi-重連機制) ✅ **已完成**
-- [2.3 Partial/Full Refresh 策略](#23-partialfull-refresh-策略) ✅ **已完成**
-- [2.4 API Fallback 詳細順序](#24-api-fallback-詳細順序) ✅ **已完成**
-- [2.5 NTP 重新同步機制](#25-ntp-重新同步機制) ✅ **已完成**
-- [2.6 Timezone 自動檢測](#26-timezone-自動檢測) ✅ **已完成**
-
-### 低優先級（開發者技術）
-- [3.1 編碼器配置參數](#31-編碼器配置參數) ✅
-- [3.2 LED 動畫任務](#32-led-動畫任務) ✅
-
-### 行動計劃
-3. [📝 建議的文檔改進優先級](#-建議的文檔改進優先級)
-4. [🎯 推薦行動計劃](#-推薦行動計劃)
-   - Phase 1: 立即更新（高優先級 1-5）✅ **已完成**
-   - Phase 2: 完善補充（中優先級 6-10）✅ **已完成**
-   - Phase 3: 可選高級內容 ✅ **已完成**
-5. [📊 文檔完整性評分](#-文檔完整性評分)
-6. [📌 總結](#-總結)
+**Generated:** 2025-12-26
+**Analysis Scope:** Source code vs. existing user documentation
+**Purpose:** Identify implemented features and internal mechanisms that are insufficiently documented
 
 ---
 
-## 📊 現有文檔概覽
+## 📖 Table of Contents
 
-### 已有的用戶指南
+### Overview & Analysis
+1. [📊 Existing Documentation Overview](#-existing-documentation-overview)
+2. [🔍 Feature Gap Analysis](#-feature-gap-analysis)
 
-| 文檔 | 行數 | 主要內容 |
-|------|------|----------|
-| `DISPLAY_GUIDE.md` | ~1100 | 主顯示、多幣種、API Fallback、WiFi、NTP、E-ink 刷新模式 |
-| `LED_DISPLAY_GUIDE.md` | 243 | LED 顏色含義、呼吸動畫、Party Mode |
-| `OTA_UPDATE_GUIDE.md` | 1030 | OTA 更新流程、安全機制、A/B 分區回滾、快速進入 |
-| `HARDWARE_GUIDE.md` | 394 | 硬件組裝、BOM、接線圖 |
+### High Priority (User-Visible)
+- [1.1 Multi-Currency Display System (9 currencies)](#11-multi-currency-display-system-9-currencies) ✅ **Completed**
+- [1.2 Day Average Mode (reference line)](#12-day-average-mode-reference-line) ✅ **Completed**
+- [1.3 Independent Time Refresh Mechanism](#13-independent-time-refresh-mechanism-v099q-feature) ✅ **Confirmed**
+- [1.4 Update Interval Default Correction](#14-update-interval-default-correction) ✅ **Completed**
+- [1.5 Maintenance Mode Boot-Time Entry](#15-maintenance-mode-boot-time-entry) ✅ **Completed**
 
-### 新增的開發者文檔
+### Medium Priority (Internal Mechanisms)
+- [2.1 Prefetch Scheduling Mechanism](#21-prefetch-scheduling-mechanism-prefetch-optimization) ✅ **Completed**
+- [2.2 Runtime WiFi Reconnection](#22-runtime-wifi-reconnection) ✅ **Completed**
+- [2.3 Partial/Full Refresh Strategy](#23-partialfull-refresh-strategy) ✅ **Completed**
+- [2.4 API Fallback Detailed Order](#24-api-fallback-detailed-order) ✅ **Completed**
+- [2.5 NTP Resync Mechanism](#25-ntp-resync-mechanism) ✅ **Completed**
+- [2.6 Timezone Auto-Detection](#26-timezone-auto-detection) ✅ **Completed**
 
-| 文檔 | 行數 | 主要內容 |
-|------|------|----------|
-| `DEVELOPER_GUIDE.md` | 1057 | Prefetch 調度機制、架構設計、調試技巧、性能分析 ✨ **新增** |
-| `src/README.md` | ~500 | 26 個源代碼模組詳細說明 |
-| `include/README.md` | ~650 | 20 個頭文件 API 參考 |
-| `lib/README.md` | ~60 | 外部庫列表 |
-| `test/README.md` | ~110 | 測試策略建議 |
+### Low Priority (Developer Technical)
+- [3.1 Encoder Configuration Parameters](#31-encoder-configuration-parameters) ✅
+- [3.2 LED Animation Task](#32-led-animation-task) ✅
+
+### Action Plan
+3. [📝 Suggested Documentation Improvement Priorities](#-suggested-documentation-improvement-priorities)
+4. [🎯 Recommended Action Plan](#-recommended-action-plan)
+   - Phase 1: Immediate Updates (High Priority 1-5) ✅ **Completed**
+   - Phase 2: Comprehensive Additions (Medium Priority 6-10) ✅ **Completed**
+   - Phase 3: Optional Advanced Content ✅ **Completed**
+5. [📊 Documentation Completeness Scores](#-documentation-completeness-scores)
+6. [📌 Summary](#-summary)
 
 ---
 
-## 🔍 功能差距分析
+## 📊 Existing Documentation Overview
 
-### 1. ⚠️ 高優先級：用戶可見但未充分記錄的功能
+### User Guides
 
-#### 1.1 多幣種顯示系統（9種貨幣）
+| Document | Lines | Main Content |
+|----------|-------|-------------|
+| `DISPLAY_GUIDE.md` | ~1100 | Main display, multi-currency, API fallback, WiFi, NTP, E-ink refresh modes |
+| `LED_DISPLAY_GUIDE.md` | 243 | LED color meanings, breathing animations, Party Mode |
+| `OTA_UPDATE_GUIDE.md` | 1030 | OTA update process, security mechanisms, A/B partition rollback, quick entry |
+| `HARDWARE_GUIDE.md` | 394 | Hardware assembly, BOM, wiring diagrams |
 
-**狀態:** ⚠️ 僅簡單提及，缺乏詳細說明
+### Developer Documentation
 
-**代碼實現位置:**
-- `config.h:80-114` - 貨幣枚舉和元數據
-- `network.cpp` - `fetchExchangeRates()` 函數
+| Document | Lines | Main Content |
+|----------|-------|-------------|
+| `DEVELOPER_GUIDE.md` | 1057 | Prefetch scheduling, architecture design, debugging techniques, performance profiling ✨ **New** |
+| `src/README.md` | ~500 | 26 source code module descriptions |
+| `include/README.md` | ~650 | 20 header file API reference |
+| `lib/README.md` | ~60 | External library list |
+| `test/README.md` | ~110 | Testing strategy recommendations |
 
-**已實現功能:**
+---
+
+## 🔍 Feature Gap Analysis
+
+### 1. ⚠️ High Priority: User-Visible But Insufficiently Documented Features
+
+#### 1.1 Multi-Currency Display System (9 currencies)
+
+**Status:** ⚠️ Only briefly mentioned, lacks detailed explanation
+
+**Code Implementation Location:**
+- `config.h:80-114` - Currency enumeration and metadata
+- `network.cpp` - `fetchExchangeRates()` function
+
+**Implemented Features:**
 ```cpp
 enum DisplayCurrency : uint8_t {
   CURR_USD = 0,  // US Dollar ($)
@@ -92,107 +92,107 @@ enum DisplayCurrency : uint8_t {
 };
 ```
 
-**特殊處理:**
-- **長度限制顯示:** 所有貨幣使用統一的長度限制算法（最多 10 字符）
-- **自動調整小數位:** 4 位 → 2 位 → 0 位（根據總長度自動調整）
-- **V0.99p 改進:** 移除了 JPY/KRW 強制整數限制，現在也可顯示小數（基於長度限制）
-- **2字符符號:** NT, C$, S$, A$, EUR, GBP, JPY, KRW 使用壓縮字體
-- **匯率來源:** ExchangeRate-API.com
-- **更新頻率:** 與價格更新同步
+**Special Handling:**
+- **Length-based display:** All currencies use unified length-limiting algorithm (max 10 characters)
+- **Auto-adjust decimals:** 4 digits → 2 digits → 0 digits (auto-adjusted based on total length)
+- **V0.99p improvement:** Removed forced integer restriction for JPY/KRW, now also supports decimals (based on length limit)
+- **2-character symbols:** NT, C$, S$, A$, EUR, GBP, JPY, KRW use compressed font
+- **Exchange rate source:** ExchangeRate-API.com
+- **Update frequency:** Synced with price updates
 
-**文檔中的缺失:**
-- 支持的 9 種貨幣完整列表
-- V0.99p 長度限制算法說明（所有貨幣統一邏輯）
-- 匯率更新機制和來源
-- 貨幣符號的特殊渲染邏輯
+**Missing from Documentation:**
+- Complete list of 9 supported currencies
+- V0.99p length-limiting algorithm explanation (unified logic for all currencies)
+- Exchange rate update mechanism and source
+- Special rendering logic for currency symbols
 
-**建議:** 在 DISPLAY_GUIDE.md 中添加 "Multi-Currency Display" 章節
+**Recommendation:** Add "Multi-Currency Display" section to DISPLAY_GUIDE.md
 
 ---
 
-#### 1.2 Day Average Mode（日均價參考線）
+#### 1.2 Day Average Mode (Reference Line)
 
-**狀態:** ⚠️ 僅列出 3 種模式名稱，無工作原理說明
+**Status:** ⚠️ Only lists 3 mode names, no explanation of how they work
 
-**代碼實現位置:**
-- `day_avg.cpp` - 滾動平均和週期平均計算
-- `chart.h` - 7pm ET cycle 管理
+**Code Implementation Location:**
+- `day_avg.cpp` - Rolling average and cycle average calculations
+- `chart.h` - 7pm ET cycle management
 
-**已實現的 3 種模式:**
+**Implemented 3 Modes:**
 
 **Mode 0: Off**
-- 無參考線
+- No reference line
 
-**Mode 1: Rolling 24h Mean（預設）**
+**Mode 1: Rolling 24h Mean (Default)**
 ```cpp
-// 實現細節：
-// - 288 個 5 分鐘桶（24h × 60min ÷ 5min）
-// - 滾動窗口：始終顯示過去 24 小時的平均價格
-// - 函數：dayAvgRollingAdd(), dayAvgRollingGet()
+// Implementation details:
+// - 288 five-minute buckets (24h × 60min ÷ 5min)
+// - Rolling window: always displays average price from past 24 hours
+// - Functions: dayAvgRollingAdd(), dayAvgRollingGet()
 ```
 
 **Mode 2: ET 7pm Cycle Mean**
 ```cpp
-// 實現細節：
-// - 每天東部時間晚上 7 點重置
-// - 計算從 7pm ET 到當前時間的平均價格
-// - 與圖表週期同步（g_chartSamples[]）
-// - 函數：dayAvgCycleMean()
+// Implementation details:
+// - Resets every day at 7pm Eastern Time
+// - Calculates average price from 7pm ET to current time
+// - Synced with chart cycle (g_chartSamples[])
+// - Function: dayAvgCycleMean()
 ```
 
-**為什麼選擇 7pm ET?**
-- 美國股市閉市後（4pm ET）
-- 加密貨幣市場 24/7 運作，但許多交易者以美東時間為基準
-- 提供一致的每日基準點
+**Why 7pm ET?**
+- After US stock market close (4pm ET)
+- Crypto markets operate 24/7, but many traders use ET as reference
+- Provides consistent daily baseline
 
-**文檔中的缺失:**
-- Rolling 24h mean 的 5 分鐘桶機制
-- ET 7pm cycle 的重置時間和原因
-- 如何解讀參考線（高於/低於的含義）
-- 兩種模式的適用場景
+**Missing from Documentation:**
+- 5-minute bucket mechanism for rolling 24h mean
+- ET 7pm cycle reset time and rationale
+- How to interpret the reference line (meaning of above/below)
+- Applicable scenarios for each mode
 
-**建議:** 在 DISPLAY_GUIDE.md 中擴展 "Reference Line" 章節
+**Recommendation:** Expand "Reference Line" section in DISPLAY_GUIDE.md
 
 ---
 
-#### 1.3 獨立時間刷新機制（V0.99q 新功能）
+#### 1.3 Independent Time Refresh Mechanism (V0.99q Feature)
 
-**狀態:** ⚠️ 完全未記錄
+**Status:** ⚠️ Completely undocumented
 
-**代碼實現位置:**
-- `app_state.h:224-227` - 時間刷新狀態變量
-- `app_scheduler.cpp` - 獨立時間刷新調度
+**Code Implementation Location:**
+- `app_state.h:224-227` - Time refresh state variables
+- `app_scheduler.cpp` - Independent time refresh scheduling
 
-**功能描述:**
+**Feature Description:**
 ```cpp
-// 時間顯示每分鐘獨立刷新，不受價格更新間隔影響
-extern time_t g_nextTimeRefreshUtc;    // 下次時間刷新時刻
-extern bool   g_timeRefreshEnabled;     // 啟用/禁用獨立時間刷新（預設：啟用）
+// Time display refreshes independently every minute, unaffected by price update interval
+extern time_t g_nextTimeRefreshUtc;    // Next time refresh moment
+extern bool   g_timeRefreshEnabled;     // Enable/disable independent time refresh (default: enabled)
 
-// 工作原理：
-// - 價格更新間隔：1/3/5/10 分鐘（用戶可選）
-// - 時間刷新間隔：固定每 1 分鐘
-// - 即使價格更新間隔設為 10 分鐘，時間仍每分鐘更新
+// How it works:
+// - Price update interval: 1/3/5/10 minutes (user selectable)
+// - Time refresh interval: fixed at 1 minute
+// - Even if price update interval set to 10 minutes, time still updates every minute
 ```
 
-**用戶體驗提升:**
-- 時間始終準確（不會因價格更新間隔長而延遲）
-- 獨立於價格更新的時間顯示刷新
-- 不影響價格更新頻率
+**User Experience Improvement:**
+- Time always accurate (not delayed by long price update intervals)
+- Independent time display refresh from price updates
+- Does not affect price update frequency
 
-**文檔中的缺失:**
-- 完全未提及此功能
-- 用戶可能誤以為時間更新頻率受價格更新間隔影響
+**Missing from Documentation:**
+- Feature completely unmentioned
+- Users might assume time update frequency depends on price update interval
 
-**建議:** 在 DISPLAY_GUIDE.md "Date & Time Display" 章節中說明
+**Recommendation:** Explain in DISPLAY_GUIDE.md "Date & Time Display" section
 
 ---
 
-#### 1.4 更新間隔預設值修正
+#### 1.4 Update Interval Default Correction
 
-**狀態:** ⚠️ 文檔中有誤導
+**Status:** ⚠️ Documentation has misleading information
 
-**代碼實際實現:**
+**Actual Code Implementation:**
 ```cpp
 // app_state.cpp:25-30
 const uint32_t UPDATE_PRESETS_MS[] = {
@@ -203,488 +203,488 @@ const uint32_t UPDATE_PRESETS_MS[] = {
 };
 ```
 
-**DISPLAY_GUIDE.md 中的說法:**
-- "Price refresh interval (1/3/5/10 min)" ✅ 正確
+**Statement in DISPLAY_GUIDE.md:**
+- "Price refresh interval (1/3/5/10 min)" ✅ Correct
 
-**但缺少的信息:**
-- **預設值:** 3 分鐘（不是 1 分鐘）
-- **推薦值:** 3 分鐘（平衡 API 限制和及時性）
-- **API 更新頻率:** CoinPaprika 每 30 秒更新一次（但用戶刷新間隔建議 ≥ 1 分鐘）
+**But Missing Information:**
+- **Default:** 3 minutes (not 1 minute)
+- **Recommended:** 3 minutes (balances API limits and timeliness)
+- **API update frequency:** CoinPaprika updates every 30 seconds (but user refresh interval recommended ≥ 1 minute)
 
-**建議:** 明確標註預設值和推薦值
+**Recommendation:** Clearly mark default and recommended values
 
 ---
 
-#### 1.5 維護模式啟動方式（Boot-time Trigger）
+#### 1.5 Maintenance Mode Boot-Time Entry
 
-**狀態:** ⚠️ 未記錄開機進入維護模式的方法
+**Status:** ⚠️ Boot-time entry method not documented
 
-**代碼實現位置:**
-- `maint_boot.cpp:7-11` - 開機檢測邏輯
+**Code Implementation Location:**
+- `maint_boot.cpp:7-11` - Boot detection logic
 
-**功能描述:**
+**Feature Description:**
 ```cpp
-// 開機時長按編碼器按鈕可直接進入維護模式
+// Holding encoder button during boot directly enters maintenance mode
 bool maintBootShouldEnter() {
   pinMode(ENC_SW_PIN, INPUT_PULLUP);
-  delay(50);  // 消抖
+  delay(50);  // Debounce
   return (digitalRead(ENC_SW_PIN) == LOW);
 }
 ```
 
-**用戶操作:**
-1. 斷電
-2. **按住編碼器按鈕**
-3. 插入電源
-4. 保持按住約 1-2 秒
-5. 設備直接進入維護模式（跳過正常啟動）
+**User Operation:**
+1. Power off
+2. **Press and hold encoder button**
+3. Plug in power
+4. Keep holding for about 1-2 seconds
+5. Device enters maintenance mode directly (skips normal startup)
 
-**用途:**
-- 無需通過菜單即可進入維護模式
-- 固件損壞時的緊急恢復方法
-- 快速 OTA 更新入口
+**Use Cases:**
+- Enter maintenance mode without going through menu
+- Emergency recovery method for corrupted firmware
+- Quick OTA update entry point
 
-**文檔中的缺失:**
-- OTA_UPDATE_GUIDE.md 只提到從菜單進入
-- 未說明開機長按的快捷方式
+**Missing from Documentation:**
+- OTA_UPDATE_GUIDE.md only mentions menu entry
+- Boot-time hold shortcut not explained
 
-**建議:** 在 OTA_UPDATE_GUIDE.md 添加 "Quick Access" 章節
+**Recommendation:** Add "Quick Access" section to OTA_UPDATE_GUIDE.md
 
 ---
 
-### 2. 🔧 中優先級：內部機制和高級功能
+### 2. 🔧 Medium Priority: Internal Mechanisms and Advanced Features
 
-#### 2.1 Prefetch 調度機制（預取優化）
+#### 2.1 Prefetch Scheduling Mechanism (Prefetch Optimization)
 
-**狀態:** ⚠️ 完全未記錄
+**Status:** ⚠️ Completely undocumented
 
-**代碼實現位置:**
-- `app_scheduler.cpp` - 預取窗口計算
-- `app_state.h:157-166` - 預取狀態變量
+**Code Implementation Location:**
+- `app_scheduler.cpp` - Prefetch window calculation
+- `app_state.h:157-166` - Prefetch state variables
 
-**機制說明:**
+**Mechanism Explanation:**
 ```cpp
-// 預取窗口配置
-extern const uint32_t PREFETCH_WINDOW_SEC;      // 30 秒窗口
-extern const uint32_t PREFETCH_MIN_LEAD_SEC;    // 最小提前 5 秒
-extern const uint32_t PREFETCH_FIXED_LEAD_SEC;  // 固定提前 10 秒
+// Prefetch window configuration
+extern const uint32_t PREFETCH_WINDOW_SEC;      // 30 second window
+extern const uint32_t PREFETCH_MIN_LEAD_SEC;    // Minimum 5 second lead
+extern const uint32_t PREFETCH_FIXED_LEAD_SEC;  // Fixed 10 second lead
 
-// 預取狀態
-extern uint32_t g_fetchJitterSec;      // 隨機抖動（5-10 秒）
-extern bool     g_prefetchValid;       // 預取數據有效標記
-extern time_t   g_prefetchForUtc;      // 預取目標時刻
-extern double   g_prefetchPrice;       // 預取的價格
-extern double   g_prefetchChange;      // 預取的變化百分比
+// Prefetch state
+extern uint32_t g_fetchJitterSec;      // Random jitter (5-10 seconds)
+extern bool     g_prefetchValid;       // Prefetch data validity flag
+extern time_t   g_prefetchForUtc;      // Target time for this prefetch
+extern double   g_prefetchPrice;       // Cached price from prefetch
+extern double   g_prefetchChange;      // Cached 24h change percentage
 ```
 
-**工作流程:**
-1. **計算下次更新時刻:** 例如 10:00:00
-2. **生成隨機抖動:** 5-10 秒（避免所有設備同時請求 API）
-3. **預取時間:** 10:00:00 - 7 秒 = 9:59:53
-4. **在 9:59:53 獲取價格** → 緩存
-5. **在 10:00:00 顯示更新** → 使用緩存的價格
+**Workflow:**
+1. **Calculate next update time:** e.g., 10:00:00
+2. **Generate random jitter:** 5-10 seconds (prevents all devices from hitting API simultaneously)
+3. **Prefetch time:** 10:00:00 - 7 seconds = 9:59:53
+4. **Fetch price at 9:59:53** → Cache
+5. **Display update at 10:00:00** → Use cached price
 
-**優勢:**
-- 顯示更新更準時（網絡延遲已提前消化）
-- 減少 API 速率限制風險（隨機抖動）
-- 用戶感知的響應速度更快
+**Advantages:**
+- More punctual display updates (network delay absorbed beforehand)
+- Reduces API rate limit risk (random jitter)
+- Faster perceived responsiveness by user
 
-**文檔中的缺失:**
-- 完全未提及預取機制
-- 用戶可能不理解為什麼更新如此準時
+**Missing from Documentation:**
+- Prefetch mechanism completely unmentioned
+- Users may not understand why updates are so punctual
 
-**建議:** 開發者文檔專題（技術細節，非用戶指南）
+**Recommendation:** Developer documentation topic (technical details, not user guide)
 
 ---
 
-#### 2.2 Runtime WiFi 重連機制
+#### 2.2 Runtime WiFi Reconnection
 
-**狀態:** ⚠️ 未記錄自動重連邏輯
+**Status:** ⚠️ Auto-reconnect logic not documented
 
-**代碼實現位置:**
-- `app_wifi.cpp` - 重連邏輯
-- `app_state.h:195-201` - 重連狀態變量
+**Code Implementation Location:**
+- `app_wifi.cpp` - Reconnection logic
+- `app_state.h:195-201` - Reconnection state variables
 
-**機制說明:**
+**Mechanism Explanation:**
 ```cpp
-// 重連參數
-extern const uint8_t  RUNTIME_RECONNECT_ATTEMPTS;     // 每批 3 次嘗試
-extern const uint32_t RUNTIME_RECONNECT_TIMEOUT_MS;   // 每次嘗試 30 秒超時
-extern const uint32_t RUNTIME_RECONNECT_BACKOFF_MS;   // 批次間隔 5 分鐘退避
+// Reconnection parameters
+extern const uint8_t  RUNTIME_RECONNECT_ATTEMPTS;     // 3 attempts per batch
+extern const uint32_t RUNTIME_RECONNECT_TIMEOUT_MS;   // 30 second timeout per attempt
+extern const uint32_t RUNTIME_RECONNECT_BACKOFF_MS;   // 5 minute backoff between batches
 
-// 重連狀態
-extern bool     g_wifiEverConnected;        // 是否曾經連接過（避免過度重試）
-extern uint32_t g_nextRuntimeReconnectMs;   // 下次重連時間
-extern uint8_t  g_runtimeReconnectBatch;    // 當前重連批次計數
+// Reconnection state
+extern bool     g_wifiEverConnected;        // Whether ever connected (avoid excessive retry)
+extern uint32_t g_nextRuntimeReconnectMs;   // Next reconnection time
+extern uint8_t  g_runtimeReconnectBatch;    // Current reconnection batch count
 ```
 
-**重連策略:**
-1. **檢測到斷線** → 等待 5 分鐘（避免頻繁重試）
-2. **第一批重連:** 3 次嘗試，每次 30 秒超時
-3. **失敗 → 等待 5 分鐘**
-4. **第二批重連:** 3 次嘗試
-5. **持續重試，指數退避**
+**Reconnection Strategy:**
+1. **Disconnect detected** → Wait 5 minutes (avoid frequent retry)
+2. **First batch reconnect:** 3 attempts, 30 second timeout each
+3. **Failed → Wait 5 minutes**
+4. **Second batch reconnect:** 3 attempts
+5. **Continuous retry with exponential backoff**
 
-**保護機制:**
-- 如果從未連接過（首次配置失敗），不自動重連
-- 避免電池設備無限重連耗電
+**Protection Mechanism:**
+- If never connected (first config failed), no auto-reconnect
+- Avoids battery drain from infinite reconnection on battery devices
 
-**文檔中的缺失:**
-- 斷線後的行為未說明
-- 用戶可能不知道設備會自動重連
+**Missing from Documentation:**
+- Behavior after disconnect not explained
+- Users may not know device will auto-reconnect
 
-**建議:** 在 DISPLAY_GUIDE.md 添加 "WiFi Connection Management" 章節
+**Recommendation:** Add "WiFi Connection Management" section to DISPLAY_GUIDE.md
 
 ---
 
-#### 2.3 Partial/Full Refresh 策略
+#### 2.3 Partial/Full Refresh Strategy
 
-**狀態:** ⚠️ 只提到模式選擇，未說明自動 Full Refresh
+**Status:** ⚠️ Only mentions mode selection, not auto full refresh
 
-**代碼實現位置:**
-- `app_state.h:86-88` - Partial refresh 計數器
-- `ui.cpp` - 刷新邏輯
+**Code Implementation Location:**
+- `app_state.h:86-88` - Partial refresh counter
+- `ui.cpp` - Refresh logic
 
-**機制說明:**
+**Mechanism Explanation:**
 ```cpp
-extern uint16_t g_partialRefreshCount;           // Partial refresh 計數器
-extern const uint16_t PARTIAL_REFRESH_LIMIT;     // 20 次後自動 Full Refresh
+extern uint16_t g_partialRefreshCount;           // Partial refresh counter
+extern const uint16_t PARTIAL_REFRESH_LIMIT;     // Auto full refresh after 20 partials
 ```
 
-**自動 Full Refresh 規則:**
-- **Partial 模式下:** 每 20 次 partial refresh 後自動執行 1 次 full refresh
-- **目的:** 清除累積的殘影（ghosting）
-- **Full 模式下:** 每次都執行 full refresh（無計數器）
+**Auto Full Refresh Rules:**
+- **In Partial mode:** Automatically executes 1 full refresh after every 20 partial refreshes
+- **Purpose:** Clear accumulated ghosting
+- **In Full mode:** Always executes full refresh (no counter)
 
-**Partial vs Full 比較:**
-| 特性 | Partial Refresh | Full Refresh |
-|------|-----------------|--------------|
-| 速度 | ~1 秒 | ~2-3 秒 |
-| 殘影 | 可能累積 | 完全清除 |
-| 閃爍 | 無 | 黑白閃爍 |
-| 電量消耗 | 低 | 高 |
-| 推薦場景 | 頻繁更新 | 長時間靜態顯示 |
+**Partial vs Full Comparison:**
+| Feature | Partial Refresh | Full Refresh |
+|---------|-----------------|--------------|
+| Speed | ~1 second | ~2-3 seconds |
+| Ghosting | May accumulate | Completely cleared |
+| Flicker | None | Black/white flicker |
+| Power consumption | Low | High |
+| Recommended scenario | Frequent updates | Long-term static display |
 
-**文檔中的缺失:**
-- 自動 Full Refresh 的 20 次規則
-- Partial/Full 的詳細比較
-- 何時選擇哪種模式
+**Missing from Documentation:**
+- 20× auto full refresh rule
+- Detailed partial/full comparison
+- When to choose which mode
 
-**建議:** 在 DISPLAY_GUIDE.md "Refresh Mode" 章節中詳細說明
+**Recommendation:** Detail in DISPLAY_GUIDE.md "Refresh Mode" section
 
 ---
 
-#### 2.4 API Fallback 詳細順序
+#### 2.4 API Fallback Detailed Order
 
-**狀態:** ⚠️ 僅提到 "fallback"，未說明具體順序
+**Status:** ⚠️ Only mentions "fallback", not specific order
 
-**代碼實現位置:**
-- `network.cpp:fetchPrice()` - 4層價格 fallback
-- `network.cpp:bootstrapHistoryFromKrakenOHLC()` - 3層歷史數據 fallback
+**Code Implementation Location:**
+- `network.cpp:fetchPrice()` - 4-layer price fallback
+- `network.cpp:bootstrapHistoryFromKrakenOHLC()` - 3-layer history data fallback
 
-**價格 API Fallback（4層）:**
+**Price API Fallback (4 layers):**
 ```cpp
 1. Binance WebSocket API (BTCUSDT pair)
-   ↓ 失敗
+   ↓ Failed
 2. Kraken REST API (XXBTZUSD pair, if configured)
-   ↓ 失敗
+   ↓ Failed
 3. CoinPaprika API (aggregated data, 30s refresh)
-   ↓ 失敗
+   ↓ Failed
 4. CoinGecko API (backup source)
-   ↓ 全部失敗 → 顯示 "----" + LED 黃燈
+   ↓ All failed → Display "----" + Yellow LED
 ```
 
-**歷史數據 API Fallback（3層）:**
+**History Data API Fallback (3 layers):**
 ```cpp
 1. Kraken OHLC API (5min interval, if krakenPair configured)
-   ↓ 失敗
+   ↓ Failed
 2. Binance Klines API (5min candles)
-   ↓ 失敗
+   ↓ Failed
 3. CoinGecko market_chart API (days=1)
-   ↓ 全部失敗 → 圖表顯示 "Collecting data..."
+   ↓ All failed → Chart shows "Collecting data..."
 ```
 
-**Fallback 觸發條件:**
-- HTTP 錯誤（4xx/5xx）
-- 超時（10 秒）
-- JSON 解析失敗
-- 返回數據無效
+**Fallback Trigger Conditions:**
+- HTTP errors (4xx/5xx)
+- Timeout (10 seconds)
+- JSON parsing failure
+- Invalid returned data
 
-**文檔中的缺失:**
-- 具體的 API 順序
-- 為什麼選擇這個順序（可靠性、速度、限制）
-- Fallback 的觸發條件
+**Missing from Documentation:**
+- Specific API order
+- Why this order (reliability, speed, limits)
+- Fallback trigger conditions
 
-**建議:** 在 DISPLAY_GUIDE.md "API Labels" 章節中詳細說明
+**Recommendation:** Detail in DISPLAY_GUIDE.md "API Labels" section
 
 ---
 
-#### 2.5 NTP 重新同步機制
+#### 2.5 NTP Resync Mechanism
 
-**狀態:** ⚠️ 未記錄定期同步
+**Status:** ⚠️ Periodic sync not documented
 
-**代碼實現位置:**
-- `app_time.cpp` - NTP 同步邏輯
-- `app_state.h:217-222` - NTP 狀態變量
+**Code Implementation Location:**
+- `app_time.cpp` - NTP sync logic
+- `app_state.h:217-222` - NTP state variables
 
-**機制說明:**
+**Mechanism Explanation:**
 ```cpp
-extern const uint32_t NTP_RESYNC_INTERVAL_SEC;  // 10 分鐘（600 秒）
-extern time_t g_nextNtpResyncUtc;               // 下次 NTP 同步時刻
+extern const uint32_t NTP_RESYNC_INTERVAL_SEC;  // 10 minutes (600 seconds)
+extern time_t g_nextNtpResyncUtc;               // Next NTP sync time
 ```
 
-**NTP 同步策略:**
-1. **首次啟動:** WiFi 連接後立即同步
-2. **定期同步:** 每 10 分鐘自動重新同步
-3. **NTP 服務器:**
+**NTP Sync Strategy:**
+1. **First boot:** Immediate sync after WiFi connection
+2. **Periodic sync:** Auto-resync every 10 minutes
+3. **NTP servers:**
    - Primary: `pool.ntp.org`
    - Secondary: `time.nist.gov`
 
-**時間精度:**
-- ESP32 內部 RTC 漂移：~1-5 秒/天
-- 10 分鐘同步間隔確保時間始終精確（誤差 < 0.1 秒）
+**Time Accuracy:**
+- ESP32 internal RTC drift: ~1-5 seconds/day
+- 10-minute sync interval ensures always accurate time (error < 0.1 second)
 
-**文檔中的缺失:**
-- 定期 NTP 同步機制
-- 時間精度保證
-- NTP 服務器來源
+**Missing from Documentation:**
+- Periodic NTP sync mechanism
+- Time accuracy guarantee
+- NTP server sources
 
-**建議:** 在 DISPLAY_GUIDE.md 添加 "Time Accuracy" 說明
+**Recommendation:** Add "Time Accuracy" explanation to DISPLAY_GUIDE.md
 
 ---
 
-#### 2.6 Timezone 自動檢測
+#### 2.6 Timezone Auto-Detection
 
-**狀態:** ⚠️ 未記錄首次啟動自動檢測
+**Status:** ⚠️ First boot auto-detection not documented
 
-**代碼實現位置:**
-- `app_time.cpp:appTimeAutoDetectTimezone()` - 自動檢測邏輯
-- `settings_store.cpp:settingsStoreHasTzIndex()` - 檢查是否已設置時區
+**Code Implementation Location:**
+- `app_time.cpp:appTimeAutoDetectTimezone()` - Auto-detection logic
+- `settings_store.cpp:settingsStoreHasTzIndex()` - Check if timezone already set
 
-**機制說明:**
+**Mechanism Explanation:**
 ```cpp
-// 自動檢測觸發條件：
-// 1. 首次啟動（NVS 中無 tzIndex 鍵）
-// 2. WiFi 連接成功
-// 3. 一次性嘗試（成功或失敗後不再自動檢測）
+// Auto-detection trigger conditions:
+// 1. First boot (no tzIndex key in NVS)
+// 2. WiFi successfully connected
+// 3. One-time attempt (no retry after success or failure)
 
-// 檢測方法：
-// - 使用 worldtimeapi.org IP-based timezone API
-// - 返回當前 IP 的 UTC offset（整數小時）
-// - 匹配到最接近的時區 index
-// - 保存到 NVS（之後用戶可手動修改）
+// Detection method:
+// - Use worldtimeapi.org IP-based timezone API
+// - Returns UTC offset for current IP (integer hours)
+// - Match to closest timezone index
+// - Save to NVS (user can manually change later)
 ```
 
-**Fallback 行為:**
-- **自動檢測失敗** → 使用預設時區（UTC-08 Seattle）
-- **VPN 用戶:** 檢測到的是 VPN 出口位置的時區
-- **無網絡:** 保持預設時區
+**Fallback Behavior:**
+- **Auto-detection failed** → Use default timezone (UTC-08 Seattle)
+- **VPN users:** Detects VPN exit location timezone
+- **No network:** Keep default timezone
 
-**文檔中的缺失:**
-- 首次啟動自動檢測時區
-- VPN 用戶的注意事項
-- 為什麼預設是 Seattle
+**Missing from Documentation:**
+- First boot auto-detection of timezone
+- VPN user considerations
+- Why default is Seattle
 
-**建議:** 在 WiFi Portal 說明中添加時區自動檢測提示
+**Recommendation:** Add timezone auto-detection note to WiFi Portal description
 
 ---
 
-### 3. 🛠️ 低優先級：開發者專用技術細節
+### 3. 🛠️ Low Priority: Developer-Specific Technical Details
 
-#### 3.1 編碼器配置參數
+#### 3.1 Encoder Configuration Parameters
 
-**狀態:** ✅ 已在 `src/README.md` 和 `include/README.md` 中詳細記錄
+**Status:** ✅ Detailed documentation in `src/README.md` and `include/README.md`
 
-**可調參數:**
+**Adjustable Parameters:**
 ```cpp
-// encoder_pcnt.cpp 中可調整：
-#define ENC_PCNT_FILTER_VAL 150        // 噪音過濾（100-300）
-#define ENC_COUNTS_PER_DETENT 6        // 靈敏度（3/6/12）
-#define ENC_DIR_INVERT 0               // 方向反轉（0/1）
-#define ENC_DIR_LOCK_MS 10             // 方向鎖定時間（0-50ms）
-#define ENC_DEBUG 2                    // 調試級別（0/1/2）
+// Adjustable in encoder_pcnt.cpp:
+#define ENC_PCNT_FILTER_VAL 150        // Noise filtering (100-300)
+#define ENC_COUNTS_PER_DETENT 6        // Sensitivity (3/6/12)
+#define ENC_DIR_INVERT 0               // Direction invert (0/1)
+#define ENC_DIR_LOCK_MS 10             // Direction lock time (0-50ms)
+#define ENC_DEBUG 2                    // Debug level (0/1/2)
 ```
 
-**文檔狀態:** ✅ 已充分記錄在開發者文檔中
+**Documentation Status:** ✅ Sufficiently documented in developer docs
 
 ---
 
-#### 3.2 LED 動畫任務
+#### 3.2 LED Animation Task
 
-**狀態:** ✅ 已在 `src/README.md` 和 `include/README.md` 中記錄
+**Status:** ✅ Documented in `src/README.md` and `include/README.md`
 
-**功能描述:**
+**Feature Description:**
 ```cpp
-// 可選：獨立 LED 動畫任務（20-30 Hz）
+// Optional: Independent LED animation task (20-30 Hz)
 void ledAnimStartTask(uint16_t hz = 30, uint8_t core = 0);
 
-// 優勢：
-// - LED 在 e-paper 刷新期間仍能呼吸（主線程被阻塞）
-// - 更流暢的動畫效果
-// - 可指定運行在哪個 CPU 核心
+// Advantages:
+// - LED can breathe during e-paper refresh (main thread blocked)
+// - Smoother animation effect
+// - Can specify which CPU core to run on
 ```
 
-**文檔狀態:** ✅ 已在開發者文檔中記錄
+**Documentation Status:** ✅ Documented in developer docs
 
 ---
 
-## 📝 建議的文檔改進優先級
+## 📝 Suggested Documentation Improvement Priorities
 
-### 🔴 高優先級（用戶直接可見）
+### 🔴 High Priority (User-Visible)
 
-1. **多幣種顯示系統** - 在 DISPLAY_GUIDE.md 添加專門章節
-   - 9 種貨幣完整列表
-   - V0.99p 長度限制算法說明（統一邏輯，所有貨幣都可顯示小數）
-   - 匯率更新機制
+1. **Multi-Currency Display System** - Add dedicated section to DISPLAY_GUIDE.md
+   - Complete list of 9 currencies
+   - V0.99p length-limiting algorithm explanation (unified logic, all currencies can show decimals)
+   - Exchange rate update mechanism
 
-2. **Day Average Mode 詳細說明** - 擴展 DISPLAY_GUIDE.md "Reference Line" 章節
-   - Rolling 24h mean 原理（5分鐘桶）
-   - ET 7pm cycle mean 原理和重置時間
-   - 如何解讀參考線
+2. **Day Average Mode Detailed Explanation** - Expand DISPLAY_GUIDE.md "Reference Line" section
+   - Rolling 24h mean principle (5-minute buckets)
+   - ET 7pm cycle mean principle and reset time
+   - How to interpret reference line
 
-3. **獨立時間刷新** - 在 DISPLAY_GUIDE.md "Date & Time Display" 章節添加
-   - 時間每分鐘獨立刷新
-   - 不受價格更新間隔影響
+3. **Independent Time Refresh** - Add to DISPLAY_GUIDE.md "Date & Time Display" section
+   - Time refreshes independently every minute
+   - Unaffected by price update interval
 
-4. **維護模式快速進入** - 在 OTA_UPDATE_GUIDE.md 添加 "Quick Access" 章節
-   - 開機長按編碼器按鈕
-   - 緊急恢復方法
+4. **Maintenance Mode Quick Entry** - Add "Quick Access" section to OTA_UPDATE_GUIDE.md
+   - Boot-time encoder button hold
+   - Emergency recovery method
 
-5. **更新間隔預設值** - 在 DISPLAY_GUIDE.md 明確標註
-   - 預設：3 分鐘
-   - 推薦：3 分鐘（平衡 API 限制和及時性）
+5. **Update Interval Default** - Clearly mark in DISPLAY_GUIDE.md
+   - Default: 3 minutes
+   - Recommended: 3 minutes (balances API limits and timeliness)
 
-### 🟡 中優先級（影響用戶體驗）
+### 🟡 Medium Priority (User Experience Impact)
 
-6. **Runtime WiFi 重連** - 在 DISPLAY_GUIDE.md 添加 "WiFi Connection Management"
-   - 自動重連策略（3 次嘗試，5 分鐘退避）
-   - 斷線後的行為
+6. **Runtime WiFi Reconnection** - Add "WiFi Connection Management" to DISPLAY_GUIDE.md
+   - Auto-reconnect strategy (3 attempts, 5-minute backoff)
+   - Behavior after disconnect
 
-7. **Partial/Full Refresh 詳細說明** - 擴展 DISPLAY_GUIDE.md "Refresh Mode"
-   - 20 次 Partial 後自動 Full Refresh
-   - 兩種模式的詳細比較表
-   - 推薦使用場景
+7. **Partial/Full Refresh Detailed Explanation** - Expand DISPLAY_GUIDE.md "Refresh Mode"
+   - Auto full refresh after 20× partials
+   - Detailed comparison table of two modes
+   - Recommended usage scenarios
 
-8. **API Fallback 詳細順序** - 擴展 DISPLAY_GUIDE.md "API Labels"
-   - 4 層價格 fallback 順序
-   - 3 層歷史數據 fallback 順序
-   - Fallback 觸發條件
+8. **API Fallback Detailed Order** - Expand DISPLAY_GUIDE.md "API Labels"
+   - 4-layer price fallback order
+   - 3-layer history data fallback order
+   - Fallback trigger conditions
 
-9. **NTP 同步機制** - 在 DISPLAY_GUIDE.md 添加 "Time Accuracy"
-   - 每 10 分鐘自動同步
-   - 時間精度保證（< 0.1 秒）
+9. **NTP Sync Mechanism** - Add "Time Accuracy" to DISPLAY_GUIDE.md
+   - Auto-sync every 10 minutes
+   - Time accuracy guarantee (< 0.1 second)
 
-10. **Timezone 自動檢測** - 在 WiFi Portal 說明中添加
-    - 首次啟動自動檢測
-    - VPN 用戶注意事項
+10. **Timezone Auto-Detection** - Add to WiFi Portal description
+    - Auto-detect on first boot
+    - VPN user considerations
 
-### 🟢 低優先級（開發者專用）
+### 🟢 Low Priority (Developer-Specific)
 
-11. **Prefetch 調度機制** - 可選：創建 `DEVELOPER_GUIDE.md`
-    - 預取窗口和抖動機制
-    - 技術實現細節
+11. **Prefetch Scheduling Mechanism** - Optional: Create `DEVELOPER_GUIDE.md`
+    - Prefetch window and jitter mechanism
+    - Technical implementation details
 
-12. **編碼器/LED 高級配置** - ✅ 已在開發者文檔中充分記錄
-
----
-
-## 🎯 推薦行動計劃
-
-### Phase 1: 立即更新（高優先級項目 1-5）
-
-**預估工作量:** 2-3 小時
-
-1. 編輯 `DISPLAY_GUIDE.md`:
-   - 添加 "Multi-Currency Display" 章節（~50 行）
-   - 擴展 "Reference Line" 章節（~80 行）
-   - 更新 "Date & Time Display" 添加獨立刷新說明（~20 行）
-   - 更新菜單項說明，標註預設值（~10 行）
-
-2. 編輯 `OTA_UPDATE_GUIDE.md`:
-   - 添加 "Quick Access: Boot-time Entry" 章節（~30 行）
-
-**預期成果:** 用戶指南完整性提升 80%
-
-### Phase 2: 完善補充（中優先級項目 6-10）
-
-**預估工作量:** 2-3 小時
-
-1. 繼續編輯 `DISPLAY_GUIDE.md`:
-   - 添加 "WiFi Connection Management" 章節（~40 行）
-   - 擴展 "Refresh Mode" 詳細說明（~60 行）
-   - 擴展 "API Labels" 說明 fallback 順序（~50 行）
-   - 添加 "Time Accuracy & NTP Sync" 章節（~30 行）
-   - 添加 "Timezone Auto-Detection" 說明（~20 行）
-
-**預期成果:** 用戶指南完整性提升至 95%
-
-### Phase 3: 可選高級內容（低優先級）
-
-**預估工作量:** 3-4 小時
-
-1. 創建 `DEVELOPER_GUIDE.md`（可選）:
-   - Prefetch 調度機制詳解
-   - 架構設計決策說明
-   - 高級調試技巧
-
-**預期成果:** 開發者文檔完整性 100%
+12. **Encoder/LED Advanced Configuration** - ✅ Already sufficiently documented in developer docs
 
 ---
 
-## 📊 文檔完整性評分
+## 🎯 Recommended Action Plan
 
-| 分類 | 初始評分 | Phase 1 後 | Phase 2 後 | Phase 3 後（最終） |
-|------|----------|------------|------------|------------------|
-| **用戶指南** | 65% | 85% | 95% | 95% |
-| **開發者文檔** | 90% | 90% | 95% | **100%** ✅ |
-| **整體完整性** | 75% | 87% | 95% | **98%** ✅ |
+### Phase 1: Immediate Updates (High Priority Items 1-5)
 
----
+**Estimated Effort:** 2-3 hours
 
-## 📌 總結
+1. Edit `DISPLAY_GUIDE.md`:
+   - Add "Multi-Currency Display" section (~50 lines)
+   - Expand "Reference Line" section (~80 lines)
+   - Update "Date & Time Display" add independent refresh note (~20 lines)
+   - Update menu item descriptions, mark default values (~10 lines)
 
-**✅ 全部完成（Phase 1-3）:**
+2. Edit `OTA_UPDATE_GUIDE.md`:
+   - Add "Quick Access: Boot-time Entry" section (~30 lines)
 
-### Phase 1: 高優先級用戶文檔 ✅
-- ✅ 多幣種顯示系統（9種貨幣，V0.99p 統一邏輯）
-- ✅ Day Average Mode 詳細說明（Rolling 24h / ET 7pm Cycle）
-- ✅ 獨立時間刷新機制（已確認文檔充分）
-- ✅ 更新間隔預設值修正（3 分鐘預設）
-- ✅ 維護模式啟動方式（開機長按編碼器）
+**Expected Outcome:** User guide completeness improved to 80%
 
-### Phase 2: 中優先級內部機制 ✅
-- ✅ E-ink Refresh Mode 詳細說明（Partial/Full，20× 自動全刷新）
-- ✅ API Fallback 詳細順序（4層價格、3層歷史數據）
-- ✅ Time Accuracy & NTP Sync（10 分鐘同步間隔）
-- ✅ WiFi Connection Management（5 分鐘退避，3 次嘗試）
-- ✅ Timezone 自動檢測（IP-based，首次啟動）
-- ✅ 所有文檔 TOC 錨點修復
+### Phase 2: Comprehensive Additions (Medium Priority Items 6-10)
 
-### Phase 3: 低優先級開發者內容 ✅
-- ✅ **創建 DEVELOPER_GUIDE.md**（1057 行）
-  - Prefetch 調度機制詳解（預取窗口、抖動策略、時間線示例）
-  - 架構設計決策（OTA 雙分區、任務架構、NVS vs SPIFFS 等）
-  - 高級調試技巧（Serial debug、性能分析、內存監控）
-  - 構建和刷機指南
-  - 性能分析（更新週期、網絡延遲、功耗測量）
-  - 測試策略（單元測試、集成測試）
+**Estimated Effort:** 2-3 hours
 
-**文檔改進統計:**
-- **新增文檔:** DEVELOPER_GUIDE.md（1057 行）
-- **擴展文檔:** DISPLAY_GUIDE.md（+500 行）、OTA_UPDATE_GUIDE.md（+90 行）
-- **修復導航:** 5 個文檔的 TOC 錨點全部修復
-- **總新增內容:** ~600+ 行技術文檔
+1. Continue editing `DISPLAY_GUIDE.md`:
+   - Add "WiFi Connection Management" section (~40 lines)
+   - Expand "Refresh Mode" detailed explanation (~60 lines)
+   - Expand "API Labels" explain fallback order (~50 lines)
+   - Add "Time Accuracy & NTP Sync" section (~30 lines)
+   - Add "Timezone Auto-Detection" explanation (~20 lines)
 
-**最終狀態:**
-- 🎉 **用戶指南完整性: 95%**（涵蓋所有關鍵功能）
-- 🎉 **開發者文檔完整性: 100%**（Prefetch、架構、調試全部記錄）
-- 🎉 **整體完整性: 98%**（PRE-LAUNCH READY）
+**Expected Outcome:** User guide completeness improved to 95%
 
-**剩餘 2% 缺口:**
-- 未來功能文檔（待實現功能）
-- 多語言支持（目前僅英文）
-- 視頻教程（可選）
+### Phase 3: Optional Advanced Content (Low Priority)
+
+**Estimated Effort:** 3-4 hours
+
+1. Create `DEVELOPER_GUIDE.md` (optional):
+   - Prefetch scheduling mechanism detailed explanation
+   - Architecture design decision descriptions
+   - Advanced debugging techniques
+
+**Expected Outcome:** Developer documentation completeness 100%
 
 ---
 
-**報告結束 - 所有計劃的文檔改進已完成** ✅
+## 📊 Documentation Completeness Scores
+
+| Category | Initial | Phase 1 | Phase 2 | Phase 3 (Final) |
+|----------|---------|---------|---------|-----------------|
+| **User Guides** | 65% | 85% | 95% | 95% |
+| **Developer Docs** | 90% | 90% | 95% | **100%** ✅ |
+| **Overall Completeness** | 75% | 87% | 95% | **98%** ✅ |
+
+---
+
+## 📌 Summary
+
+**✅ All Completed (Phase 1-3):**
+
+### Phase 1: High Priority User Documentation ✅
+- ✅ Multi-Currency Display System (9 currencies, V0.99p unified logic)
+- ✅ Day Average Mode detailed explanation (Rolling 24h / ET 7pm Cycle)
+- ✅ Independent Time Refresh Mechanism (confirmed sufficient documentation)
+- ✅ Update Interval Default correction (3-minute default)
+- ✅ Maintenance Mode Boot-Time Entry (boot-time encoder hold)
+
+### Phase 2: Medium Priority Internal Mechanisms ✅
+- ✅ E-ink Refresh Mode detailed explanation (Partial/Full, 20× auto-full)
+- ✅ API Fallback detailed order (4-layer price, 3-layer history)
+- ✅ Time Accuracy & NTP Sync (10-minute sync interval)
+- ✅ WiFi Connection Management (5-minute backoff, 3 attempts)
+- ✅ Timezone Auto-Detection (IP-based, first boot)
+- ✅ All documentation TOC anchor fixes
+
+### Phase 3: Low Priority Developer Content ✅
+- ✅ **Created DEVELOPER_GUIDE.md** (1057 lines)
+  - Prefetch scheduling mechanism deep-dive (prefetch window, jitter strategy, timeline examples)
+  - Architecture design decisions (OTA dual-partition, task architecture, NVS vs SPIFFS, etc.)
+  - Advanced debugging techniques (Serial debug, performance profiling, memory monitoring)
+  - Build and flash guide
+  - Performance profiling (update cycles, network latency, power consumption measurements)
+  - Testing strategies (unit testing, integration testing)
+
+**Documentation Improvement Statistics:**
+- **New Documents:** DEVELOPER_GUIDE.md (1057 lines)
+- **Expanded Documents:** DISPLAY_GUIDE.md (+500 lines), OTA_UPDATE_GUIDE.md (+90 lines)
+- **Fixed Navigation:** TOC anchors fixed in 5 documents
+- **Total New Content:** ~1650+ lines of technical documentation
+
+**Final Status:**
+- 🎉 **User Guide Completeness: 95%** (covers all key features)
+- 🎉 **Developer Documentation Completeness: 100%** (Prefetch, architecture, debugging all documented)
+- 🎉 **Overall Completeness: 98%** (PRE-LAUNCH READY)
+
+**Remaining 2% Gap:**
+- Future feature documentation (features not yet implemented)
+- Multi-language support (currently English only)
+- Video tutorials (optional)
+
+---
+
+**Report Complete - All Planned Documentation Improvements Finished** ✅

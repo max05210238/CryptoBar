@@ -501,6 +501,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Project Documentation
 - **[README.md](README.md)** - Project overview, features, quick start guide
 - **[HARDWARE_GUIDE.md](docs/guides/HARDWARE_GUIDE.md)** - BOM, GPIO pins, assembly instructions
+- **[DISPLAY_GUIDE.md](docs/guides/DISPLAY_GUIDE.md)** - UI layout, navigation, screen elements explained
 - **[PRE_LAUNCH_AUDIT.md](PRE_LAUNCH_AUDIT.md)** - Documentation review and improvement roadmap
 
 ### Version-Specific Release Notes
@@ -521,8 +522,9 @@ All release notes moved to [`docs/release-notes/`](docs/release-notes/):
 
 ### User Guides
 All user guides moved to [`docs/guides/`](docs/guides/):
-- **[LED_DISPLAY_GUIDE.md](docs/guides/LED_DISPLAY_GUIDE.md)** - Complete LED color and animation reference
 - **[HARDWARE_GUIDE.md](docs/guides/HARDWARE_GUIDE.md)** - Hardware assembly and GPIO wiring
+- **[DISPLAY_GUIDE.md](docs/guides/DISPLAY_GUIDE.md)** - UI layout, navigation, screen elements explained
+- **[LED_DISPLAY_GUIDE.md](docs/guides/LED_DISPLAY_GUIDE.md)** - Complete LED color and animation reference
 
 ### Technical Documentation
 - **[V0.98_STATUS.md](docs/release-notes/V0.98_STATUS.md)** - Code refactoring details

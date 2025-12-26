@@ -134,8 +134,9 @@ Now open-sourced for the maker community, CryptoBar offers complete hardware and
 
 ### User Guides
 - 📘 [**Hardware Assembly Guide**](docs/guides/HARDWARE_GUIDE.md) - Wiring, GPIO pins, assembly steps
-- ⚙️ [**Configuration Guide**](docs/guides/CONFIGURATION_GUIDE.md) - WiFi setup, settings options (Coming Soon)
+- 📺 [**Display Guide**](docs/guides/DISPLAY_GUIDE.md) - UI layout, navigation, screen elements explained
 - 🎨 [**LED Display Guide**](docs/guides/LED_DISPLAY_GUIDE.md) - LED colors, animations, troubleshooting
+- ⚙️ [**Configuration Guide**](docs/guides/CONFIGURATION_GUIDE.md) - WiFi setup, settings options (Coming Soon)
 - 🚨 [**Troubleshooting Guide**](docs/guides/TROUBLESHOOTING.md) - Common issues and solutions (Coming Soon)
 
 ### Technical Documentation

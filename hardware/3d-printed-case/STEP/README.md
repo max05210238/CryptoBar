@@ -6,12 +6,14 @@ This directory contains STEP format CAD files for users who want to modify the e
 
 ## 📁 Files
 
-**STEP files will be uploaded here:**
+### Complete Enclosure Assembly
+- `CryptoBar Enclosure V1.step` - Complete enclosure assembly (24 MB)
+  - Contains all parts: front case, back cover, knob, PCB strap, LED lens
+  - All components in single file for easy editing
 
-- `cryptobar_base.step` - Main enclosure base (editable)
-- `cryptobar_cover.step` - Top cover/faceplate (editable)
-- `cryptobar_led_lens.step` - LED lens (editable)
-- Additional parts as needed
+**Total:** 1 STEP file (24 MB)
+
+**Note:** This is a complete assembly file. You can edit individual components within your CAD software and export them separately if needed.
 
 ---
 

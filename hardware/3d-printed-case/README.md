@@ -22,7 +22,8 @@ This directory contains 3D printable files for the CryptoBar enclosure.
   - LED lens (white matte - CRITICAL!)
   - See [`STL/README.md`](STL/README.md) for complete file list and printing instructions
 
-- **STEP/** - Source CAD files for users who want to modify the design (coming soon)
+- **STEP/** - Source CAD files for users who want to modify the design (1 file, 24 MB)
+  - Complete enclosure assembly with all components
   - Editable in Fusion 360, FreeCAD, SolidWorks, etc.
   - Customize for different displays, add branding, etc.
   - See [`STEP/README.md`](STEP/README.md) for editing guide

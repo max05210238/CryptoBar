@@ -108,71 +108,129 @@ pio run
 ```
 
 ### 3. Prepare for Update
-- ✅ Ensure device is connected to WiFi
 - ✅ Device has stable power supply (USB connected)
-- ✅ Computer/phone is on **same WiFi network** as CryptoBar
-- ✅ Know your CryptoBar's IP address (shown in WiFi Info menu)
+- ✅ Phone/tablet/computer with WiFi capability
+- ✅ Downloaded firmware .bin file ready
 
 **⚠️ DO NOT disconnect power during update!**
+
+**Note:** Device will create its own WiFi hotspot for OTA update - you do NOT need to be on the same network beforehand.
 
 ---
 
 ## 📋 Step-by-Step Update Process
 
-### Step 1: Enter OTA Update Mode
+### Step 1: Enter Firmware Update Confirmation
 
 1. **On CryptoBar device:**
    - Short press encoder to open main menu
    - Navigate to `[12] Firmware Update`
    - Short press to select
 
-2. **Display shows:**
+2. **Confirmation screen appears:**
    ```
    ┌─────────────────────────┐
-   │ OTA Update Mode         │
+   │ Firmware Update         │
    │                         │
-   │ Connect to:             │
-   │ http://192.168.1.100    │  ← Your device IP
-   │                         │
-   │ Upload .bin file        │
+   │ Hold button to enter    │
+   │ maintenance mode        │
+   │ (short press to cancel) │
    └─────────────────────────┘
    ```
 
-3. **LED indicator:**
-   - 🟣 **Purple (solid)** - OTA mode active
-   - Device stays in this mode until you upload firmware or long-press to exit
+3. **Choose:**
+   - **Long press (hold)** - Proceed to Step 2
+   - **Short press** - Cancel and return to menu
 
 ---
 
-### Step 2: Access OTA Web Interface
+### Step 2: Device Creates Maintenance Hotspot
 
-1. **On your computer/phone/tablet:**
-   - Open web browser (Chrome, Firefox, Safari, etc.)
-   - Enter the IP address shown on CryptoBar display
-   - Example: `http://192.168.1.100`
+**⚠️ IMPORTANT:** When you long-press to confirm, the device will:
+- Disconnect from your WiFi network
+- Create a **dedicated WiFi hotspot** for OTA update
+- This is NORMAL behavior - your device is NOT broken!
 
-2. **You should see:**
+1. **Device disconnects from WiFi** (LED may blink)
+
+2. **Maintenance AP starts** (~5 seconds)
+   - LED turns 🟣 **purple (solid)**
+   - Device creates open WiFi hotspot (no password)
+
+3. **Display shows connection info:**
+   ```
+   ┌─────────────────────────┐
+   │ Firmware Update         │
+   │                         │
+   │ 1) Connect phone to:    │
+   │    CryptoBar_MAINT_A1B2 │  ← Your unique SSID
+   │                         │
+   │ 2) Open browser to:     │
+   │    http://192.168.4.1   │  ← Always this IP
+   │                         │
+   │ 3) Upload .bin file     │
+   └─────────────────────────┘
+   ```
+
+**Important notes:**
+- **SSID format:** `CryptoBar_MAINT_XXXX` (XXXX = last 4 digits of device MAC address)
+- **No password** - The hotspot is open (temporary, OTA only)
+- **Fixed IP:** Always `192.168.4.1` (not your home network IP!)
+
+---
+
+### Step 3: Connect to Maintenance Hotspot
+
+1. **On your phone/tablet/computer:**
+   - Open WiFi settings
+   - Look for network: `CryptoBar_MAINT_XXXX`
+   - Connect to it (no password needed)
+
+2. **Connection confirmation:**
+   - You should connect successfully within 5-10 seconds
+   - Your device will show "No internet" - **this is normal!**
+   - You're connecting directly to CryptoBar, not to the internet
+
+**⚠️ Troubleshooting connection:**
+- If SSID doesn't appear: Wait 30 seconds, device may still be starting AP
+- If phone auto-disconnects: Disable "Auto-switch network" feature
+- On iPhone: Tap "Use Without Internet" when prompted
+- On Android: Tap "Stay connected" when warned about no internet
+
+---
+
+### Step 4: Access OTA Web Interface
+
+1. **Open web browser:**
+   - While still connected to `CryptoBar_MAINT_XXXX`
+   - Navigate to: `http://192.168.4.1`
+   - **DO NOT use HTTPS** - device only supports HTTP
+
+2. **You should see OTA web page:**
    ```
    ┌─────────────────────────────────────┐
    │ CryptoBar Firmware Update           │
    │                                     │
-   │ Current Version: V0.99q             │
+   │ Current: V0.99q (2025-12-25 10:30)  │
+   │ OTA slot: running app0 → target app1│
    │                                     │
-   │ [Choose File]  [Upload]             │
+   │ [Choose File]  [Upload & Update]    │
    │                                     │
-   │ Select .bin file and click Upload   │
+   │ Tip: keep this page open until it   │
+   │      says rebooting                 │
    └─────────────────────────────────────┘
    ```
 
 **⚠️ If page doesn't load:**
-- Check device and computer are on same WiFi network
-- Verify IP address is correct (check WiFi Info menu)
-- Try adding `:80` to URL: `http://192.168.1.100:80`
+- Verify you're connected to `CryptoBar_MAINT_XXXX` (check WiFi settings)
+- Try `http://192.168.4.1` again (copy-paste to avoid typos)
+- Clear browser cache and retry
+- Try different browser (Chrome, Firefox, Safari)
 - See [Troubleshooting](#-troubleshooting) section
 
 ---
 
-### Step 3: Upload Firmware
+### Step 5: Upload Firmware
 
 1. **Click "Choose File" button**
    - Navigate to downloaded `.bin` file
@@ -197,7 +255,7 @@ pio run
 
 ---
 
-### Step 4: Device Reboot
+### Step 6: Device Reboot
 
 1. **Automatic reboot sequence:**
    - Device validates firmware integrity
@@ -219,7 +277,7 @@ pio run
 
 ---
 
-### Step 5: Verify Update Success
+### Step 7: Verify Update Success
 
 1. **Check version:**
    - Enter main menu

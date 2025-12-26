@@ -4,6 +4,29 @@ Quick reference for understanding LED colors and animations.
 
 ---
 
+## 📖 Table of Contents
+
+### LED Behavior
+1. [🎨 LED Color Meanings](#-led-color-meanings)
+   - Price Movement Colors (Red/Green)
+   - System Status Colors (Yellow/Blue/Purple)
+2. [🫁 Breathing Animations](#-breathing-animations)
+3. [🎉 Party Mode](#-party-mode)
+4. [🔄 Color Priority](#-color-priority)
+
+### Examples & Control
+5. [📊 Examples](#-examples)
+6. [🎚️ Brightness Control](#️-brightness-control)
+7. [🔧 Technical Details](#-technical-details)
+
+### Reference
+8. [🐛 Troubleshooting](#-troubleshooting)
+9. [📝 Configuration](#-configuration)
+10. [🌟 Best Practices](#-best-practices)
+11. [📚 Version History](#-version-history)
+
+---
+
 ## 🎨 LED Color Meanings
 
 ### Price Movement (Red/Green Reserved)

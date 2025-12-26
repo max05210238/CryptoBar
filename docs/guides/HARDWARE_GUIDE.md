@@ -4,6 +4,31 @@ Complete guide for building your CryptoBar cryptocurrency display device.
 
 ---
 
+## 📖 Table of Contents
+
+### Planning & Parts
+1. [📦 Bill of Materials (BOM)](#-bill-of-materials-bom)
+2. [💰 Cost Breakdown](#-cost-breakdown)
+3. [🛒 Where to Buy Components](#-where-to-buy-components)
+
+### Assembly
+4. [🔌 GPIO Pin Connections](#-gpio-pin-connections)
+5. [🛠️ Assembly Instructions](#️-assembly-instructions)
+   - Step 1: 3D Printed Case Preparation
+   - Step 2: ESP32-S3 Modification (5V-out)
+   - Step 3: E-paper Display Connection
+   - Step 4: Rotary Encoder Wiring
+   - Step 5: LED Installation
+   - Step 6: Final Assembly
+
+### Reference
+6. [📐 Wiring Diagrams](#-wiring-diagrams)
+7. [🔧 Troubleshooting](#-troubleshooting)
+8. [🎨 Customization Ideas](#-customization-ideas)
+9. [📚 Additional Resources](#-additional-resources)
+
+---
+
 ## 📦 Bill of Materials (BOM)
 
 ### Core Electronics

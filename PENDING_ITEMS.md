@@ -73,10 +73,13 @@
 | M2 x 5mm Flat Head Screws | 4 | Kit | https://amzn.to/44HXbLf |
 | M3 Heat Set Inserts | 2 | Kit | https://amzn.to/44HXbLf |
 | M2 Heat Set Inserts | 4 | Kit | https://amzn.to/49rPdbL |
-| PolyMaker Matte Black PLA | ~50g | ~$2 | https://amzn.to/4atrUPS |
+| PolyMaker Matte Black PLA | ~50g (enclosure) | ~$2 | https://amzn.to/4atrUPS |
+| PolyMaker Matte White PLA | ~5g (LED lens) | ~$0.20 | https://amzn.to/4qquieL |
 | USB-C Cable & Adapter | 1 | ~$5-8 | https://amzn.to/3KO9BKZ |
 
 **Total Cost:** ~$35 USD (extremely affordable!)
+
+**Note:** LED lens MUST be white matte PLA for optimal light diffusion
 
 **Note:** Many components come in multi-packs. Recommend users to build multiple units.
 

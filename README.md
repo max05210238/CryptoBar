@@ -85,10 +85,12 @@ Now open-sourced for the maker community, CryptoBar offers complete hardware and
 
 | Component | Recommended Product | Amazon Link |
 |-----------|---------------------|-------------|
-| **PLA Filament** | PolyMaker Matte Black PLA (best matte finish) | [Buy on Amazon](https://amzn.to/4atrUPS) |
+| **Black PLA Filament** | PolyMaker Matte Black PLA (enclosure parts) | [Buy on Amazon](https://amzn.to/4atrUPS) |
+| **White PLA Filament** | PolyMaker Matte White PLA (LED lens - REQUIRED) | [Buy on Amazon](https://amzn.to/4qquieL) |
 
 - **Files:** Available in [`hardware/3d-printed-case/`](hardware/3d-printed-case/)
-- **Material:** PLA or PETG recommended (PolyMaker Matte Black PLA for best results)
+- **Enclosure:** Matte Black PLA recommended (or any color)
+- **LED Lens:** **Matte White PLA REQUIRED** for optimal light diffusion
 - **Print Time:** ~3-4 hours total
 - **Cost:** ~$2 USD material cost (if you have a 3D printer)
 - **Post-Processing:** Heat set insert installation required (soldering iron)

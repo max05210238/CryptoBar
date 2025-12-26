@@ -28,9 +28,12 @@ Complete guide for building your CryptoBar cryptocurrency display device.
 
 | Item | Description | Amazon Link |
 |------|-------------|-------------|
-| **PLA Filament** | PolyMaker Matte Black PLA (best matte finish on market) | [Buy on Amazon](https://amzn.to/4atrUPS) |
+| **Black PLA Filament** | PolyMaker Matte Black PLA (enclosure parts) | [Buy on Amazon](https://amzn.to/4atrUPS) |
+| **White PLA Filament** | PolyMaker Matte White PLA (LED lens - REQUIRED) | [Buy on Amazon](https://amzn.to/4qquieL) |
 | **USB-C Cable & Adapter** | USB-C cable + 5V power adapter kit | [Buy on Amazon](https://amzn.to/3KO9BKZ) |
 | **3D Printed Enclosure** | STL files in [`hardware/3d-printed-case/`](../../hardware/3d-printed-case/) | Print yourself or use service |
+
+**Important:** LED lens MUST be printed in matte white PLA for optimal light diffusion. See [3D printing guide](../../hardware/3d-printed-case/README.md) for details.
 
 ### Tools Required
 

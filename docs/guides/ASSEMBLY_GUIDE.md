@@ -58,7 +58,7 @@ Before starting, verify you have all components:
 - [ ] WaveShare 2.9" B&W E-ink display (with **V2 sticker**)
 - [ ] KY-040 rotary encoder module
 - [ ] WS2812B addressable RGB LED (single LED or strip)
-- [ ] Ribbon cable (for LED wiring)＃for led and encoder#
+- [ ] Ribbon cable (for LED and encoder wiring)
 - [ ] Pin headers (if not pre-soldered on ESP32)
 
 **3D Printed Parts:**
@@ -102,7 +102,7 @@ Before starting, verify you have all components:
 
 ### Step 2: Solder 5V-OUT PAD for LED Power
 
-**⚠️ IMPORTANT:** The WS2812B LED requires 5V power. The ESP32-S3 DevKit has a solder pad labeled **5V-OUT** #or in-out# on the back that must be bridged.
+**⚠️ IMPORTANT:** The WS2812B LED requires 5V power. The ESP32-S3 DevKit has a solder pad labeled **5V-OUT** or **IN-OUT** on the back that must be bridged.
 
 **Location:** Bottom side of the ESP32-S3 DevKit board, near the USB-C connector
 
@@ -162,7 +162,7 @@ Before proceeding with mechanical assembly, flash the firmware to verify the ESP
 **⚠️ CRITICAL:** Only the **WaveShare 2.9" B&W V2** display is supported. Using V1 or incompatible displays will not work.
 
 **How to verify:**
-- Look for a **V2 sticker** on the display's ribbon cable or back#Look for a **V2 sticker** on the back#
+- Look for a **V2 sticker** on the back
 - The V2 model has a different driver IC than V1
 
 **If you have the wrong version:**
@@ -177,12 +177,12 @@ The KY-040 rotary encoder module needs modification to fit inside the enclosure.
 **Required modifications:**
 
 1. **Remove 90° pin headers:**
-#- Remove the pin holder cleanly need good soldering skills, if you are not certain you can do it, you can cut it off#
+   - Removing the pin holder cleanly requires good soldering skills. If you are not certain you can do it, you can cut it off
    - Use flush cutters to clip off the right-angle pin headers
    - Clean up the pads with solder wick if needed
    - You will solder wires directly to these pads later
 
-2. **Remove center mounting pin (OPTIONAL but recommended):**#not optional, it's required#
+2. **Remove center mounting pin (REQUIRED):**
    - The encoder has a small metal pin at the center for PCB mounting
    - This pin prevents the encoder from sitting flush in the enclosure
    - Use wire cutters to carefully clip this pin as close to the base as possible
@@ -227,19 +227,15 @@ If using a WS2812B LED strip, you need to cut a single LED.
 **Procedure:**
 
 1. **Prepare ribbon cable:**
-   - Cut 3 wires from ribbon cable, approximately 8-10cm length#10-15cm#
-   - Strip 2-3mm from each end#one end, keep the female Dupont end, that will be used for plugging into the ESP32#
+   - Cut 3 wires from ribbon cable, approximately 10-15cm length
+   - Strip 2-3mm from one end only, keep the female Dupont end (that will be used for plugging into the ESP32)
 
 2. **Solder to LED:**
    - **Power wire** → 5V/VCC pad
    - **Data wire** → DIN/DATA pad (input side, where arrow points FROM)
    - **Ground wire** → GND pad
 
-3. **Heat shrink or insulate:**#this part not needed#
-   - Use small heat shrink tubing on each wire
-   - Ensure no solder joints are touching
-
-4. **Test with multimeter:**
+3. **Test with multimeter:**
    - Verify no shorts between adjacent pads
 
 ![LED arrow direction](../images/assembly/step7_led_arrow.jpg)
@@ -319,13 +315,13 @@ The **Matte_Black_Front_Case_V1** requires 4x M2 heat set inserts for attaching 
 
 ### Step 10: Install M3 Heat Set Inserts (Back Cover)
 
-The **Matte_Black_Back_Cover_V1** requires 2x M3 heat set inserts for the final assembly screws.#for attaching Matte_Black_PCB_Strap_V1#
+The **Matte_Black_Back_Cover_V1** requires 2x M3 heat set inserts for attaching Matte_Black_PCB_Strap_V1.
 
 **Procedure:**
 
 1. **Identify insert locations:**
    - There are 2 holes on the back cover
-   - Located on the left and right sides#on each sides where the ESP32 will be installed#
+   - Located on each side where the ESP32 will be installed
 
 2. **Follow same procedure as Step 9:**
    - Heat M3 insert with soldering iron (200-260°C depending on material)
@@ -360,10 +356,10 @@ The **Matte_Black_Back_Cover_V1** requires 2x M3 heat set inserts for the final 
    - **Critical:** Make sure that the marked side is always facing up when insert
 
 2. **Install in front case:**
-   - Apply small drop of super glue in magnet cavity if the fit is loose#if the fit is loose should move to the front#
+   - If the fit is loose, apply a small drop of super glue in magnet cavity
    - Insert magnet with correct pole facing up
    - Repeat for all 4 magnets (2 on top, 2 on bottom)
-   #-be very careful about the pole, it is not very easy to remove#
+   - **⚠️ Be very careful about the pole orientation - magnets are not easy to remove once installed**
 
 3. **Allow to cure:**
    - Wait 5 minutes before handling
@@ -399,12 +395,13 @@ The **Matte_Black_Back_Cover_V1** requires 2x M3 heat set inserts for the final 
 3. **Secure with screws:**
    - Insert 2x M3 x 8mm hex screws through the strap into the M3 heat set inserts
    - **⚠️ CRITICAL:** Tighten screws VERY GENTLY - just slightly snug
-   - **Do NOT fully tighten** - this will warp and damage the ESP32-S3 PCB#it's normal to have a large gap between the strap and back case#
+   - **Do NOT fully tighten** - this will warp and damage the ESP32-S3 PCB
+   - It's normal to have a large gap between the strap and back case
    - After tightening, check from the side to ensure PCB is NOT bent or warped
 
 4. **Verify installation:**
    - ESP32-S3 should be held securely but NOT bent
-   - Pin headers should be exposed and accessible#a few pins will be covered, but thouse are not used#
+   - Pin headers should be exposed and accessible (a few pins will be covered, but those are not used)
    - PCB should be completely flat (no warping)
 
 ![ESP32-S3 mounted to back cover](../images/assembly/step12_esp32_mounted.jpg)
@@ -414,7 +411,7 @@ The **Matte_Black_Back_Cover_V1** requires 2x M3 heat set inserts for the final 
 
 ### Step 13: Install LED Lens to Front Case
 
-The **Matte_White_LED_Lens_V1** (with LED installed from Step 8) snaps into the front case.#it doesn't snap in, but will be a tight fit#
+The **Matte_White_LED_Lens_V1** (with LED installed from Step 8) will be a tight fit into the front case.
 
 **Procedure:**
 
@@ -444,7 +441,7 @@ The **Matte_White_LED_Lens_V1** (with LED installed from Step 8) snaps into the 
 
 **Components:**
 - WaveShare 2.9" B&W V2 e-ink display
-#- WaveShare cable for screen(it should comes with the display)#
+- WaveShare cable for screen (it should come with the display)
 
 **Procedure:**
 
@@ -456,24 +453,26 @@ The **Matte_White_LED_Lens_V1** (with LED installed from Step 8) snaps into the 
 
 2. **Remove protective film:**
    - Peel off the protective film from the display
-  
-#add a step to install the screen cable, the connector is just a plug in type, no lock, the other side have female Dupont connectors for connecting to the ESP32#
 
-3. **Position display in front case:**
+3. **Install screen cable:**
+   - The connector is just a plug-in type, no lock
+   - Plug one end of the cable into the display's connector
+   - The other side has female Dupont connectors for connecting to the ESP32 (will be connected in Step 16)
+
+4. **Position display in front case:**
    - Place display into the **Matte_Black_Front_Case_V1**
-   - **Orientation:** The end WITHOUT the ribbon cable should face toward the LED#led lens#
-   - Ribbon cable should exit toward the bottom#remove this line#
+   - **Orientation:** The end WITHOUT the ribbon cable should face toward the LED lens
 
-4. **Screw down display:**
-   - Use the 4 small screws you removed in step 1#step 14-1#
+5. **Screw down display:**
+   - Use the 4 small screws you removed in step 14-1
    - **⚠️ CRITICAL:** You are screwing directly into the 3D printed plastic (NOT into heat set inserts)
-   - Start all 4 screws by hand first (do not tighten)#remove first#
+   - Start all 4 screws by hand (do not tighten)
    - Once all 4 are started, tighten VERY GENTLY in a cross pattern:
      - Top-left → Bottom-right → Top-right → Bottom-left
    - **⚠️ Do not over-tighten** - just slightly snug is enough
    - Over-tightening will strip the plastic threads
 
-5. **Verify display:**
+6. **Verify display:**
    - Display should sit flat against the front case
    - No gaps or warping
    - Ribbon cable should have enough slack to reach the ESP32
@@ -493,7 +492,7 @@ The **Matte_White_LED_Lens_V1** (with LED installed from Step 8) snaps into the 
 1. **Insert encoder through front case:**
    - The encoder shaft goes through the round hole in the front case
    - Encoder body sits inside the case
-    #-make sure the PCB is rotated to the right location, see photo#
+   - **⚠️ Make sure the PCB is rotated to the right location - see photo**
 
 2. **Secure with nut:**
    - The encoder comes with a metal washer and hex nut
@@ -546,22 +545,17 @@ All wires have Dupont connectors and can be plugged directly into ESP32-S3 pin h
    - Encoder DT → ESP32 GPIO 1
    - Encoder CLK → ESP32 GPIO 2
 
-2. **Connect display cable:**
-   - The display module includes a cable with ribbon connector on one end and Dupont connectors on the other
-   - **Connect to display module:**#remove this connecting ribbon cable part, already did that in the previus step#
-     - Lift the black retaining clip on the display's PCB connector
-     - Insert ribbon cable (contacts facing down)
-     - Press retaining clip down to lock
-   - **Connect to ESP32-S3:**
-     - Plug each Dupont connector into the correct ESP32-S3 pin according to the table above
-     - Display VCC → ESP32 3V3
-     - Display GND → ESP32 GND
-     - Display DIN (MOSI) → ESP32 GPIO 11
-     - Display CLK (SCK) → ESP32 GPIO 12
-     - Display CS → ESP32 GPIO 10
-     - Display DC → ESP32 GPIO 17
-     - Display RST → ESP32 GPIO 16
-     - Display BUSY → ESP32 GPIO 4
+2. **Connect display cable to ESP32-S3:**
+   - The display cable was already connected to the display module in Step 14-3
+   - Plug each Dupont connector into the correct ESP32-S3 pin according to the table above
+   - Display VCC → ESP32 3V3
+   - Display GND → ESP32 GND
+   - Display DIN (MOSI) → ESP32 GPIO 11
+   - Display CLK (SCK) → ESP32 GPIO 12
+   - Display CS → ESP32 GPIO 10
+   - Display DC → ESP32 GPIO 17
+   - Display RST → ESP32 GPIO 16
+   - Display BUSY → ESP32 GPIO 4
 
 3. **Connect LED wires to ESP32-S3:**
    - Plug LED wires into the correct ESP32-S3 pins
@@ -578,7 +572,6 @@ All wires have Dupont connectors and can be plugged directly into ESP32-S3 pin h
 - Swapping CLK and DT on encoder (encoder will count backward)
 - Connecting LED to 3.3V instead of 5V (LED won't light)
 - Forgetting to bridge 5V-OUT pad (LED has no power)
-- Reversing display ribbon cable (display won't work)#remove this line, the display cable is not reversible#
 
 ---
 
@@ -604,12 +597,12 @@ All wires have Dupont connectors and can be plugged directly into ESP32-S3 pin h
    - If display shows garbage: likely wrong display version (need V2)
 
 4. **LED test:**
-   - LED should light up during boot (rainbow animation or solid color)#it will light up blue#
+   - LED should light up during boot (it will light up blue)
    - If LED doesn't light:
      - Check 5V-OUT pad is bridged
      - Check GPIO 15 connection
      - Verify LED polarity (arrow direction)
-#- make sure the soldering is not broken, these wires are thine, will break if rotated too many times#
+     - **⚠️ Make sure the soldering is not broken - these wires are thin and will break if rotated too many times**
 
 5. **Encoder test:**
    - Rotate encoder clockwise/counter-clockwise
@@ -639,18 +632,17 @@ All wires have Dupont connectors and can be plugged directly into ESP32-S3 pin h
 **Procedure:**
 
 1. **Align knob with encoder shaft:**
-   - The knob has a D-shaped hole that matches the encoder shaft#does not have a D-shaped, just a rounds whole#
-   - Some encoders have round shafts (use set screw to secure)#our knob does not have set screws#
+   - The knob has a round hole (does not have a D-shaped hole)
+   - Our knob does not have set screws
 
 2. **Press knob onto shaft:**
    - Apply firm, even pressure
    - Knob should slide down until it bottoms out on the encoder nut
    - **Do not force** - if too tight, sand the inside of the knob slightly
 
-3. **Secure knob (if applicable):**
-   - If knob has a set screw, tighten with Allen key#remove this line#
-   - Position set screw over the flat side of the shaft (if D-shaft)#remove this line#
-    # the knob shold be a tight fit, if too loose, apply a very tiny dot of CA glue#
+3. **Secure knob:**
+   - The knob should be a tight fit
+   - If too loose, apply a very tiny dot of CA glue
 
 4. **Test rotation:**
    - Rotate knob smoothly
@@ -669,11 +661,11 @@ All wires have Dupont connectors and can be plugged directly into ESP32-S3 pin h
 
 2. **Close enclosure:**
    - Gently press front and back together
-   - You should feel/hear snaps as the case closes#not snaps, but make sure the back cover sit flush in the front case#
+   - Make sure the back cover sits flush in the front case
 
-3. **Install M3 screws:**
-   - Use 2x M3 x 8mm hex screws#4 M2 x 5mm flat head screws#
-   - Screw into the M3 heat set inserts (from Step 10)#M2#
+3. **Install M2 screws:**
+   - Use 4x M2 x 5mm flat head screws
+   - Screw into the M2 heat set inserts (from Step 9)
    - Tighten with hex driver (do not over-tighten)
 
 4. **Final inspection:**
@@ -717,7 +709,7 @@ Next steps:
 
 **LED doesn't light up:**
 - Check 5V-OUT pad is bridged on ESP32
-- Verify GPIO 48 connection#gpio 15#
+- Verify GPIO 15 connection
 - Check LED polarity (arrow direction matters)
 - Test with multimeter: 5V pin should measure 5V when USB connected
 
@@ -733,8 +725,8 @@ Next steps:
 
 **Encoder doesn't respond:**
 - Check all 5 wires (VCC, GND, SW, DT, CLK)
-- Verify GPIO 1, 2, 42 connections#gpio 1, 2, 21#
-- Test button press (GPIO 42 should go LOW when pressed)#GPIO 21#
+- Verify GPIO 1, 2, 21 connections
+- Test button press (GPIO 21 should go LOW when pressed)
 
 **Encoder counts backward:**
 - CLK and DT wires are swapped

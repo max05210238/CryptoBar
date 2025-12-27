@@ -6,6 +6,9 @@
 ![Version](https://img.shields.io/badge/version-V0.99q-green.svg)
 ![Platform](https://img.shields.io/badge/platform-ESP32--S3-orange.svg)
 
+![CryptoBar displaying BTC, ETH, and XRP prices](docs/images/product/hero_three_units_stacked.jpeg)
+*Three CryptoBar units stacked using magnets, displaying real-time cryptocurrency prices with LED status indicators*
+
 ---
 
 ## 📖 Overview
@@ -56,6 +59,9 @@ Now open-sourced for the maker community, CryptoBar offers complete hardware and
 - 🔃 **Display Refresh Modes**: Partial (battery-friendly) / Full (ghosting-free)
 - 📡 **OTA Firmware Updates**: Update wirelessly via web interface
 - 🌐 **WiFi Configuration Portal**: Easy setup through captive portal
+
+![CryptoBar hardware design](docs/images/product/side_angle_knob_view.jpeg)
+*Professional 3D-printed enclosure with rotary encoder knob and LED light diffuser*
 
 ---
 

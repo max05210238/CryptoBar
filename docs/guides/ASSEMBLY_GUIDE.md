@@ -540,11 +540,22 @@ All wires have Dupont connectors and can be plugged directly into ESP32-S3 pin h
    - Encoder DT → ESP32 GPIO 1
    - Encoder CLK → ESP32 GPIO 2
 
-2. **Plug in display ribbon cable:**
-   - The display ribbon cable plugs into the display's PCB connector
-   - Lift the black retaining clip
-   - Insert ribbon cable (contacts facing down)
-   - Press retaining clip down to lock
+2. **Connect display cable:**
+   - The display module includes a cable with ribbon connector on one end and Dupont connectors on the other
+   - **Connect to display module:**
+     - Lift the black retaining clip on the display's PCB connector
+     - Insert ribbon cable (contacts facing down)
+     - Press retaining clip down to lock
+   - **Connect to ESP32-S3:**
+     - Plug each Dupont connector into the correct ESP32-S3 pin according to the table above
+     - Display VCC → ESP32 3V3
+     - Display GND → ESP32 GND
+     - Display DIN (MOSI) → ESP32 GPIO 11
+     - Display CLK (SCK) → ESP32 GPIO 12
+     - Display CS → ESP32 GPIO 10
+     - Display DC → ESP32 GPIO 17
+     - Display RST → ESP32 GPIO 16
+     - Display BUSY → ESP32 GPIO 4
 
 3. **Connect LED wires to ESP32-S3:**
    - Plug LED wires into the correct ESP32-S3 pins

@@ -69,11 +69,12 @@ Before starting, verify you have all components:
 - [ ] Matte_Black_Knob_V1
 
 **Hardware:**
-- [ ] M2 heat set inserts (4x)
-- [ ] M3 heat set inserts (2x)
-- [ ] M2 x 5mm flat head screws (4x)
-- [ ] M3 x 8mm hex screws (2x)
+- [ ] M2 heat set inserts (4x) - for back cover mounting
+- [ ] M3 heat set inserts (2x) - for final assembly
+- [ ] M3 x 8mm hex screws (2x) - for ESP32 mounting
 - [ ] Small magnets 4mm x 6mm (4x) - **OPTIONAL** if stacking multiple units
+
+**Note:** E-ink display uses its own screws (included with the display). Do NOT purchase separate M2 screws for the display.
 
 ---
 
@@ -276,7 +277,7 @@ The LED must be secured inside the **Matte_White_LED_Lens_V1** part.
 
 ### Step 9: Install M2 Heat Set Inserts (Front Case)
 
-The **Matte_Black_Front_Case_V1** requires 4x M2 heat set inserts for mounting the e-ink display.
+The **Matte_Black_Front_Case_V1** requires 4x M2 heat set inserts for attaching the back cover.
 
 **Tools needed:**
 - Soldering iron with clean tip (or dedicated heat set insert tip)
@@ -376,25 +377,32 @@ The **Matte_Black_Back_Cover_V1** requires 2x M3 heat set inserts for the final 
 
 ### Step 12: Mount ESP32-S3 to Back Cover
 
-**Tools needed:**
+**Components needed:**
+- ESP32-S3 module (with pin headers soldered from Step 1)
+- Matte_Black_Back_Cover_V1 (with M3 inserts installed from Step 10)
 - Matte_Black_PCB_Strap_V1 (3D printed part)
-- ESP32-S3 module (with pin headers soldered)
+- 2x M3 x 8mm hex screws
 
 **Procedure:**
 
 1. **Position ESP32-S3 in back cover:**
-   - USB-C port should face the **bottom opening** of the back cover
+   - Place ESP32-S3 with **component side facing DOWN** (pin headers pointing UP)
    - Pin headers should point upward (toward the front)
 
 2. **Install PCB strap:**
    - Place the PCB_Strap over the ESP32-S3 pins
    - Strap should press the ESP32-S3 firmly against the back cover
 
-3. **Verify fit:**
-   - ESP32-S3 should be held securely
-   - Pin headers should be exposed and accessible
+3. **Secure with screws:**
+   - Insert 2x M3 x 8mm hex screws through the strap into the M3 heat set inserts
+   - **⚠️ CRITICAL:** Tighten screws VERY GENTLY - just slightly snug
+   - **Do NOT fully tighten** - this will warp and damage the ESP32-S3 PCB
+   - After tightening, check from the side to ensure PCB is NOT bent or warped
 
-**⚠️ Do not force or over-tighten** - the PCB strap uses friction fit. If too tight, it may crack.
+4. **Verify installation:**
+   - ESP32-S3 should be held securely but NOT bent
+   - Pin headers should be exposed and accessible
+   - PCB should be completely flat (no warping)
 
 ![ESP32-S3 mounted to back cover](../images/assembly/step12_esp32_mounted.jpg)
 *ESP32-S3 secured to back cover with PCB strap and M3 screws (lightly tightened only)*
@@ -407,18 +415,17 @@ The **Matte_White_LED_Lens_V1** (with LED installed from Step 8) snaps into the 
 
 **Procedure:**
 
-1. **Route LED wires:**
-   - Thread the 3 LED wires through the wire channel in the front case
-   - Wires should exit toward the interior
-
-2. **Align lens:**
+1. **Align lens:**
    - The lens has alignment features that match the front case
-   - Position the lens in the circular opening
+   - Position the lens over the light window opening
 
-3. **Press to snap:**
+2. **Press to snap:**
    - Apply firm, even pressure
    - You should hear/feel a click when fully seated
    - Lens should be flush with front case surface
+
+3. **Secure with glue:**
+   - Apply some CA glue between the seams of the lens and front case to hold it together
 
 4. **Verify installation:**
    - Lens should not wobble or come loose
@@ -434,31 +441,39 @@ The **Matte_White_LED_Lens_V1** (with LED installed from Step 8) snaps into the 
 
 **Components:**
 - WaveShare 2.9" B&W V2 e-ink display
-- 4x M2 x 5mm flat head screws
 
 **Procedure:**
 
-1. **Position display in front case:**
-   - The display has 4 mounting holes that align with the M2 inserts (from Step 9)
+1. **Remove screws from display:**
+   - Remove the 4 small screws from the display PCB
+   - **Keep these screws** - you will use them to mount the display
+   - Remove the small standoffs (copper pillars)
+   - **Discard the standoffs** - they are not needed
+
+2. **Remove protective film:**
+   - Peel off the protective film from the display
+
+3. **Position display in front case:**
+   - Place display into the **Matte_Black_Front_Case_V1**
+   - **Orientation:** The end WITHOUT the ribbon cable should face toward the LED
    - Ribbon cable should exit toward the bottom
 
-2. **Route ribbon cable:**
-   - Thread the display ribbon cable through the opening
-   - Ensure cable is not twisted or kinked
-
-3. **Screw down display:**
+4. **Screw down display:**
+   - Use the 4 small screws you removed in step 1
+   - **⚠️ CRITICAL:** You are screwing directly into the 3D printed plastic (NOT into heat set inserts)
    - Start all 4 screws by hand first (do not tighten)
-   - Once all 4 are started, tighten in a cross pattern:
+   - Once all 4 are started, tighten VERY GENTLY in a cross pattern:
      - Top-left → Bottom-right → Top-right → Bottom-left
-   - **⚠️ Do not over-tighten** - screws should be snug but not crushing the display
+   - **⚠️ Do not over-tighten** - just slightly snug is enough
+   - Over-tightening will strip the plastic threads
 
-4. **Verify display:**
+5. **Verify display:**
    - Display should sit flat against the front case
    - No gaps or warping
    - Ribbon cable should have enough slack to reach the ESP32
 
 ![E-ink display installed](../images/assembly/step14_display_installed.jpg)
-*WaveShare 2.9" e-ink display mounted in the front case with M2 screws*
+*WaveShare 2.9" e-ink display mounted in the front case with its original screws screwed directly into plastic*
 
 ---
 

@@ -285,8 +285,8 @@ The **Matte_Black_Front_Case_V1** requires 4x M2 heat set inserts for mounting t
 **Procedure:**
 
 1. **Identify insert locations:**
-   - There are 4 holes on the inner face of the front case
-   - Located at corners where the display will mount
+   - There are 4 holes around the opening of the front case
+   - Located at the corners where the back cover will mount
 
 2. **Heat the insert:**
    - Hold M2 heat set insert with needle-nose pliers or tweezers
@@ -346,31 +346,26 @@ The **Matte_Black_Back_Cover_V1** requires 2x M3 heat set inserts for the final 
 - 4x small magnets (4mm x 6mm)
 
 **Magnet locations:**
-- Front case: 2 magnet cavities
-- Back cover: 2 magnet cavities
+- Front case top (inside): 2 magnet cavities
+- Front case bottom (inside): 2 magnet cavities
 
 **Procedure:**
 
 1. **Test polarity first:**
-   - Take 2 magnets and let them snap together
-   - Mark the poles with permanent marker (N on one side, S on other)
-   - **Critical:** Ensure opposite poles face outward on front/back
+   - Take 4 magnets and let them snap together
+   - Pick one magnet on the end and mark the face with permanent marker
+   - **Critical:** Make sure that the marked side is always facing up when insert
 
 2. **Install in front case:**
-   - Apply small drop of super glue in magnet cavity
-   - Insert magnet with correct pole facing outward
-   - Repeat for second front magnet
+   - Apply small drop of super glue in magnet cavity if the fit is loose
+   - Insert magnet with correct pole facing up
+   - Repeat for all 4 magnets (2 on top, 2 on bottom)
 
-3. **Install in back cover:**
-   - **Check polarity** with front case magnets
-   - Front and back should **attract**, not repel
-   - Apply glue and insert magnets
-
-4. **Allow to cure:**
+3. **Allow to cure:**
    - Wait 5 minutes before handling
 
 **Polarity check:**
-- Hold front case near back cover
+- Hold front case near another front case
 - They should snap together with magnetic attraction
 - If they repel, you installed magnets with wrong polarity (need to re-do)
 
@@ -392,13 +387,11 @@ The **Matte_Black_Back_Cover_V1** requires 2x M3 heat set inserts for the final 
    - Pin headers should point upward (toward the front)
 
 2. **Install PCB strap:**
-   - Place the PCB_Strap over the ESP32-S3 silver shield
-   - The strap has a slot that fits over the USB-C connector
+   - Place the PCB_Strap over the ESP32-S3 pins
    - Strap should press the ESP32-S3 firmly against the back cover
 
 3. **Verify fit:**
    - ESP32-S3 should be held securely
-   - USB-C port should be accessible through the bottom opening
    - Pin headers should be exposed and accessible
 
 **⚠️ Do not force or over-tighten** - the PCB strap uses friction fit. If too tight, it may crack.

@@ -251,8 +251,8 @@ The LED must be secured inside the **Matte_White_LED_Lens_V1** part.
 **Procedure:**
 
 1. **Test fit first:**
-   - Insert LED into the lens cavity (small circular recess)
-   - LED should sit flush with wires exiting through the channel
+   - Insert LED into the lens cavity (square recess)
+   - LED will fit in the square recess, it might not be flush with the surface, that is normal
 
 2. **Apply adhesive:**
    - Use a small drop of super glue (cyanoacrylate) **OR**
@@ -260,8 +260,8 @@ The LED must be secured inside the **Matte_White_LED_Lens_V1** part.
 
 3. **Position LED:**
    - Center the LED in the lens cavity
-   - Ensure the LED faces **forward** (light emits toward the front)
-   - Route wires through the wire channel
+   - Ensure the LED faces **into the lens**
+   - **⚠️ The cable direction is CRITICAL** - please make sure it's the same as shown in the photo
 
 4. **Allow to cure:**
    - Super glue: 30-60 seconds
@@ -270,7 +270,7 @@ The LED must be secured inside the **Matte_White_LED_Lens_V1** part.
 **⚠️ Do not use too much glue** - excess glue can seep into the LED or block light.
 
 ![LED installed in lens](../images/assembly/step8_led_on_lens.jpg)
-*WS2812B LED glued into the white LED lens with wires routed through the channel*
+*WS2812B LED glued into the white LED lens with wires routed the same direction shown here*
 
 ---
 

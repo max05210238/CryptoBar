@@ -69,12 +69,13 @@ Before starting, verify you have all components:
 - [ ] Matte_Black_Knob_V1
 
 **Hardware:**
-- [ ] M2 heat set inserts (4x) - for back cover mounting
-- [ ] M3 heat set inserts (2x) - for final assembly
+- [ ] M2 heat set inserts (4x) - for back cover attachment
+- [ ] M2 x 5mm flat head screws (4x) - for final assembly (attaching back cover to front case)
+- [ ] M3 heat set inserts (2x) - for ESP32 mounting
 - [ ] M3 x 8mm hex screws (2x) - for ESP32 mounting
 - [ ] Small magnets 4mm x 6mm (4x) - **OPTIONAL** if stacking multiple units
 
-**Note:** E-ink display uses its own screws (included with the display). Do NOT purchase separate M2 screws for the display.
+**Note:** E-ink display uses its own screws (included with the display). The M2 x 5mm screws listed above are for attaching the back cover, NOT for the display.
 
 ---
 

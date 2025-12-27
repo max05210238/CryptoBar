@@ -493,12 +493,7 @@ The **Matte_White_LED_Lens_V1** (with LED installed from Step 8) snaps into the 
    - The encoder comes with a metal washer and hex nut
    - Place washer on the shaft (outside the case)
    - Thread the hex nut onto the shaft
-   - Tighten **hand-tight only** (do not use pliers)
-
-3. **Verify alignment:**
-   - Encoder should be perpendicular to the front case
-   - Shaft should protrude enough for knob installation (3-4mm)
-   - Encoder should not spin when shaft is rotated
+   - Can use pliers, but please be gentle
 
 **⚠️ Do not over-tighten the nut** - it can crack the plastic case or damage the encoder threads.
 
@@ -510,11 +505,6 @@ The **Matte_White_LED_Lens_V1** (with LED installed from Step 8) snaps into the 
 ### Step 16: Complete All Wiring
 
 **⚠️ CRITICAL STEP:** Incorrect wiring can damage components. Double-check all connections before powering on.
-
-**Tools needed:**
-- Soldering iron
-- Wire strippers
-- Multimeter (for continuity check)
 
 **Complete Pin Assignment Table:**
 
@@ -539,35 +529,33 @@ The **Matte_White_LED_Lens_V1** (with LED installed from Step 8) snaps into the 
 
 **Wiring Procedure:**
 
-1. **Prepare all wires:**
-   - Cut wires to appropriate lengths (10-15cm)
-   - Strip 2-3mm from each end
-   - Use different colors for easy identification
+All wires have Dupont connectors and can be plugged directly into ESP32-S3 pin headers.
 
-2. **Solder encoder wires:**
-   - Solder 5 wires to the encoder pads (where pin headers were removed in Step 5)
-   - Label wires or keep track of which wire goes to which pad
+1. **Connect encoder wires to ESP32-S3:**
+   - Plug encoder wires into the correct ESP32-S3 pins according to the table above
+   - **Double-check the pin assignment before connecting**
+   - Encoder + → ESP32 3V3
+   - Encoder GND → ESP32 GND
+   - Encoder SW → ESP32 GPIO 21
+   - Encoder DT → ESP32 GPIO 1
+   - Encoder CLK → ESP32 GPIO 2
 
-3. **Connect to ESP32-S3:**
-   - Route all wires neatly through the enclosure
-   - Solder each wire to the correct ESP32-S3 pin header
-   - **Double-check the table before soldering**
-
-4. **Plug in display ribbon cable:**
+2. **Plug in display ribbon cable:**
    - The display ribbon cable plugs into the display's PCB connector
    - Lift the black retaining clip
    - Insert ribbon cable (contacts facing down)
    - Press retaining clip down to lock
 
-5. **Connect LED wires:**
+3. **Connect LED wires to ESP32-S3:**
+   - Plug LED wires into the correct ESP32-S3 pins
    - LED VCC → ESP32 5V pin
    - LED DIN → ESP32 GPIO 15
    - LED GND → ESP32 GND
 
-6. **Verify all connections:**
-   - Use multimeter continuity mode
-   - Check each connection from component to ESP32 pin
-   - Verify no shorts between adjacent pins
+4. **Verify all connections:**
+   - Double-check each connection against the pin assignment table
+   - Ensure all Dupont connectors are firmly seated on the pins
+   - Verify no adjacent pins are accidentally bridged
 
 **⚠️ Common wiring mistakes:**
 - Swapping CLK and DT on encoder (encoder will count backward)
@@ -584,9 +572,9 @@ The **Matte_White_LED_Lens_V1** (with LED installed from Step 8) snaps into the 
 **Procedure:**
 
 1. **Visual inspection:**
-   - Check all solder joints are solid
-   - Verify no loose wires
-   - Ensure no shorts between pins
+   - Check all Dupont connectors are firmly seated
+   - Verify no loose connections
+   - Ensure no adjacent pins are accidentally bridged
 
 2. **Power on test:**
    - Connect USB-C cable to ESP32-S3

@@ -228,9 +228,9 @@ If using a WS2812B LED strip, you need to cut a single LED.
    - Strip 2-3mm from each end
 
 2. **Solder to LED:**
-   - **Red wire** → 5V/VCC pad
-   - **White/Yellow wire** → DIN/DATA pad (input side, where arrow points FROM)
-   - **Black wire** → GND pad
+   - **Power wire** → 5V/VCC pad
+   - **Data wire** → DIN/DATA pad (input side, where arrow points FROM)
+   - **Ground wire** → GND pad
 
 3. **Heat shrink or insulate:**
    - Use small heat shrink tubing on each wire
@@ -238,11 +238,6 @@ If using a WS2812B LED strip, you need to cut a single LED.
 
 4. **Test with multimeter:**
    - Verify no shorts between adjacent pads
-
-**Wire color recommendations:**
-- Red = 5V
-- White/Yellow/Green = Data
-- Black = GND
 
 ![LED arrow direction](../images/assembly/step7_led_arrow.jpg)
 *Pay attention to the arrow marking (circled in red) - solder wires to the INPUT side where the arrow points FROM*
@@ -514,24 +509,24 @@ The **Matte_White_LED_Lens_V1** (with LED installed from Step 8) snaps into the 
 
 **Complete Pin Assignment Table:**
 
-| Component | Component Pin | ESP32-S3 Pin | Wire Color (Suggested) | Notes |
-|-----------|---------------|--------------|------------------------|-------|
-| **E-ink Display** | VCC | 3V3 | Red | 3.3V power |
-| | GND | GND | Black | Ground |
-| | DIN (MOSI) | GPIO 11 | Blue | SPI data |
-| | CLK (SCK) | GPIO 12 | Yellow | SPI clock |
-| | CS | GPIO 10 | Orange | Chip select |
-| | DC | GPIO 17 | Green | Data/Command |
-| | RST | GPIO 16 | White | Reset |
-| | BUSY | GPIO 4 | Purple | Busy signal |
-| **WS2812B LED** | VCC | 5V | Red | 5V power (from 5V-OUT pad) |
-| | DIN | GPIO 15 | White/Yellow | Data input |
-| | GND | GND | Black | Ground |
-| **Rotary Encoder (KY-040)** | + | 3V3 | Red | 3.3V power |
-| | GND | GND | Black | Ground |
-| | SW | GPIO 21 | Green | Push button |
-| | DT | GPIO 1 | Yellow | Encoder B (PCNT) |
-| | CLK | GPIO 2 | Blue | Encoder A (PCNT) |
+| Component | Component Pin | ESP32-S3 Pin | Notes |
+|-----------|---------------|--------------|-------|
+| **E-ink Display** | VCC | 3V3 | 3.3V power |
+| | GND | GND | Ground |
+| | DIN (MOSI) | GPIO 11 | SPI data |
+| | CLK (SCK) | GPIO 12 | SPI clock |
+| | CS | GPIO 10 | Chip select |
+| | DC | GPIO 17 | Data/Command |
+| | RST | GPIO 16 | Reset |
+| | BUSY | GPIO 4 | Busy signal |
+| **WS2812B LED** | VCC | 5V | 5V power (from 5V-OUT pad) |
+| | DIN | GPIO 15 | Data input |
+| | GND | GND | Ground |
+| **Rotary Encoder (KY-040)** | + | 3V3 | 3.3V power |
+| | GND | GND | Ground |
+| | SW | GPIO 21 | Push button |
+| | DT | GPIO 1 | Encoder B (PCNT) |
+| | CLK | GPIO 2 | Encoder A (PCNT) |
 
 **Wiring Procedure:**
 
@@ -542,7 +537,7 @@ The **Matte_White_LED_Lens_V1** (with LED installed from Step 8) snaps into the 
 
 2. **Solder encoder wires:**
    - Solder 5 wires to the encoder pads (where pin headers were removed in Step 5)
-   - Use the color code from the table above
+   - Label wires or keep track of which wire goes to which pad
 
 3. **Connect to ESP32-S3:**
    - Route all wires neatly through the enclosure
@@ -556,9 +551,9 @@ The **Matte_White_LED_Lens_V1** (with LED installed from Step 8) snaps into the 
    - Press retaining clip down to lock
 
 5. **Connect LED wires:**
-   - LED VCC (Red) → ESP32 5V pin
-   - LED DIN (White/Yellow) → ESP32 GPIO 15
-   - LED GND (Black) → ESP32 GND
+   - LED VCC → ESP32 5V pin
+   - LED DIN → ESP32 GPIO 15
+   - LED GND → ESP32 GND
 
 6. **Verify all connections:**
    - Use multimeter continuity mode

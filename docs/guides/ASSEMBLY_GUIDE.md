@@ -93,6 +93,9 @@ Before starting, verify you have all components:
 3. Solder all pins on both sides (2x19 pins = 38 total)
 4. Ensure good solder joints with smooth, shiny finish
 
+![ESP32-S3 with soldered pin headers](../images/assembly/step1_esp32_soldered.jpg)
+*ESP32-S3-DevKitC-1 N16R8 with pin headers soldered*
+
 ---
 
 ### Step 2: Solder 5V-OUT PAD for LED Power
@@ -109,6 +112,9 @@ Before starting, verify you have all components:
 5. Verify continuity between the 5V pin and USB 5V with multimeter
 
 **Why this is needed:** By default, the 5V pin is not connected to USB power. Bridging this pad enables 5V output on the pin header.
+
+![5V-OUT PAD location on ESP32-S3](../images/assembly/step2_5v_out_pad.jpg)
+*5V-OUT PAD location (circled in red) near the USB-C connector on the back of the ESP32-S3 board*
 
 ---
 
@@ -181,6 +187,12 @@ The KY-040 rotary encoder module needs modification to fit inside the enclosure.
 
 **⚠️ Be careful not to damage the encoder mechanism while modifying.**
 
+![Modified rotary encoder](../images/assembly/step5_encoder_modified.jpg)
+*KY-040 rotary encoder with 90° pin headers removed and ribbon cable soldered*
+
+![Encoder mounting pin removal](../images/assembly/step5_encoder_mounting_pin.jpg)
+*Center mounting pin (circled in red) should be removed for flush installation*
+
 ---
 
 ### Step 6: Cut WS2812B LED from Strip
@@ -194,6 +206,9 @@ If using a WS2812B LED strip, you need to cut a single LED.
 
 **If using individual WS2812B LED:**
 - Skip this step
+
+![Cutting LED from strip](../images/assembly/step6_led_cut.jpg)
+*Cut WS2812B LED at the marked cut line (scissors symbol)*
 
 ---
 
@@ -229,6 +244,9 @@ If using a WS2812B LED strip, you need to cut a single LED.
 - White/Yellow/Green = Data
 - Black = GND
 
+![LED arrow direction](../images/assembly/step7_led_arrow.jpg)
+*Pay attention to the arrow marking (circled in red) - solder wires to the INPUT side where the arrow points FROM*
+
 ---
 
 ### Step 8: Install LED into Lens
@@ -255,6 +273,9 @@ The LED must be secured inside the **Matte_White_LED_Lens_V1** part.
    - Hot glue: 2-3 minutes
 
 **⚠️ Do not use too much glue** - excess glue can seep into the LED or block light.
+
+![LED installed in lens](../images/assembly/step8_led_on_lens.jpg)
+*WS2812B LED glued into the white LED lens with wires routed through the channel*
 
 ---
 
@@ -293,6 +314,9 @@ The **Matte_Black_Front_Case_V1** requires 4x M2 heat set inserts for mounting t
 - Inserting too fast (melts too much plastic)
 - Temperature too high (warps the part)
 
+![M2 heat set insert installation](../images/assembly/step9_m2_insert.jpg)
+*M2 heat set insert installed flush in the front case - insert must be below the surface*
+
 ---
 
 ### Step 10: Install M3 Heat Set Inserts (Back Cover)
@@ -313,6 +337,9 @@ The **Matte_Black_Back_Cover_V1** requires 2x M3 heat set inserts for the final 
 3. **Verify alignment:**
    - Look from the side to ensure insert is perpendicular
    - If crooked, reheat and adjust before it cools
+
+![M3 heat set insert installation](../images/assembly/step10_m3_insert.jpg)
+*M3 heat set insert installed in the back cover for final assembly screws*
 
 ---
 
@@ -352,6 +379,9 @@ The **Matte_Black_Back_Cover_V1** requires 2x M3 heat set inserts for the final 
 - They should snap together with magnetic attraction
 - If they repel, you installed magnets with wrong polarity (need to re-do)
 
+![Magnet installation](../images/assembly/step11_magnet.jpg)
+*Small 4mm x 6mm magnet installed in the front case cavity (tight friction fit or with glue)*
+
 ---
 
 ### Step 12: Mount ESP32-S3 to Back Cover
@@ -378,6 +408,9 @@ The **Matte_Black_Back_Cover_V1** requires 2x M3 heat set inserts for the final 
 
 **⚠️ Do not force or over-tighten** - the PCB strap uses friction fit. If too tight, it may crack.
 
+![ESP32-S3 mounted to back cover](../images/assembly/step12_esp32_mounted.jpg)
+*ESP32-S3 secured to back cover with PCB strap and M3 screws (lightly tightened only)*
+
 ---
 
 ### Step 13: Install LED Lens to Front Case
@@ -403,6 +436,9 @@ The **Matte_White_LED_Lens_V1** (with LED installed from Step 8) snaps into the 
    - Lens should not wobble or come loose
    - LED should be visible through the lens
    - Wires should have enough slack (8-10cm)
+
+![LED lens installed in front case](../images/assembly/step13_led_lens_installed.jpg)
+*White LED lens with WS2812B LED snapped into the front case*
 
 ---
 
@@ -433,6 +469,9 @@ The **Matte_White_LED_Lens_V1** (with LED installed from Step 8) snaps into the 
    - No gaps or warping
    - Ribbon cable should have enough slack to reach the ESP32
 
+![E-ink display installed](../images/assembly/step14_display_installed.jpg)
+*WaveShare 2.9" e-ink display mounted in the front case with M2 screws*
+
 ---
 
 ### Step 15: Install Rotary Encoder
@@ -459,6 +498,9 @@ The **Matte_White_LED_Lens_V1** (with LED installed from Step 8) snaps into the 
 
 **⚠️ Do not over-tighten the nut** - it can crack the plastic case or damage the encoder threads.
 
+![Rotary encoder installed](../images/assembly/step15_encoder_installed.jpg)
+*KY-040 rotary encoder mounted through the front case with washer and nut*
+
 ---
 
 ### Step 16: Complete All Wiring
@@ -479,17 +521,17 @@ The **Matte_White_LED_Lens_V1** (with LED installed from Step 8) snaps into the 
 | | DIN (MOSI) | GPIO 11 | Blue | SPI data |
 | | CLK (SCK) | GPIO 12 | Yellow | SPI clock |
 | | CS | GPIO 10 | Orange | Chip select |
-| | DC | GPIO 13 | Green | Data/Command |
-| | RST | GPIO 14 | White | Reset |
-| | BUSY | GPIO 15 | Purple | Busy signal |
+| | DC | GPIO 17 | Green | Data/Command |
+| | RST | GPIO 16 | White | Reset |
+| | BUSY | GPIO 4 | Purple | Busy signal |
 | **WS2812B LED** | VCC | 5V | Red | 5V power (from 5V-OUT pad) |
-| | DIN | GPIO 48 | White/Yellow | Data input |
+| | DIN | GPIO 15 | White/Yellow | Data input |
 | | GND | GND | Black | Ground |
 | **Rotary Encoder (KY-040)** | + | 3V3 | Red | 3.3V power |
 | | GND | GND | Black | Ground |
-| | SW | GPIO 42 | Green | Push button |
-| | DT | GPIO 2 | Yellow | Encoder B (PCNT) |
-| | CLK | GPIO 1 | Blue | Encoder A (PCNT) |
+| | SW | GPIO 21 | Green | Push button |
+| | DT | GPIO 1 | Yellow | Encoder B (PCNT) |
+| | CLK | GPIO 2 | Blue | Encoder A (PCNT) |
 
 **Wiring Procedure:**
 
@@ -515,7 +557,7 @@ The **Matte_White_LED_Lens_V1** (with LED installed from Step 8) snaps into the 
 
 5. **Connect LED wires:**
    - LED VCC (Red) → ESP32 5V pin
-   - LED DIN (White/Yellow) → ESP32 GPIO 48
+   - LED DIN (White/Yellow) → ESP32 GPIO 15
    - LED GND (Black) → ESP32 GND
 
 6. **Verify all connections:**
@@ -556,7 +598,7 @@ The **Matte_White_LED_Lens_V1** (with LED installed from Step 8) snaps into the 
    - LED should light up during boot (rainbow animation or solid color)
    - If LED doesn't light:
      - Check 5V-OUT pad is bridged
-     - Check GPIO 48 connection
+     - Check GPIO 15 connection
      - Verify LED polarity (arrow direction)
 
 5. **Encoder test:**
@@ -572,6 +614,9 @@ The **Matte_White_LED_Lens_V1** (with LED installed from Step 8) snaps into the 
    - Test all display modes
 
 **If any test fails, DO NOT proceed to final assembly.** Refer to [Troubleshooting](#troubleshooting) section.
+
+![Wiring complete before closure](../images/assembly/step17_wiring_complete.jpg)
+*All components wired and tested before final enclosure assembly - verify LED lights up, display works, and encoder responds*
 
 ---
 
@@ -626,6 +671,9 @@ The **Matte_White_LED_Lens_V1** (with LED installed from Step 8) snaps into the 
    - Knob rotates smoothly
 
 **Your CryptoBar is now complete!**
+
+![Finished CryptoBar](../images/assembly/step19_finished.jpg)
+*Completed CryptoBar showing splash screen - ready to configure and use!*
 
 Next steps:
 - [Configure WiFi and API keys](../README.md#initial-setup)

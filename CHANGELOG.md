@@ -7,6 +7,40 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [V0.99r] - 2025-12-28
+
+### 🔴 CRITICAL BUG FIX
+- **Fixed array bounds bug causing system restart on 10-minute update interval**:
+  - `UPDATE_PRESETS_COUNT` was 5 but array only had 4 elements
+  - Accessing non-existent 5th element caused ESP32 watchdog restart
+  - Fixed by correcting count to 4 (matching actual presets: 1m, 3m, 5m, 10m)
+  - **Impact**: Device was unusable when 10-minute interval selected
+  - **Severity**: CRITICAL - affects device stability
+  - **Upgrade Priority**: HIGH - Update immediately
+
+### ✨ UX Improvements
+- **Update interval now uses submenu pattern** (like coin/currency selection):
+  - Changed from direct toggle to submenu navigation
+  - Users can browse options without triggering immediate data fetching
+  - Reduces accidental API requests when exploring settings
+  - Consistent UX across all multi-option settings
+  - Settings only applied on confirmation (short press)
+  - Long press to cancel and return without saving
+
+### Added
+- New `UI_MODE_UPDATE_SUB` for update interval submenu
+- New file: `src/ui_update.cpp` for submenu rendering
+- Submenu state tracking: `g_updateMenuIndex`, `g_updateMenuTopIndex`, `g_updateDirty`
+- Documentation: `V0.99r_SETTINGS_FIX.md` with detailed bug analysis
+
+### Changed
+- Modified encoder handling in `main.cpp` for submenu navigation
+- Updated input handling in `app_input.cpp` for submenu selection
+- Updated menu handling in `app_menu.cpp` to use submenu pattern
+- All version strings updated to V0.99r
+
+---
+
 ## [V0.99q] - 2025-12-25
 
 ### Fixed - UI/UX Improvements: Time Refresh & Settings

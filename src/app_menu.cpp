@@ -212,6 +212,29 @@ void handleCurrencySelect() {
   drawMenuScreen(false);
 }
 
+void handleUpdateIntervalSelect() {
+  // V0.99r: Apply selected update interval (only when user confirms selection)
+  g_updatePresetIndex = g_updateMenuIndex;
+
+  // Validate range
+  if (g_updatePresetIndex < 0 || g_updatePresetIndex >= UPDATE_PRESETS_COUNT) {
+    g_updatePresetIndex = 0;
+  }
+
+  g_updateIntervalMs = UPDATE_PRESETS_MS[g_updatePresetIndex];
+
+  Serial.printf("[Menu] Update interval -> %s\n",
+                UPDATE_PRESET_LABELS[g_updatePresetIndex]);
+
+  saveSettings();
+  tickSchedulerReset("MENU_UPD");
+  lastUpdate = millis();
+
+  // Return to main menu
+  g_uiMode = UI_MODE_MENU;
+  drawMenuScreen(false);
+}
+
 void handleMenuSelect() {
   switch (g_menuIndex) {
     case MENU_COIN: {
@@ -226,15 +249,13 @@ void handleMenuSelect() {
     }
 
     case MENU_UPDATE_INTERVAL: {
-      int presetCount = UPDATE_PRESETS_COUNT;
-      g_updatePresetIndex = (g_updatePresetIndex + 1) % presetCount;
-      g_updateIntervalMs  = UPDATE_PRESETS_MS[g_updatePresetIndex];
-      Serial.printf("[Menu] Update interval -> %s\n",
-                    UPDATE_PRESET_LABELS[g_updatePresetIndex]);
-      saveSettings();
-      tickSchedulerReset("MENU_UPD");
-      lastUpdate = millis();
-      drawMenuScreen(false);
+      // V0.99r: Enter update interval submenu (prevents accidental data fetching)
+      g_uiMode = UI_MODE_UPDATE_SUB;
+      g_updateMenuIndex = g_updatePresetIndex;  // Start at current setting
+      g_updateMenuTopIndex = 0;
+      g_updateDirty = true;
+      Serial.println("[Menu] Enter UPDATE submenu");
+      drawUpdateMenu(false);  // Partial refresh
       break;
     }
 

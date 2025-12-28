@@ -50,8 +50,8 @@ extern const float BRIGHTNESS_PRESETS[BRIGHTNESS_PRESETS_COUNT];
 extern const char* BRIGHTNESS_LABELS[BRIGHTNESS_PRESETS_COUNT];
 
 // Update frequency presets
-// V0.99k: Update interval presets: 30s, 1min, 3min, 5min, 10min
-#define UPDATE_PRESETS_COUNT 5
+// V0.99r: Update interval presets: 1min, 3min, 5min, 10min (fixed array bounds bug)
+#define UPDATE_PRESETS_COUNT 4
 extern const uint32_t UPDATE_PRESETS_MS[UPDATE_PRESETS_COUNT];
 extern const char* UPDATE_PRESET_LABELS[UPDATE_PRESETS_COUNT];
 
@@ -112,7 +112,8 @@ enum UiMode {
   UI_MODE_COIN_SUB    = 4,
   UI_MODE_FW_CONFIRM  = 5,
   UI_MODE_MAINT       = 6,
-  UI_MODE_CURRENCY_SUB = 7  // V0.99f: Currency submenu
+  UI_MODE_CURRENCY_SUB = 7,  // V0.99f: Currency submenu
+  UI_MODE_UPDATE_SUB   = 8   // V0.99r: Update interval submenu
 };
 extern UiMode g_uiMode;
 
@@ -130,6 +131,10 @@ extern int g_coinMenuTopIndex;
 extern int g_currencyMenuIndex;
 extern int g_currencyMenuTopIndex;
 
+// Update interval submenu state (V0.99r)
+extern int g_updateMenuIndex;
+extern int g_updateMenuTopIndex;
+
 // Encoder button state
 extern bool          g_lastEncSw;
 extern unsigned long g_encPressStart;
@@ -143,6 +148,7 @@ extern bool g_menuDirty;
 extern bool g_tzDirty;
 extern bool g_coinDirty;
 extern bool g_currencyDirty;  // V0.99f
+extern bool g_updateDirty;    // V0.99r
 extern uint32_t g_lastUiDrawMs;
 extern const uint32_t UI_DRAW_MIN_MS;
 

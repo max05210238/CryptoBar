@@ -1,4 +1,4 @@
-// CryptoBar V0.99q (UI/UX Improvements: Time Refresh & Settings Fix)
+// CryptoBar V0.99r (Settings Bug Fix & UX Improvements)
 #include <Arduino.h>
 #include <WiFi.h>
 #include <HTTPClient.h>
@@ -706,6 +706,13 @@ String apIp = WiFi.softAPIP().toString();
       while (g_currencyMenuIndex >= (int)CURR_COUNT) g_currencyMenuIndex -= (int)CURR_COUNT;
       ensureCurrencyMenuVisible();
       g_currencyDirty = true;
+    } else if (g_uiMode == UI_MODE_UPDATE_SUB) {
+      // V0.99r: Handle update interval submenu navigation
+      g_updateMenuIndex += steps;
+      while (g_updateMenuIndex < 0) g_updateMenuIndex += UPDATE_PRESETS_COUNT;
+      while (g_updateMenuIndex >= UPDATE_PRESETS_COUNT) g_updateMenuIndex -= UPDATE_PRESETS_COUNT;
+      ensureUpdateMenuVisible();
+      g_updateDirty = true;
     }
   }
 
@@ -727,6 +734,11 @@ String apIp = WiFi.softAPIP().toString();
     } else if (g_uiMode == UI_MODE_CURRENCY_SUB && g_currencyDirty) {
       drawCurrencyMenu(false);
       g_currencyDirty = false;
+      g_lastUiDrawMs = ms;
+    } else if (g_uiMode == UI_MODE_UPDATE_SUB && g_updateDirty) {
+      // V0.99r: Handle update interval submenu redraw
+      drawUpdateMenu(false);
+      g_updateDirty = false;
       g_lastUiDrawMs = ms;
     }
   }

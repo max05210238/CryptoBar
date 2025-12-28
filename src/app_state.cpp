@@ -4,7 +4,7 @@
 #include "day_avg.h"  // for DAYAVG_ROLLING constant
 
 // ==================== Version =====================
-const char* CRYPTOBAR_VERSION = "V0.99q";
+const char* CRYPTOBAR_VERSION = "V0.99r";
 
 // ==================== Constants =====================
 
@@ -20,7 +20,7 @@ const float BRIGHTNESS_PRESETS[] = { 0.2f, 0.5f, 1.0f };
 const char* BRIGHTNESS_LABELS[]  = { "Low", "Med", "High" };
 
 // Update frequency presets
-// V0.99n: 1min, 3min, 5min, 10min (removed 30s to reduce API pressure)
+// V0.99r: 1min, 3min, 5min, 10min (4 presets, fixed array bounds bug)
 // Recommended: 3min for 1-3 devices, 5min for 4+ devices on same network
 const uint32_t UPDATE_PRESETS_MS[] = {
   60UL * 1000UL,   // 1min
@@ -113,6 +113,10 @@ int g_coinMenuTopIndex = 0;
 int g_currencyMenuIndex    = 0;
 int g_currencyMenuTopIndex = 0;
 
+// Update interval submenu state (V0.99r)
+int g_updateMenuIndex    = 0;
+int g_updateMenuTopIndex = 0;
+
 // Encoder button state
 bool          g_lastEncSw       = HIGH;
 unsigned long g_encPressStart   = 0;
@@ -126,6 +130,7 @@ bool g_menuDirty = false;
 bool g_tzDirty   = false;
 bool g_coinDirty = false;
 bool g_currencyDirty = false;  // V0.99f
+bool g_updateDirty   = false;  // V0.99r
 uint32_t g_lastUiDrawMs = 0;
 const uint32_t UI_DRAW_MIN_MS = 120;
 

@@ -74,3 +74,7 @@ void ensureCoinMenuVisible();
 // Currency selection submenu (V0.99f)
 void drawCurrencyMenu(bool fullRefresh);
 void ensureCurrencyMenuVisible();
+
+// Update interval selection submenu (V0.99r)
+void drawUpdateMenu(bool fullRefresh);
+void ensureUpdateMenuVisible();

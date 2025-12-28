@@ -498,23 +498,37 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Documentation Index
 
+### Project Documentation
+- **[README.md](README.md)** - Project overview, features, quick start guide
+- **[HARDWARE_GUIDE.md](docs/guides/HARDWARE_GUIDE.md)** - BOM, GPIO pins, assembly instructions
+- **[DISPLAY_GUIDE.md](docs/guides/DISPLAY_GUIDE.md)** - UI layout, navigation, screen elements explained
+- **[PRE_LAUNCH_AUDIT.md](PRE_LAUNCH_AUDIT.md)** - Documentation review and improvement roadmap
+
 ### Version-Specific Release Notes
-- **ENCODER_V099a_RELEASE_NOTES.md** - Encoder optimization (V0.99a)
-- **V0.99f_CURRENCY_SUPPORT.md** - Multi-currency support (V0.99f)
-- **V0.99g_API_OPTIMIZATION.md** - Binance API integration (V0.99g)
-- **V0.99h_LED_OPTIMIZATION.md** - LED party mode and improvements (V0.99h)
-- **V0.99i_PRICE_UPDATE.md** - Price update optimization (V0.99i)
-- **V0.99j_PRECISION_FIX.md** - Price precision fix (V0.99j)
-- **V0.99k_AGGREGATED_DATA.md** - Aggregated market data priority (V0.99k)
-- **V0.99l_DISPLAY_REFRESH.md** - Display refresh optimization (V0.99l)
-- **V0.99p_High-PRECISION_PRICE_DISPLAY.md** - High-precision price display (V0.99p)
-- **V0.99q_UI_UX_IMPROVEMENTS.md** - UI/UX improvements: time refresh & settings fix (V0.99q)
+All release notes moved to [`docs/release-notes/`](docs/release-notes/):
+- **[V0.99a_ENCODER_OPTIMIZATION.md](docs/release-notes/V0.99a_ENCODER_OPTIMIZATION.md)** - Encoder optimization (V0.99a)
+- **[V0.99f_CURRENCY_SUPPORT.md](docs/release-notes/V0.99f_CURRENCY_SUPPORT.md)** - Multi-currency support (V0.99f)
+- **[V0.99g_API_OPTIMIZATION.md](docs/release-notes/V0.99g_API_OPTIMIZATION.md)** - Binance API integration (V0.99g)
+- **[V0.99h_LED_OPTIMIZATION.md](docs/release-notes/V0.99h_LED_OPTIMIZATION.md)** - LED party mode and improvements (V0.99h)
+- **[V0.99i_PRICE_UPDATE.md](docs/release-notes/V0.99i_PRICE_UPDATE.md)** - Price update optimization (V0.99i)
+- **[V0.99j_PRECISION_FIX.md](docs/release-notes/V0.99j_PRECISION_FIX.md)** - Price precision fix (V0.99j)
+- **[V0.99k_AGGREGATED_DATA.md](docs/release-notes/V0.99k_AGGREGATED_DATA.md)** - Aggregated market data priority (V0.99k)
+- **[V0.99l_DISPLAY_REFRESH.md](docs/release-notes/V0.99l_DISPLAY_REFRESH.md)** - Display refresh optimization (V0.99l)
+- **[V0.99m_API_SOURCE_DISPLAY.md](docs/release-notes/V0.99m_API_SOURCE_DISPLAY.md)** - API source display (V0.99m)
+- **[V0.99n_API_PRIORITY.md](docs/release-notes/V0.99n_API_PRIORITY.md)** - API priority reordering (V0.99n)
+- **[V0.99o_MAC_JITTER.md](docs/release-notes/V0.99o_MAC_JITTER.md)** - MAC-based jitter and price display (V0.99o)
+- **[V0.99p_High-PRECISION_PRICE_DISPLAY.md](docs/release-notes/V0.99p_High-PRECISION_PRICE_DISPLAY.md)** - High-precision price display (V0.99p)
+- **[V0.99q_UI_UX_IMPROVEMENTS.md](docs/release-notes/V0.99q_UI_UX_IMPROVEMENTS.md)** - UI/UX improvements: time refresh & settings fix (V0.99q)
 
 ### User Guides
-- **LED_DISPLAY_GUIDE.md** - Complete LED color and animation reference
+All user guides moved to [`docs/guides/`](docs/guides/):
+- **[HARDWARE_GUIDE.md](docs/guides/HARDWARE_GUIDE.md)** - Hardware assembly and GPIO wiring
+- **[DISPLAY_GUIDE.md](docs/guides/DISPLAY_GUIDE.md)** - UI layout, navigation, screen elements explained
+- **[LED_DISPLAY_GUIDE.md](docs/guides/LED_DISPLAY_GUIDE.md)** - Complete LED color and animation reference
+- **[OTA_UPDATE_GUIDE.md](docs/guides/OTA_UPDATE_GUIDE.md)** - Firmware update process and security considerations
 
 ### Technical Documentation
-- **V0.98_STATUS.md** - Code refactoring details
+- **[V0.98_STATUS.md](docs/release-notes/V0.98_STATUS.md)** - Code refactoring details
 
 ---
 

@@ -3,8 +3,14 @@
 > Open-source ESP32-S3 cryptocurrency price display with e-ink screen and encoder control—an affordable, customizable alternative to overpriced commercial tickers.
 
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
-![Version](https://img.shields.io/badge/version-V0.99q-green.svg)
+![Version](https://img.shields.io/badge/version-V0.99r-green.svg)
 ![Platform](https://img.shields.io/badge/platform-ESP32--S3-orange.svg)
+![GitHub Stars](https://img.shields.io/github/stars/max05210238/CryptoBar?style=social)
+![GitHub Forks](https://img.shields.io/github/forks/max05210238/CryptoBar?style=social)
+![GitHub Issues](https://img.shields.io/github/issues/max05210238/CryptoBar)
+![GitHub Last Commit](https://img.shields.io/github/last-commit/max05210238/CryptoBar)
+![Code Size](https://img.shields.io/github/languages/code-size/max05210238/CryptoBar)
+![Contributors](https://img.shields.io/github/contributors/max05210238/CryptoBar)
 
 ![CryptoBar displaying BTC, ETH, and XRP prices](docs/images/product/hero_three_units_stacked.jpeg)
 *Three CryptoBar units stacked using magnets, displaying real-time cryptocurrency prices with LED status indicators*

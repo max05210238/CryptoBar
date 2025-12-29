@@ -3,7 +3,7 @@
 > Open-source ESP32-S3 cryptocurrency price display with e-ink screen and encoder control—an affordable, customizable alternative to overpriced commercial tickers.
 
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
-![GitHub Release](https://img.shields.io/github/v/release/max05210238/CryptoBar?label=version)
+![GitHub Tag](https://img.shields.io/github/v/tag/max05210238/CryptoBar?label=version)
 ![Platform](https://img.shields.io/badge/platform-ESP32--S3-orange.svg)
 ![GitHub Stars](https://img.shields.io/github/stars/max05210238/CryptoBar?style=social)
 ![GitHub Forks](https://img.shields.io/github/forks/max05210238/CryptoBar?style=social)

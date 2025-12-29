@@ -331,11 +331,11 @@ appendOption(page, "", "Keep current", s_defUpd < 0);
 for (int i = 0; i < kUpdPresetCount; ++i) {
   String label = String(i) + " = " + kUpdPresetLabels[i] + " (" + String(kUpdPresetSecs[i]) + "s)";
   // Mark 3m (index 1) as recommended
-  if (i == 1) label += " ⭐ Recommended";
+  if (i == 1) label += " (recommended)";
   appendOption(page, String(i), label, s_defUpd == i);
 }
 page += "</select>";
-page += "<small style='color:#888'>💡 Tip: For multiple devices on same network, use 3m or longer to avoid API rate limits.</small>";
+page += "<small style='color:#888'>Tip: For multiple devices on same network, use 3m or longer to avoid API rate limits.</small>";
 
 // Brightness preset
 page += "<label>Brightness Preset (bri)</label><select name='bri'>";

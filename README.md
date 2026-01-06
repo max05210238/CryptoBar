@@ -134,7 +134,7 @@ Now open-sourced for the maker community, CryptoBar offers complete hardware and
    ```bash
    pio run -t upload
    ```
-6. **Assemble Hardware** - Follow [Hardware Assembly Guide](docs/guides/HARDWARE_GUIDE.md)
+6. **Assemble Hardware** - Follow [Hardware Assembly Guide](docs/guides/HARDWARE_ASSEMBLY_GUIDE.md)
 7. **Configure WiFi** - Device creates "CryptoBar-XXXXXX" AP on first boot
 
 **Estimated Build Time:** 2-4 hours (including 3D printing)
@@ -145,7 +145,7 @@ Now open-sourced for the maker community, CryptoBar offers complete hardware and
 ## 📚 Documentation
 
 ### User Guides
-- 📘 [**Hardware Assembly Guide**](docs/guides/HARDWARE_GUIDE.md) - Wiring, GPIO pins, assembly steps
+- 📘 [**Hardware Assembly Guide**](docs/guides/HARDWARE_ASSEMBLY_GUIDE.md) - Complete build guide from BOM to final assembly
 - 📺 [**Display Guide**](docs/guides/DISPLAY_GUIDE.md) - UI layout, navigation, screen elements explained
 - 🎨 [**LED Display Guide**](docs/guides/LED_DISPLAY_GUIDE.md) - LED colors, animations, troubleshooting
 - 🔄 [**OTA Update Guide**](docs/guides/OTA_UPDATE_GUIDE.md) - Firmware updates and security considerations

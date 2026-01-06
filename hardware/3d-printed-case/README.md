@@ -95,7 +95,7 @@ This directory contains 3D printable files for the CryptoBar enclosure.
 
 ## 🔧 Assembly Instructions
 
-**See [HARDWARE_GUIDE](../../docs/guides/HARDWARE_GUIDE.md) for complete assembly instructions.**
+**See [HARDWARE_ASSEMBLY_GUIDE](../../docs/guides/HARDWARE_ASSEMBLY_GUIDE.md) for complete assembly instructions.**
 
 **Quick assembly overview:**
 1. Print all parts (black for enclosure, white matte for LED lens)
@@ -140,7 +140,7 @@ Want to modify the design? See [`STEP/README.md`](STEP/README.md) for:
 ## 📚 Additional Resources
 
 - [Main README](../../README.md) - Project overview
-- [Hardware Guide](../../docs/guides/HARDWARE_GUIDE.md) - Complete assembly instructions
+- [Hardware Assembly Guide](../../docs/guides/HARDWARE_ASSEMBLY_GUIDE.md) - Complete assembly instructions
 - [STL Directory](STL/) - Ready-to-print files with detailed instructions
 - [STEP Directory](STEP/) - CAD source files for customization
 

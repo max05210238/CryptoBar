@@ -1028,7 +1028,7 @@ main.cpp
 ### User Guides
 - [Display Guide](DISPLAY_GUIDE.md) - Complete UI reference
 - [OTA Update Guide](OTA_UPDATE_GUIDE.md) - Firmware update instructions
-- [Hardware Assembly Guide](HARDWARE_GUIDE.md) - Building CryptoBar
+- [Hardware Assembly Guide](HARDWARE_ASSEMBLY_GUIDE.md) - Building CryptoBar
 - [LED Display Guide](LED_DISPLAY_GUIDE.md) - LED color meanings
 
 ### Developer References

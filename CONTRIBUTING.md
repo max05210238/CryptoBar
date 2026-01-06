@@ -349,14 +349,14 @@ Update docs when you:
 - Change user-facing behavior (update relevant guide)
 - Modify API (update DEVELOPER_GUIDE.md)
 - Fix a bug (add to CHANGELOG.md)
-- Change hardware wiring (update HARDWARE_GUIDE.md)
+- Change hardware wiring (update HARDWARE_ASSEMBLY_GUIDE.md)
 
 ### Documentation Structure
 
 ```
 docs/
 ├── guides/
-│   ├── HARDWARE_GUIDE.md      # Hardware assembly
+│   ├── HARDWARE_ASSEMBLY_GUIDE.md      # Hardware assembly
 │   ├── DISPLAY_GUIDE.md       # UI and navigation
 │   ├── LED_DISPLAY_GUIDE.md   # LED status meanings
 │   ├── OTA_UPDATE_GUIDE.md    # Firmware updates

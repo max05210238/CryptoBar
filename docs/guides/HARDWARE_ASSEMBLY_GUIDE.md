@@ -1,51 +1,153 @@
-# 🔧 CryptoBar Assembly Guide
+# 🔧 CryptoBar Hardware Assembly Guide
 
-Complete step-by-step instructions for assembling your CryptoBar hardware.
+Complete guide for building your CryptoBar cryptocurrency display device - from purchasing components to final assembly.
 
-> **⚠️ Important:** This guide assumes you have all components listed in the [Hardware Guide BOM](HARDWARE_GUIDE.md#bill-of-materials-bom). Read through all steps before starting assembly.
+> **⚠️ Important:** Read through all sections before starting your build. This guide combines BOM planning with detailed step-by-step assembly instructions.
 
-## 📋 Table of Contents
+---
 
-- [🔧 CryptoBar Assembly Guide](#-cryptobar-assembly-guide)
-  - [📋 Table of Contents](#-table-of-contents)
-  - [🛠️ Required Tools](#️-required-tools)
-  - [📦 Pre-Assembly Checklist](#-pre-assembly-checklist)
-  - [⚡ Assembly Steps](#-assembly-steps)
-    - [Step 1: Verify ESP32-S3 Module and Solder Pin Headers](#step-1-verify-esp32-s3-module-and-solder-pin-headers)
-    - [Step 2: Solder 5V-OUT PAD for LED Power](#step-2-solder-5v-out-pad-for-led-power)
-    - [Step 3: Flash Firmware](#step-3-flash-firmware)
-    - [Step 4: Verify E-ink Display Model](#step-4-verify-e-ink-display-model)
-    - [Step 5: Modify Rotary Encoder](#step-5-modify-rotary-encoder)
-    - [Step 6: Cut WS2812B LED from Strip](#step-6-cut-ws2812b-led-from-strip)
-    - [Step 7: Solder LED Ribbon Cable](#step-7-solder-led-ribbon-cable)
-    - [Step 8: Install LED into Lens](#step-8-install-led-into-lens)
-    - [Step 9: Install M2 Heat Set Inserts (Front Case)](#step-9-install-m2-heat-set-inserts-front-case)
-    - [Step 10: Install M3 Heat Set Inserts (Back Cover)](#step-10-install-m3-heat-set-inserts-back-cover)
-    - [Step 11: Install Magnets (OPTIONAL - For Stacking Only)](#step-11-install-magnets-optional---for-stacking-only)
-    - [Step 12: Mount ESP32-S3 to Back Cover](#step-12-mount-esp32-s3-to-back-cover)
-    - [Step 13: Install LED Lens to Front Case](#step-13-install-led-lens-to-front-case)
-    - [Step 14: Install E-ink Display](#step-14-install-e-ink-display)
-    - [Step 15: Install Rotary Encoder](#step-15-install-rotary-encoder)
-    - [Step 16: Complete All Wiring](#step-16-complete-all-wiring)
-    - [Step 17: Test Before Final Assembly](#step-17-test-before-final-assembly)
-    - [Step 18: Install Knob](#step-18-install-knob)
-    - [Step 19: Assembly Complete! 🎉](#step-19-assembly-complete-)
-  - [🔍 Troubleshooting](#-troubleshooting)
-  - [📚 Additional Resources](#-additional-resources)
+## 📖 Table of Contents
+
+### Planning & Parts
+1. [📦 Bill of Materials (BOM)](#-bill-of-materials-bom)
+2. [💰 Cost Breakdown](#-cost-breakdown)
+3. [🛒 Where to Buy Components](#-where-to-buy-components)
+4. [🛠️ Required Tools](#️-required-tools)
+
+### Assembly
+5. [📦 Pre-Assembly Checklist](#-pre-assembly-checklist)
+6. [🔌 GPIO Pin Connections](#-gpio-pin-connections)
+7. [⚡ Step-by-Step Assembly Instructions](#-step-by-step-assembly-instructions)
+   - Step 1: Verify ESP32-S3 Module and Solder Pin Headers
+   - Step 2: Solder 5V-OUT PAD for LED Power
+   - Step 3: Flash Firmware
+   - Step 4: Verify E-ink Display Model
+   - Step 5: Modify Rotary Encoder
+   - Step 6: Cut WS2812B LED from Strip
+   - Step 7: Solder LED Ribbon Cable
+   - Step 8: Install LED into Lens
+   - Step 9: Install M2 Heat Set Inserts (Front Case)
+   - Step 10: Install M3 Heat Set Inserts (Back Cover)
+   - Step 11: Install Magnets (OPTIONAL)
+   - Step 12: Mount ESP32-S3 to Back Cover
+   - Step 13: Install LED Lens to Front Case
+   - Step 14: Install E-ink Display
+   - Step 15: Install Rotary Encoder
+   - Step 16: Complete All Wiring
+   - Step 17: Test Before Final Assembly
+   - Step 18: Install Knob
+   - Step 19: Final Assembly
+
+### Reference
+8. [🔍 Troubleshooting](#-troubleshooting)
+9. [🎨 Customization Ideas](#-customization-ideas)
+10. [📚 Additional Resources](#-additional-resources)
+
+---
+
+## 📦 Bill of Materials (BOM)
+
+### Core Electronics
+
+| Item | Description | Qty | Est. Cost | Amazon Link |
+|------|-------------|-----|-----------|-------------|
+| ESP32-S3 Dev Board | N16R8 (16MB Flash, 8MB PSRAM) | 1 | $10-15 | [Buy](https://amzn.to/4952HZK) |
+| E-ink Display | WaveShare 2.9" B&W e-Paper Module **V2** | 1 | $20-25 | [Buy](https://amzn.to/4pdoJj1) |
+| Rotary Encoder | KY-040 Module with Ribbon Cable Kit | 1 | $8-10 | [Buy](https://amzn.to/3Lip1Hm) |
+| RGB LED | WS2812B LED Strip (only need 1 LED) | 1 | $8-12 | [Buy](https://amzn.to/3YPYPXD) |
+
+### Hardware & Fasteners
+
+| Item | Description | Qty Needed | Kit Size | Amazon Link |
+|------|-------------|------------|----------|-------------|
+| M3 Hex Screws | M3 x 8mm | 2 | Multi-pack | [Buy Kit](https://amzn.to/3L2rsOg) |
+| M2 Flat Screws | M2 x 5mm Flat Head | 4 | Multi-pack | [Buy Kit](https://amzn.to/44HXbLf) |
+| M3 Heat Set Inserts | Brass, M3 size | 2 | Multi-pack | [Buy](https://amzn.to/44HXbLf) |
+| M2 Heat Set Inserts | Brass, M2 size | 4 | Multi-pack | [Buy](https://amzn.to/49rPdbL) |
+
+### Optional Components
+
+| Item | Description | Qty Needed | Use Case | Amazon Link |
+|------|-------------|------------|----------|-------------|
+| Small Magnets | 4mm x 6mm | 4 per unit | **Only needed for stacking multiple units** - allows secure vertical stacking | [Buy](https://amzn.to/4sjNFIy) |
+
+**Note:** Magnets are embedded in enclosure and enable multiple CryptoBars to stack cleanly. Skip if building only one unit.
+
+### 3D Printing Materials
+
+| Component | Recommended Product | Amazon Link |
+|-----------|---------------------|-------------|
+| **Black PLA Filament** | PolyMaker Matte Black PLA (enclosure parts) | [Buy on Amazon](https://amzn.to/4atrUPS) |
+| **White PLA Filament** | PolyMaker Matte White PLA (LED lens - REQUIRED) | [Buy on Amazon](https://amzn.to/4qquieL) |
+
+- **Files:** Available in [`hardware/3d-printed-case/`](../../hardware/3d-printed-case/)
+- **Enclosure:** Matte Black PLA recommended (or any color)
+- **LED Lens:** **Matte White PLA REQUIRED** for optimal light diffusion
+- **Print Time:** ~3-4 hours total
+- **Cost:** ~$2 USD material cost (if you have a 3D printer)
+- **Post-Processing:** Heat set insert installation required (soldering iron)
+
+### Power Supply
+
+| Component | Description | Amazon Link |
+|-----------|-------------|-------------|
+| **USB-C Cable & Adapter** | USB-C cable + power adapter kit | [Buy on Amazon](https://amzn.to/3KO9BKZ) |
+
+- **Input:** 5V via USB-C, 1A minimum
+- **Power Consumption:** ~0.5W average (e-ink refresh), <0.1W standby
+
+---
+
+## 💰 Cost Breakdown
+
+### Complete Build Cost (with own 3D printer)
+- **ESP32-S3 N16R8:** ~$6 USD
+- **WaveShare 2.9" E-ink Display:** ~$27 USD
+- **KY-040 Rotary Encoder:** ~$2 USD
+- **WS2812B LED:** ~$2 USD (strip, need 1 LED)
+- **M3/M2 Screws & Heat Set Inserts:** ~$0.50 USD (from kits)
+- **3D Printing Material:** ~$2 USD (PLA)
+- **USB-C Cable & Adapter:** ~$5-8 USD (if needed)
+
+**Total Estimated Cost:** **~$35 USD** (extremely affordable!)
+
+**Optional Add-ons:**
+- **Small Magnets (4mm x 6mm):** ~$0.50 USD (only if stacking multiple units)
+
+**Notes:**
+- Hardware kits (screws, inserts, magnets) come in multi-packs - consider building multiple units with friends to maximize value!
+- Shipping costs vary by location
+- If using 3D printing service instead of own printer: add ~$5-10 USD
+- **Many components come in multi-packs** - building 2-3 units together significantly reduces per-unit cost
+
+---
+
+## 🛒 Where to Buy Components
+
+All components are readily available via the Amazon links provided in the BOM table above.
+
+**Recommended Sources:**
+- **Electronics:** Amazon (affiliate links provided in BOM)
+- **3D Printing Filament:** [PolyMaker Matte Black PLA](https://amzn.to/4atrUPS) for best finish
+- **USB-C Cable & Adapter:** [USB-C kit](https://amzn.to/3KO9BKZ)
+- **Alternative Sources:** AliExpress, local electronics suppliers (longer shipping, lower cost)
 
 ---
 
 ## 🛠️ Required Tools
 
-- **Soldering iron** (temperature controlled, 320-350°C recommended)
-- **Solder wire** (lead-free or 63/37 tin-lead)
-- **Wire cutters** (flush cutters preferred)
-- **Heat set insert installation tool** (or soldering iron tip)
-- **Tweezers** (for small component handling)
-- **Super glue or hot glue gun** (for LED installation)
-- **Multimeter** (optional, for continuity testing)
-- **USB-C cable** (for programming and power)
-- **Computer with Visual Studio Code** (for firmware flashing)
+| Tool | Purpose | Est. Cost |
+|------|---------|-----------|
+| **Soldering Iron** | Heat set insert installation, ESP32-S3 5V-out mod, LED wiring | $20-50 |
+| **Solder Wire** | Lead-free or 63/37 tin-lead | $5-10 |
+| **Wire Cutters** | Flush cutters preferred for LED and encoder prep | $10-15 |
+| **Heat Set Insert Tip** | Or use soldering iron tip | Optional |
+| **Small Phillips Screwdriver** | Assembly screws | $5-10 |
+| **Tweezers** | Small component handling | $5-10 |
+| **Super Glue or Hot Glue Gun** | LED installation | $5-10 |
+| **Multimeter** | Testing connections (optional but recommended) | $15-30 |
+| **USB-C Cable** | For programming and power | Included |
+| **Computer with VS Code** | For firmware flashing | Required |
 
 ---
 
@@ -79,7 +181,53 @@ Before starting, verify you have all components:
 
 ---
 
-## ⚡ Assembly Steps
+## 🔌 GPIO Pin Connections
+
+### Complete Pin Assignment Table
+
+| Component | Component Pin | ESP32-S3 Pin | Wire Color (typical) | Notes |
+|-----------|---------------|--------------|----------------------|-------|
+| **E-ink Display (SPI)** |
+| | VCC | 3V3 | Red | 3.3V power |
+| | GND | GND | Black | Ground |
+| | DIN (MOSI) | GPIO 11 | Yellow | SPI data |
+| | CLK (SCK) | GPIO 12 | White | SPI clock |
+| | CS | GPIO 10 | Orange/Yellow | Chip select |
+| | DC | GPIO 17 | Green | Data/Command |
+| | RST | GPIO 16 | Blue | Reset |
+| | BUSY | GPIO 4 | Purple/Gray | Busy signal |
+| **Rotary Encoder (KY-040)** |
+| | + (VCC) | 3V3 | Red | 3.3V power |
+| | GND | GND | Black | Ground |
+| | SW | GPIO 21 | Blue | Push button (active low) |
+| | DT (Phase B) | GPIO 1 | Green | Encoder B (PCNT) |
+| | CLK (Phase A) | GPIO 2 | White | Encoder A (PCNT) |
+| **WS2812B LED** |
+| | VCC | 5V | Red | 5V power (requires 5V-OUT mod!) |
+| | DIN (Data In) | GPIO 15 | Green/White | NeoPixel data |
+| | GND | GND | Black | Ground |
+
+### Important Notes
+
+1. **ESP32-S3 PCNT Compatibility**
+   - Encoder MUST use GPIO 1 and 2 (PCNT-compatible pins)
+   - GPIO 5/6 do NOT support PCNT on ESP32-S3 (common mistake!)
+   - **GPIO 2/1 specifically chosen** for ESP32-S3 PCNT (Pulse Counter) peripheral support
+
+2. **5V Power Rail Requirement**
+   - WS2812B LED requires 5V power
+   - ESP32-S3 dev boards may NOT have 5V-out by default
+   - **Required modification:** Short the 5V-OUT solder jumper on the back (see Step 2)
+   - This enables 5V output on the pin header from USB power
+
+3. **Display Version Critical**
+   - Only **WaveShare 2.9" B&W V2** display is supported
+   - Look for **V2 sticker** on the back of the display
+   - V1 or other versions will NOT work (different driver IC)
+
+---
+
+## ⚡ Step-by-Step Assembly Instructions
 
 ### Step 1: Verify ESP32-S3 Module and Solder Pin Headers
 
@@ -166,7 +314,7 @@ Before proceeding with mechanical assembly, flash the firmware to verify the ESP
 - The V2 model has a different driver IC than V1
 
 **If you have the wrong version:**
-- Purchase the correct V2 display from [Amazon link in Hardware Guide](HARDWARE_GUIDE.md#bill-of-materials-bom)
+- Purchase the correct V2 display from [Amazon link in BOM](#-bill-of-materials-bom)
 
 ---
 
@@ -511,33 +659,14 @@ The **Matte_White_LED_Lens_V1** (with LED installed from Step 8) will be a tight
 
 **⚠️ CRITICAL STEP:** Incorrect wiring can damage components. Double-check all connections before powering on.
 
-**Complete Pin Assignment Table:**
-
-| Component | Component Pin | ESP32-S3 Pin | Notes |
-|-----------|---------------|--------------|-------|
-| **E-ink Display** | VCC | 3V3 | 3.3V power |
-| | GND | GND | Ground |
-| | DIN (MOSI) | GPIO 11 | SPI data |
-| | CLK (SCK) | GPIO 12 | SPI clock |
-| | CS | GPIO 10 | Chip select |
-| | DC | GPIO 17 | Data/Command |
-| | RST | GPIO 16 | Reset |
-| | BUSY | GPIO 4 | Busy signal |
-| **WS2812B LED** | VCC | 5V | 5V power (from 5V-OUT pad) |
-| | DIN | GPIO 15 | Data input |
-| | GND | GND | Ground |
-| **Rotary Encoder (KY-040)** | + | 3V3 | 3.3V power |
-| | GND | GND | Ground |
-| | SW | GPIO 21 | Push button |
-| | DT | GPIO 1 | Encoder B (PCNT) |
-| | CLK | GPIO 2 | Encoder A (PCNT) |
+Refer to the [GPIO Pin Connections table](#-gpio-pin-connections) for the complete wiring reference.
 
 **Wiring Procedure:**
 
 All wires have Dupont connectors and can be plugged directly into ESP32-S3 pin headers.
 
 1. **Connect encoder wires to ESP32-S3:**
-   - Plug encoder wires into the correct ESP32-S3 pins according to the table above
+   - Plug encoder wires into the correct ESP32-S3 pins according to the table
    - **Double-check the pin assignment before connecting**
    - Encoder + → ESP32 3V3
    - Encoder GND → ESP32 GND
@@ -547,7 +676,7 @@ All wires have Dupont connectors and can be plugged directly into ESP32-S3 pin h
 
 2. **Connect display cable to ESP32-S3:**
    - The display cable was already connected to the display module in Step 14-3
-   - Plug each Dupont connector into the correct ESP32-S3 pin according to the table above
+   - Plug each Dupont connector into the correct ESP32-S3 pin according to the table
    - Display VCC → ESP32 3V3
    - Display GND → ESP32 GND
    - Display DIN (MOSI) → ESP32 GPIO 11
@@ -616,8 +745,7 @@ All wires have Dupont connectors and can be plugged directly into ESP32-S3 pin h
    - Test menu navigation
    - Test all display modes
 
-
-**If any test fails, DO NOT proceed to final assembly.** Refer to [Troubleshooting](#troubleshooting) section.
+**If any test fails, DO NOT proceed to final assembly.** Refer to [Troubleshooting](#-troubleshooting) section.
 
 ![Wiring complete before closure](../images/assembly/step17_wiring_complete.jpg)
 *All components wired and tested before final enclosure assembly - verify LED lights up, display works, and encoder responds*
@@ -651,7 +779,7 @@ All wires have Dupont connectors and can be plugged directly into ESP32-S3 pin h
 
 ---
 
-### Step 19: Assembly Complete! 🎉
+### Step 19: Final Assembly
 
 **Final assembly:**
 
@@ -674,15 +802,16 @@ All wires have Dupont connectors and can be plugged directly into ESP32-S3 pin h
    - USB-C port accessible
    - Knob rotates smoothly
 
-**Your CryptoBar is now complete!**
+**🎉 Your CryptoBar is now complete! 🎉**
 
 ![Finished CryptoBar](../images/assembly/step19_finished.jpg)
 *Completed CryptoBar showing splash screen - ready to configure and use!*
 
-Next steps:
-- [Configure WiFi and API keys](../README.md#initial-setup)
+**Next steps:**
+- Configure WiFi (device creates "CryptoBar-XXXXXX" AP on first boot)
 - [Customize display settings](DISPLAY_GUIDE.md)
 - [Set up OTA updates](OTA_UPDATE_GUIDE.md)
+- [Explore configuration options](SETTINGS_MENU_GUIDE.md)
 
 ---
 
@@ -691,93 +820,175 @@ Next steps:
 ### Display Issues
 
 **Display shows nothing:**
-- Check ribbon cable is fully inserted and locked
-- Verify BUSY pin connection (GPIO 15)
-- Check 3.3V power to display
+- ✅ Check ribbon cable is fully inserted and locked
+- ✅ Verify all 8 display connections (especially CS, DC, RST, BUSY)
+- ✅ Check 3.3V power to display
+- ✅ Verify 5V-out jumper is bridged on ESP32-S3 (even though display uses 3.3V, check anyway)
+- ✅ Test with serial monitor - look for display init messages
 
 **Display shows garbage/random pixels:**
-- Wrong display version (need WaveShare V2, not V1)
-- Incorrect wiring (verify all 8 pins)
-- Bad solder joint on CS/DC/RST pins
+- ✅ Wrong display version (need WaveShare V2, not V1)
+- ✅ Incorrect wiring (verify all 8 pins against GPIO table)
+- ✅ Bad solder joint on CS/DC/RST pins
+- ✅ Verify SPI pins (MOSI=GPIO11, SCK=GPIO12)
 
 **Display is very slow:**
-- Normal behavior for e-ink displays
-- Full refresh takes 2-3 seconds
-- Partial refresh takes 0.5-1 second
+- ✅ Normal behavior for e-ink displays
+- ✅ Full refresh takes 2-3 seconds
+- ✅ Partial refresh takes 0.5-1 second
+
+**Display ghosting:**
+- ✅ Normal for e-ink - use full refresh mode
+- ✅ Try full refresh instead of partial in settings
 
 ### LED Issues
 
 **LED doesn't light up:**
-- Check 5V-OUT pad is bridged on ESP32
-- Verify GPIO 15 connection
-- Check LED polarity (arrow direction matters)
-- Test with multimeter: 5V pin should measure 5V when USB connected
+- ✅ **Critical:** Check 5V-OUT pad is bridged on ESP32
+- ✅ **Critical:** Verify LED connected to 5V (not 3.3V)
+- ✅ Verify GPIO 15 connection
+- ✅ Check LED polarity (arrow direction matters)
+- ✅ Test with multimeter: 5V pin should measure 5V when USB connected
+- ✅ Test with LED brightness setting (not set to Low or 0)
+- ✅ Verify WS2812B polarity (check LED markings)
 
 **LED wrong color:**
-- Normal - LED color is software controlled
-- Default boot color may vary by firmware version
+- ✅ Normal - LED color is software controlled
+- ✅ Default boot color may vary by firmware version
+- ✅ Check firmware version (V0.99h+ required for party mode)
+- ✅ Verify RGB order (some strips use GRB instead of RGB)
 
 **LED flickers:**
-- Loose connection on data or ground wire
-- Check solder joints
+- ✅ Loose connection on data or ground wire
+- ✅ Check solder joints
+- ✅ Verify data wire not damaged
 
 ### Encoder Issues
 
 **Encoder doesn't respond:**
-- Check all 5 wires (VCC, GND, SW, DT, CLK)
-- Verify GPIO 1, 2, 21 connections
-- Test button press (GPIO 21 should go LOW when pressed)
+- ✅ **Critical:** Verify using GPIO 1/2 (not GPIO 5/6!)
+- ✅ Check all 5 wires (VCC, GND, SW, DT, CLK)
+- ✅ Verify GPIO 1, 2, 21 connections
+- ✅ Check 3.3V power to encoder module
+- ✅ Test button press (GPIO 21 should go LOW when pressed)
+- ✅ Test with serial monitor debug output
+- ✅ Verify ribbon cable orientation
 
 **Encoder counts backward:**
-- CLK and DT wires are swapped
-- Swap GPIO 1 and GPIO 2 connections
+- ✅ CLK and DT wires are swapped
+- ✅ Swap GPIO 1 and GPIO 2 connections
+- ✅ Or modify `ENC_DIR_INVERT` in code
 
 **Encoder skips counts:**
-- Loose connection on CLK or DT
-- Bad solder joint
-- Damaged encoder (replace)
+- ✅ Loose connection on CLK or DT
+- ✅ Bad solder joint
+- ✅ Damaged encoder (replace)
+- ✅ Adjust `ENC_COUNTS_PER_DETENT` in encoder_pcnt.cpp
+
+**Encoder very sensitive / jumpy:**
+- ✅ Adjust `ENC_COUNTS_PER_DETENT` in encoder_pcnt.cpp
+- ✅ Increase `ENC_DIR_LOCK_MS` for more filtering
 
 ### Boot Issues
 
 **ESP32 doesn't boot:**
-- Check USB cable (must be data cable, not charge-only)
-- Verify 3.3V power LED on ESP32 is lit
-- Check Serial Monitor for error messages
+- ✅ Check USB cable (must be data cable, not charge-only)
+- ✅ Verify 3.3V power LED on ESP32 is lit
+- ✅ Check Serial Monitor for error messages
 
 **Firmware upload fails:**
-- Wrong USB driver (install CP210x or CH340 driver)
-- Wrong board selected in PlatformIO
-- Boot mode issue: Hold BOOT button during upload
+- ✅ Wrong USB driver (install CP210x or CH340 driver)
+- ✅ Wrong board selected in PlatformIO
+- ✅ Boot mode issue: Hold BOOT button during upload
+
+### WiFi Issues
+
+**Can't find CryptoBar access point:**
+- ✅ Long-press encoder for 12 seconds to force WiFi portal
+- ✅ Check WiFi scanning on phone (2.4GHz only)
+- ✅ Move closer to device
+
+**Can't connect to home WiFi:**
+- ✅ Verify WiFi credentials (case-sensitive)
+- ✅ Check 2.4GHz network (ESP32 doesn't support 5GHz)
+- ✅ Verify router compatibility (WPA2 recommended)
+
+### API / Price Fetch Issues
+
+**Yellow LED / "API Failure" message:**
+- ✅ Verify internet connection (ping test)
+- ✅ Check firewall settings
+- ✅ Wait 30-60 seconds for automatic retry
+- ✅ CoinGecko may be rate-limited (use 3min+ update interval)
+
+**Price not updating:**
+- ✅ Check update interval setting (3min recommended)
+- ✅ Verify time is synchronized (check clock display)
+- ✅ Review serial monitor for API error messages
 
 ### Assembly Issues
 
 **Heat set inserts crooked:**
-- Reheat with soldering iron and straighten
-- If too damaged, fill hole with epoxy and re-drill
-- Last resort: re-print the part
+- ✅ Reheat with soldering iron and straighten
+- ✅ If too damaged, fill hole with epoxy and re-drill
+- ✅ Last resort: re-print the part
 
 **Screws won't thread:**
-- Insert may have melted plastic inside threads
-- Use screw to "chase" the threads (screw in/out several times)
-- If stripped: use larger screw or add threadlocker
+- ✅ Insert may have melted plastic inside threads
+- ✅ Use screw to "chase" the threads (screw in/out several times)
+- ✅ If stripped: use larger screw or add threadlocker
 
 **Parts don't fit:**
-- 3D printer tolerances vary
-- Sand/file parts slightly for better fit
-- Check print quality (no warping or elephant's foot)
+- ✅ 3D printer tolerances vary
+- ✅ Sand/file parts slightly for better fit
+- ✅ Check print quality (no warping or elephant's foot)
+
+---
+
+## 🎨 Customization Ideas
+
+### Hardware Modifications
+
+- **Battery Power**: Add 18650 battery + TP4056 charging module
+- **Larger Display**: Adapt for 4.2" or 7.5" e-ink displays
+- **External Antenna**: For better WiFi in metal enclosures
+- **PCB Design**: Create custom PCB to eliminate wiring
+
+### Enclosure Modifications
+
+- **Wall Mount**: Add mounting holes to back panel
+- **Desk Stand**: Design angled stand for better visibility
+- **Transparent Cover**: Use clear acrylic for minimalist look
+- **RGB Light Pipe**: Add diffuser for LED visibility
+- **Custom Colors**: Print enclosure in different colors
 
 ---
 
 ## 📚 Additional Resources
 
-- **[Hardware Guide](HARDWARE_GUIDE.md)** - BOM and component specifications
-- **[Display Guide](DISPLAY_GUIDE.md)** - Understanding the UI and settings
+- **[Main README](../../README.md)** - Project overview and quick start
+- **[Display Guide](DISPLAY_GUIDE.md)** - UI layout, navigation, screen elements explained
+- **[LED Display Guide](LED_DISPLAY_GUIDE.md)** - LED colors, animations, troubleshooting
+- **[Settings Menu Guide](SETTINGS_MENU_GUIDE.md)** - Configuration options explained
 - **[OTA Update Guide](OTA_UPDATE_GUIDE.md)** - Wireless firmware updates
 - **[Developer Guide](DEVELOPER_GUIDE.md)** - Code architecture and development
-- **[Main README](../README.md)** - Project overview and quick start
-
-**Need help?** Open an issue on [GitHub](https://github.com/max05210238/CryptoBar/issues)
+- **[Release Notes](../release-notes/)** - Technical version details
+- **[3D Printing Guide](../../hardware/3d-printed-case/README.md)** - STL files and print settings
 
 ---
 
-*Last updated: 2025-12-27*
+## ❓ Need Help?
+
+- 🐛 [Report hardware issues](https://github.com/max05210238/CryptoBar/issues)
+- 💬 [Ask questions](https://github.com/max05210238/CryptoBar/discussions)
+
+---
+
+**Last Updated:** 2025-12-27
+**Hardware Version:** V0.99q compatible
+**Estimated Build Time:** 2-4 hours (including 3D printing)
+**Estimated Cost:** ~$35 USD (with own 3D printer)
+
+---
+
+*Made with ❤️ for the crypto and maker communities*

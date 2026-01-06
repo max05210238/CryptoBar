@@ -534,7 +534,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Project Documentation
 - **[README.md](README.md)** - Project overview, features, quick start guide
-- **[HARDWARE_GUIDE.md](docs/guides/HARDWARE_GUIDE.md)** - BOM, GPIO pins, assembly instructions
+- **[HARDWARE_ASSEMBLY_GUIDE.md](docs/guides/HARDWARE_ASSEMBLY_GUIDE.md)** - Complete build guide from BOM to final assembly
 - **[DISPLAY_GUIDE.md](docs/guides/DISPLAY_GUIDE.md)** - UI layout, navigation, screen elements explained
 - **[PRE_LAUNCH_AUDIT.md](PRE_LAUNCH_AUDIT.md)** - Documentation review and improvement roadmap
 
@@ -556,7 +556,7 @@ All release notes moved to [`docs/release-notes/`](docs/release-notes/):
 
 ### User Guides
 All user guides moved to [`docs/guides/`](docs/guides/):
-- **[HARDWARE_GUIDE.md](docs/guides/HARDWARE_GUIDE.md)** - Hardware assembly and GPIO wiring
+- **[HARDWARE_ASSEMBLY_GUIDE.md](docs/guides/HARDWARE_ASSEMBLY_GUIDE.md)** - Hardware assembly and GPIO wiring
 - **[DISPLAY_GUIDE.md](docs/guides/DISPLAY_GUIDE.md)** - UI layout, navigation, screen elements explained
 - **[LED_DISPLAY_GUIDE.md](docs/guides/LED_DISPLAY_GUIDE.md)** - Complete LED color and animation reference
 - **[OTA_UPDATE_GUIDE.md](docs/guides/OTA_UPDATE_GUIDE.md)** - Firmware update process and security considerations

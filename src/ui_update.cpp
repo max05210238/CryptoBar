@@ -3,14 +3,14 @@
 
 #include <Arduino.h>
 
-#include <GxEPD2_BW.h>
+#include <GxEPD2_4C.h>
 
 #include "app_state.h"
 #include "ui.h"
 #include "ui_list.h"
 
 // e-paper display object (defined in main.cpp)
-extern GxEPD2_BW<GxEPD2_290_BS, GxEPD2_290_BS::HEIGHT> display;
+extern GxEPD2_4C<GxEPD2_290_GDEY029F51H, GxEPD2_290_GDEY029F51H::HEIGHT> display;
 
 // Update menu state (defined in app_state.cpp)
 extern int g_updateMenuIndex;

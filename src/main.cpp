@@ -1,4 +1,4 @@
-// CryptoBar V0.99r (Settings Bug Fix & UX Improvements)
+// CryptoBar V0.99r-G (4-Color Display Support - GDEY029F51H)
 #include <Arduino.h>
 #include <WiFi.h>
 #include <HTTPClient.h>
@@ -6,7 +6,7 @@
 #include <time.h>
 #include <esp_sntp.h>
 
-#include <GxEPD2_BW.h>
+#include <GxEPD2_4C.h>
 #include <Fonts/FreeSansBold9pt7b.h>
 #include <Fonts/FreeSansBold12pt7b.h>
 #include <Fonts/FreeSansBold18pt7b.h>
@@ -52,8 +52,8 @@
 
 // ==================== e-paper display =====================
 
-GxEPD2_BW<GxEPD2_290_BS, GxEPD2_290_BS::HEIGHT> display(
-  GxEPD2_290_BS(EPD_CS, EPD_DC, EPD_RST, EPD_BUSY)
+GxEPD2_4C<GxEPD2_290_GDEY029F51H, GxEPD2_290_GDEY029F51H::HEIGHT> display(
+  GxEPD2_290_GDEY029F51H(EPD_CS, EPD_DC, EPD_RST, EPD_BUSY)
 );
 
 // ==================== Helper Functions =====================

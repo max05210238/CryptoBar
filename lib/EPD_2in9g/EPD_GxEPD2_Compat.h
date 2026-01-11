@@ -64,10 +64,10 @@ public:
             return;
         }
 
-        // Initialize paint library for landscape mode
-        // Image size: 296x128 (landscape), rotated 270° to fit physical 128x296 (portrait)
-        Serial.println("EPD: Initializing Paint library (landscape 296x128, rotated 270°)");
-        Paint_NewImage(imageBuffer, EPD_2IN9G_HEIGHT, EPD_2IN9G_WIDTH, 270, EPD_2IN9G_WHITE);
+        // Initialize paint library - Try 0° rotation (native portrait)
+        // Width=128, Height=296, Rotate=0
+        Serial.println("EPD: Initializing Paint library (portrait 128x296, rotate=0)");
+        Paint_NewImage(imageBuffer, EPD_2IN9G_WIDTH, EPD_2IN9G_HEIGHT, 0, EPD_2IN9G_WHITE);
         Paint_SelectImage(imageBuffer);
 
         // Fill buffer with white

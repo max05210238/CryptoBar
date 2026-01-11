@@ -124,9 +124,23 @@ public:
         EPD_2IN9G_Sleep();
     }
 
+    void setRotation(uint8_t r) {
+        Serial.printf("EPD: setRotation(%d) - ignored (always landscape)\n", r);
+        // Rotation is handled by Paint library, ignore this call
+        _rotation = 0;  // Always 0 for our setup
+    }
+
     // Adafruit GFX required override
     void drawPixel(int16_t x, int16_t y, uint16_t color) {
+        static int pixelCount = 0;
         if (!imageBuffer) return;
+
+        // Debug: print first 10 pixels
+        if (pixelCount < 10) {
+            Serial.printf("EPD: drawPixel(%d, %d, color=%d)\n", x, y, color);
+            pixelCount++;
+        }
+
         Paint_SetPixel(x, y, color);
     }
 

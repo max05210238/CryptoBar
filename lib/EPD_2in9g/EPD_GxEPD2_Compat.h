@@ -32,9 +32,10 @@ public:
     static const uint16_t WIDTH = EPD_2IN9G_WIDTH;    // 128
 
     EPD_GxEPD2_Compat(int8_t cs, int8_t dc, int8_t rst, int8_t busy)
-        : Adafruit_GFX(WIDTH, HEIGHT), imageBuffer(nullptr), initialized(false),
-          _width(WIDTH), _height(HEIGHT), _rotation(0) {
+        : Adafruit_GFX(HEIGHT, WIDTH), imageBuffer(nullptr), initialized(false),
+          _width(HEIGHT), _height(WIDTH), _rotation(0) {
         // Pin configuration is in DEV_Config.h, ignore constructor pins
+        // Landscape mode: 296 (width) x 128 (height)
     }
 
     ~EPD_GxEPD2_Compat() {
@@ -46,6 +47,8 @@ public:
     void init(uint32_t serial_diag_bitrate = 0) {
         if (initialized) return;
 
+        Serial.println("EPD: Initializing hardware...");
+
         // Initialize hardware
         DEV_Module_Init();
         EPD_2IN9G_Init();
@@ -53,19 +56,26 @@ public:
         // Allocate image buffer
         // Each pixel is 2 bits (4 colors), so WIDTH/4 bytes per row
         UWORD imagesize = ((EPD_2IN9G_WIDTH % 4 == 0) ? (EPD_2IN9G_WIDTH / 4) : (EPD_2IN9G_WIDTH / 4 + 1)) * EPD_2IN9G_HEIGHT;
+        Serial.printf("EPD: Allocating %d bytes for image buffer\n", imagesize);
+
         imageBuffer = (UBYTE *)malloc(imagesize);
         if (!imageBuffer) {
             Serial.println("ERROR: Failed to allocate display buffer!");
             return;
         }
 
-        // Initialize paint library for pixel operations
-        // Rotated 270° for landscape mode (like GxEPD2)
+        // Initialize paint library for landscape mode
+        // Image size: 296x128 (landscape), rotated 270° to fit physical 128x296 (portrait)
+        Serial.println("EPD: Initializing Paint library (landscape 296x128, rotated 270°)");
         Paint_NewImage(imageBuffer, EPD_2IN9G_HEIGHT, EPD_2IN9G_WIDTH, 270, EPD_2IN9G_WHITE);
         Paint_SelectImage(imageBuffer);
+
+        // Fill buffer with white
+        Serial.println("EPD: Clearing buffer to white...");
         Paint_Clear(EPD_2IN9G_WHITE);
 
         initialized = true;
+        Serial.println("EPD: Initialization complete!");
     }
 
     void setFullWindow() {

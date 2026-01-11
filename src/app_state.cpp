@@ -1,10 +1,10 @@
-// CryptoBar V0.99q (UI/UX Improvements: Time Refresh & Settings Fix)
+// CryptoBar V0.99r-G (4-Color E-Paper Support: WaveShare 2.9" Module G)
 // app_state.cpp - Global application state definitions
 #include "app_state.h"
 #include "day_avg.h"  // for DAYAVG_ROLLING constant
 
 // ==================== Version =====================
-const char* CRYPTOBAR_VERSION = "V0.99r";
+const char* CRYPTOBAR_VERSION = "V0.99r-G";
 
 // ==================== Constants =====================
 

@@ -104,11 +104,13 @@ public:
         Serial.println("EPD: nextPage() - displaying buffer");
         if (imageBuffer) {
             // TEST: Draw a test pattern using WaveShare Paint library directly
-            Serial.println("EPD: Drawing test pattern with Paint library...");
-            Paint_DrawRectangle(5, 5, 291, 123, EPD_2IN9G_BLACK, DOT_PIXEL_2X2, DRAW_FILL_EMPTY);
+            // Coordinates for portrait mode (128x296)
+            Serial.println("EPD: Drawing test pattern with Paint library (portrait)...");
+            Paint_DrawRectangle(5, 5, 123, 291, EPD_2IN9G_BLACK, DOT_PIXEL_2X2, DRAW_FILL_EMPTY);
             Paint_DrawLine(10, 10, 100, 100, EPD_2IN9G_RED, DOT_PIXEL_2X2, LINE_STYLE_SOLID);
-            Paint_DrawString_EN(20, 40, "Test Pattern", &Font24, EPD_2IN9G_BLACK, EPD_2IN9G_WHITE);
-            Paint_DrawString_EN(20, 70, "Paint Library", &Font20, EPD_2IN9G_YELLOW, EPD_2IN9G_WHITE);
+            Paint_DrawString_EN(10, 50, "CryptoBar", &Font24, EPD_2IN9G_BLACK, EPD_2IN9G_WHITE);
+            Paint_DrawString_EN(10, 100, "Portrait", &Font20, EPD_2IN9G_YELLOW, EPD_2IN9G_WHITE);
+            Paint_DrawString_EN(10, 150, "Test 0deg", &Font20, EPD_2IN9G_RED, EPD_2IN9G_WHITE);
 
             EPD_2IN9G_Display(imageBuffer);
         }

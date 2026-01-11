@@ -205,4 +205,4 @@ time_t g_nextNtpResyncUtc = 0;
 
 // ==================== Independent Time Refresh (V0.99q) =====================
 time_t g_nextTimeRefreshUtc = 0;
-bool   g_timeRefreshEnabled = true;
+bool   g_timeRefreshEnabled = false;  // V0.99r-G: Disabled (4-color e-paper has no partial refresh)

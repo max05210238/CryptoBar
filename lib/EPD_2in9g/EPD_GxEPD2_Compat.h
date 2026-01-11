@@ -108,15 +108,6 @@ public:
         // Display and return false (single page mode)
         Serial.println("EPD: nextPage() - displaying buffer");
         if (imageBuffer) {
-            // TEST: Draw a test pattern using WaveShare Paint library directly
-            // Coordinates for landscape mode (296x128) with 90° rotation
-            Serial.println("EPD: Drawing test pattern with Paint library (landscape 90deg)...");
-            Paint_DrawRectangle(5, 5, 291, 123, EPD_2IN9G_BLACK, DOT_PIXEL_2X2, DRAW_FILL_EMPTY);
-            Paint_DrawLine(10, 10, 200, 100, EPD_2IN9G_RED, DOT_PIXEL_2X2, LINE_STYLE_SOLID);
-            Paint_DrawString_EN(20, 30, "CryptoBar", &Font24, EPD_2IN9G_BLACK, EPD_2IN9G_WHITE);
-            Paint_DrawString_EN(20, 60, "Landscape", &Font20, EPD_2IN9G_YELLOW, EPD_2IN9G_WHITE);
-            Paint_DrawString_EN(20, 90, "Test 90deg", &Font20, EPD_2IN9G_RED, EPD_2IN9G_WHITE);
-
             EPD_2IN9G_Display(imageBuffer);
         }
         return false;

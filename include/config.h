@@ -3,9 +3,9 @@
 
 // NOTE (V0.97): Coin registry moved to coins.h / coins.cpp (single source of truth).
 
-// V0.99k: Default update interval: 30 seconds
-// CoinPaprika (aggregated market data) updates every 30 seconds
-static const uint32_t UPDATE_INTERVAL_MS = 30UL * 1000UL;  // 30 seconds
+// V0.99r-G: Default update interval: 5 minutes (for 4-color e-paper)
+// 4-color e-paper refresh is slow (15-20 seconds), so 5-minute update is more reasonable
+static const uint32_t UPDATE_INTERVAL_MS = 5UL * 60UL * 1000UL;  // 5 minutes
 
 // ----------------- Timezone Configuration -----------------
 struct TimezoneInfo {

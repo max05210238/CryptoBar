@@ -667,7 +667,7 @@ void Paint_DrawString_CN(UWORD Xstart, UWORD Ystart, const char * pString, cFONT
             p_text += 1;
             /* Decrement the column position by 16 */
             x += font->ASCII_Width;
-        } else {        //Chinese
+        } else {        // Multi-byte characters (Chinese, etc.)
             for(Num = 0; Num < font->size; Num++) {
                 if ((((*p_text)&0xFF) == font->table[Num].index[0]) && \
                     (((*(p_text + 1))&0xFF) == font->table[Num].index[1]) && \

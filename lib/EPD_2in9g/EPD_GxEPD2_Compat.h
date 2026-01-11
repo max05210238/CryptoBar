@@ -64,10 +64,15 @@ public:
             return;
         }
 
-        // Initialize paint library - Try 270° rotation for landscape
-        // This maps logical 296x128 (landscape) to physical 128x296 (portrait)
-        Serial.println("EPD: Initializing Paint library (landscape 296x128, rotate=270)");
-        Paint_NewImage(imageBuffer, EPD_2IN9G_HEIGHT, EPD_2IN9G_WIDTH, 270, EPD_2IN9G_WHITE);
+        // Initialize paint library with PHYSICAL dimensions
+        // Physical: 128×296, Rotation: 270° → Logical: 296×128 (landscape)
+        Serial.println("EPD: Initializing Paint library (physical 128x296, rotate=270)");
+        Paint_NewImage(imageBuffer, EPD_2IN9G_WIDTH, EPD_2IN9G_HEIGHT, 270, EPD_2IN9G_WHITE);
+
+        // CRITICAL: Set scale to 4 for 4-color display (2 bits per pixel)
+        Serial.println("EPD: Setting Paint scale to 4 (4-color mode)");
+        Paint_SetScale(4);
+
         Paint_SelectImage(imageBuffer);
 
         // Fill buffer with white

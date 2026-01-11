@@ -3,7 +3,7 @@
 #pragma once
 
 #include <Arduino.h>
-#include <GxEPD2_BW.h>
+#include <GxEPD2_4C.h>
 #include "config.h"
 #include "ui.h"
 #include "chart.h"

@@ -74,6 +74,22 @@ public:
         Serial.println("EPD: Clearing buffer to white...");
         Paint_Clear(EPD_2IN9G_WHITE);
 
+        // Display the cleared screen to remove any previous content
+        Serial.println("EPD: Clearing physical screen...");
+        EPD_2IN9G_Display(imageBuffer);
+        Serial.println("EPD: Screen cleared!");
+
+        // Draw test pattern to verify drawing works
+        Serial.println("EPD: Drawing test pattern...");
+        Paint_DrawRectangle(10, 10, 286, 118, EPD_2IN9G_BLACK, DOT_PIXEL_2X2, DRAW_FILL_EMPTY);
+        Paint_DrawLine(20, 20, 100, 100, EPD_2IN9G_RED, DOT_PIXEL_2X2, LINE_STYLE_SOLID);
+        Paint_DrawString_EN(30, 30, "CryptoBar", &Font24, EPD_2IN9G_BLACK, EPD_2IN9G_WHITE);
+        Paint_DrawString_EN(30, 60, "4-Color Test", &Font20, EPD_2IN9G_YELLOW, EPD_2IN9G_WHITE);
+
+        Serial.println("EPD: Displaying test pattern...");
+        EPD_2IN9G_Display(imageBuffer);
+        Serial.println("EPD: Test pattern displayed!");
+
         initialized = true;
         Serial.println("EPD: Initialization complete!");
     }

@@ -65,9 +65,9 @@ public:
         }
 
         // Initialize paint library with PHYSICAL dimensions
-        // Physical: 128×296, Rotation: 270° → Logical: 296×128 (landscape)
-        Serial.println("EPD: Initializing Paint library (physical 128x296, rotate=270)");
-        Paint_NewImage(imageBuffer, EPD_2IN9G_WIDTH, EPD_2IN9G_HEIGHT, 270, EPD_2IN9G_WHITE);
+        // Physical: 128×296, Rotation: 90° → Logical: 296×128 (landscape)
+        Serial.println("EPD: Initializing Paint library (physical 128x296, rotate=90)");
+        Paint_NewImage(imageBuffer, EPD_2IN9G_WIDTH, EPD_2IN9G_HEIGHT, 90, EPD_2IN9G_WHITE);
 
         // CRITICAL: Set scale to 4 for 4-color display (2 bits per pixel)
         Serial.println("EPD: Setting Paint scale to 4 (4-color mode)");
@@ -109,13 +109,13 @@ public:
         Serial.println("EPD: nextPage() - displaying buffer");
         if (imageBuffer) {
             // TEST: Draw a test pattern using WaveShare Paint library directly
-            // Coordinates for landscape mode (296x128) with 270° rotation
-            Serial.println("EPD: Drawing test pattern with Paint library (landscape 270deg)...");
+            // Coordinates for landscape mode (296x128) with 90° rotation
+            Serial.println("EPD: Drawing test pattern with Paint library (landscape 90deg)...");
             Paint_DrawRectangle(5, 5, 291, 123, EPD_2IN9G_BLACK, DOT_PIXEL_2X2, DRAW_FILL_EMPTY);
             Paint_DrawLine(10, 10, 200, 100, EPD_2IN9G_RED, DOT_PIXEL_2X2, LINE_STYLE_SOLID);
             Paint_DrawString_EN(20, 30, "CryptoBar", &Font24, EPD_2IN9G_BLACK, EPD_2IN9G_WHITE);
             Paint_DrawString_EN(20, 60, "Landscape", &Font20, EPD_2IN9G_YELLOW, EPD_2IN9G_WHITE);
-            Paint_DrawString_EN(20, 90, "Test 270deg", &Font20, EPD_2IN9G_RED, EPD_2IN9G_WHITE);
+            Paint_DrawString_EN(20, 90, "Test 90deg", &Font20, EPD_2IN9G_RED, EPD_2IN9G_WHITE);
 
             EPD_2IN9G_Display(imageBuffer);
         }

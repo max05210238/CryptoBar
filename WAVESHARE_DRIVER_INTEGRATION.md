@@ -200,6 +200,22 @@ display.print(priceText);
 
 ---
 
+## 🔧 重要 Bug 修復 (2026-01-11)
+
+### 問題：部分顯示渲染 Bug
+- **症狀**: 顯示器只在左側 ~40% 區域渲染，右側顯示雜訊
+- **根本原因**: Paint 庫使用 Scale=2 (黑白模式) 而不是 Scale=4 (4色模式)
+- **影響**: WidthByte 計算錯誤 (37 bytes 而不是 32 bytes)，導致緩衝區地址錯誤
+
+### 解決方案
+在 `EPD_GxEPD2_Compat.h` 的 `init()` 函數中：
+1. 修正參數順序：使用物理尺寸 `(WIDTH, HEIGHT)` 而不是 `(HEIGHT, WIDTH)`
+2. 添加 `Paint_SetScale(4)` 啟用 4色模式
+
+詳細說明請參閱：`FIX_PARTIAL_DISPLAY_BUG.md`
+
+---
+
 **最後更新**: 2026-01-11
 **分支**: `claude/4color-display-V099r-G-K0kQP`
-**狀態**: ✅ 整合完成，等待測試
+**狀態**: ✅ 整合完成 | 🐛 顯示 Bug 已修復 | 📝 等待實機測試

@@ -1,4 +1,4 @@
-// CryptoBar V0.99r-G (WaveShare 2.9" Module G Support)
+// CryptoBar V0.99r-G (4-Color Display Support - GDEY029F51H)
 #include <Arduino.h>
 #include <WiFi.h>
 #include <HTTPClient.h>
@@ -6,8 +6,7 @@
 #include <time.h>
 #include <esp_sntp.h>
 
-// WaveShare EPD 2.9G Driver with GxEPD2 compatibility wrapper
-#include "../lib/EPD_2in9g/EPD_GxEPD2_Compat.h"
+#include <GxEPD2_3C.h>
 #include <Fonts/FreeSansBold9pt7b.h>
 #include <Fonts/FreeSansBold12pt7b.h>
 #include <Fonts/FreeSansBold18pt7b.h>
@@ -52,9 +51,10 @@
 #endif
 
 // ==================== e-paper display =====================
-// WaveShare 2.9" Module (G) - 4-color display
 
-EPD_GxEPD2_Compat display(EPD_CS, EPD_DC, EPD_RST, EPD_BUSY);
+GxEPD2_3C<GxEPD2_290c, GxEPD2_290c::HEIGHT> display(
+  GxEPD2_290c(EPD_CS, EPD_DC, EPD_RST, EPD_BUSY)
+);
 
 // ==================== Helper Functions =====================
 

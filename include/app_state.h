@@ -3,7 +3,8 @@
 #pragma once
 
 #include <Arduino.h>
-#include <GxEPD2_3C.h>
+// WaveShare EPD 2.9G Driver with GxEPD2 compatibility wrapper
+#include "../lib/EPD_2in9g/EPD_GxEPD2_Compat.h"
 #include "config.h"
 #include "ui.h"
 #include "chart.h"
@@ -190,8 +191,8 @@ extern int32_t g_localUtcOffsetSec;
 extern ChartSample g_chartSamples[MAX_CHART_SAMPLES];
 extern int         g_chartSampleCount;
 
-// e-paper display
-extern GxEPD2_3C<GxEPD2_290c, GxEPD2_290c::HEIGHT> display;
+// e-paper display - WaveShare 2.9" Module (G)
+extern EPD_GxEPD2_Compat display;
 
 // ==================== WiFi credentials (stored in NVS) =====================
 extern String g_wifiSsid;

@@ -74,21 +74,9 @@ public:
         Serial.println("EPD: Clearing buffer to white...");
         Paint_Clear(EPD_2IN9G_WHITE);
 
-        // Display the cleared screen to remove any previous content
+        // Clear physical screen
         Serial.println("EPD: Clearing physical screen...");
-        EPD_2IN9G_Display(imageBuffer);
-        Serial.println("EPD: Screen cleared!");
-
-        // Draw test pattern to verify drawing works
-        Serial.println("EPD: Drawing test pattern...");
-        Paint_DrawRectangle(10, 10, 286, 118, EPD_2IN9G_BLACK, DOT_PIXEL_2X2, DRAW_FILL_EMPTY);
-        Paint_DrawLine(20, 20, 100, 100, EPD_2IN9G_RED, DOT_PIXEL_2X2, LINE_STYLE_SOLID);
-        Paint_DrawString_EN(30, 30, "CryptoBar", &Font24, EPD_2IN9G_BLACK, EPD_2IN9G_WHITE);
-        Paint_DrawString_EN(30, 60, "4-Color Test", &Font20, EPD_2IN9G_YELLOW, EPD_2IN9G_WHITE);
-
-        Serial.println("EPD: Displaying test pattern...");
-        EPD_2IN9G_Display(imageBuffer);
-        Serial.println("EPD: Test pattern displayed!");
+        EPD_2IN9G_Clear(EPD_2IN9G_WHITE);
 
         initialized = true;
         Serial.println("EPD: Initialization complete!");
@@ -105,6 +93,7 @@ public:
 
     void firstPage() {
         // Clear buffer for new frame
+        Serial.println("EPD: firstPage() - clearing buffer");
         if (imageBuffer) {
             Paint_Clear(EPD_2IN9G_WHITE);
         }
@@ -112,6 +101,7 @@ public:
 
     bool nextPage() {
         // Display and return false (single page mode)
+        Serial.println("EPD: nextPage() - displaying buffer");
         if (imageBuffer) {
             EPD_2IN9G_Display(imageBuffer);
         }
@@ -119,10 +109,12 @@ public:
     }
 
     void clearScreen(uint8_t value = 0xFF) {
+        Serial.println("EPD: clearScreen()");
         EPD_2IN9G_Clear(EPD_2IN9G_WHITE);
     }
 
     void display() {
+        Serial.println("EPD: display() - refreshing screen");
         if (imageBuffer) {
             EPD_2IN9G_Display(imageBuffer);
         }
@@ -159,6 +151,7 @@ public:
 
     // Clear display
     void fillScreen(uint16_t color) {
+        Serial.printf("EPD: fillScreen(color=%d)\n", color);
         if (imageBuffer) {
             Paint_Clear(color);
         }

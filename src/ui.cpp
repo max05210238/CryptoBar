@@ -17,7 +17,7 @@
 // ===== Global objects and variables from main.cpp (extern declarations) =====
 
 // e-paper display object
-extern GxEPD2_4C<GxEPD2_290_GDEY029F51H, GxEPD2_290_GDEY029F51H::HEIGHT> display;
+extern GxEPD2_4C<GxEPD2_290c_GDEY029F51H, GxEPD2_290c_GDEY029F51H::HEIGHT> display;
 
 // Layout: left symbol panel width
 extern const int SYMBOL_PANEL_WIDTH;

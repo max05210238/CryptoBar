@@ -191,7 +191,7 @@ extern ChartSample g_chartSamples[MAX_CHART_SAMPLES];
 extern int         g_chartSampleCount;
 
 // e-paper display
-extern GxEPD2_4C<GxEPD2_290_GDEY029F51H, GxEPD2_290_GDEY029F51H::HEIGHT> display;
+extern GxEPD2_4C<GxEPD2_290c_GDEY029F51H, GxEPD2_290c_GDEY029F51H::HEIGHT> display;
 
 // ==================== WiFi credentials (stored in NVS) =====================
 extern String g_wifiSsid;

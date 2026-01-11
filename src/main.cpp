@@ -52,8 +52,8 @@
 
 // ==================== e-paper display =====================
 
-GxEPD2_4C<GxEPD2_290_GDEY029F51H, GxEPD2_290_GDEY029F51H::HEIGHT> display(
-  GxEPD2_290_GDEY029F51H(EPD_CS, EPD_DC, EPD_RST, EPD_BUSY)
+GxEPD2_4C<GxEPD2_290c_GDEY029F51H, GxEPD2_290c_GDEY029F51H::HEIGHT> display(
+  GxEPD2_290c_GDEY029F51H(EPD_CS, EPD_DC, EPD_RST, EPD_BUSY)
 );
 
 // ==================== Helper Functions =====================

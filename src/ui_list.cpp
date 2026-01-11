@@ -7,7 +7,7 @@
 #include "ui_list.h"
 
 // e-paper display object (defined in main.cpp)
-extern GxEPD2_4C<GxEPD2_290_GDEY029F51H, GxEPD2_290_GDEY029F51H::HEIGHT> display;
+extern GxEPD2_4C<GxEPD2_290c_GDEY029F51H, GxEPD2_290c_GDEY029F51H::HEIGHT> display;
 
 // Draw a simple vertical scrollbar (shared by list pages).
 static void uiDrawScrollbar(int16_t trackX, int16_t trackTop, int16_t trackBottom,

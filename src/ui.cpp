@@ -1,7 +1,7 @@
 #include <Arduino.h>
 #include <time.h>
 
-#include <GxEPD2_4C.h>
+#include <GxEPD2_3C.h>
 #include <Fonts/FreeSansBold9pt7b.h>
 #include <Fonts/FreeSansBold12pt7b.h>
 #include <Fonts/FreeSansBold18pt7b.h>
@@ -17,7 +17,7 @@
 // ===== Global objects and variables from main.cpp (extern declarations) =====
 
 // e-paper display object
-extern GxEPD2_4C<GxEPD2_290c_GDEY029F51H, GxEPD2_290c_GDEY029F51H::HEIGHT> display;
+extern GxEPD2_3C<GxEPD2_290c, GxEPD2_290c::HEIGHT> display;
 
 // Layout: left symbol panel width
 extern const int SYMBOL_PANEL_WIDTH;

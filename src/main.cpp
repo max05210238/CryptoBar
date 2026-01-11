@@ -6,7 +6,7 @@
 #include <time.h>
 #include <esp_sntp.h>
 
-#include <GxEPD2_4C.h>
+#include <GxEPD2_3C.h>
 #include <Fonts/FreeSansBold9pt7b.h>
 #include <Fonts/FreeSansBold12pt7b.h>
 #include <Fonts/FreeSansBold18pt7b.h>
@@ -52,8 +52,8 @@
 
 // ==================== e-paper display =====================
 
-GxEPD2_4C<GxEPD2_290c_GDEY029F51H, GxEPD2_290c_GDEY029F51H::HEIGHT> display(
-  GxEPD2_290c_GDEY029F51H(EPD_CS, EPD_DC, EPD_RST, EPD_BUSY)
+GxEPD2_3C<GxEPD2_290c, GxEPD2_290c::HEIGHT> display(
+  GxEPD2_290c(EPD_CS, EPD_DC, EPD_RST, EPD_BUSY)
 );
 
 // ==================== Helper Functions =====================

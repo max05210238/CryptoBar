@@ -412,6 +412,29 @@ You are free to:
 
 ---
 
+## ❤️ Support This Project
+
+CryptoBar is an open-source project built and maintained with passion. If you find this project useful and want to support its continued development, consider making a donation!
+
+### Ways to Support
+
+**💖 Donate via PayPal**
+
+Your generous donation helps cover development costs, hardware testing, and keeps this project alive and improving.
+
+[![Donate with PayPal](https://www.paypalobjects.com/en_US/i/btn/btn_donate_LG.gif)](https://www.paypal.com/donate/?business=GS74UBCHYVWU4&no_recurring=0&item_name=Thank+you+for+your+generous+donation.+Your+support+helps+me+continue+creating+and+improving+what+I+do.&currency_code=USD)
+
+**Other Ways to Help:**
+- ⭐ **Star this repository** - It helps others discover CryptoBar
+- 🔧 **Contribute code** - See [Contributing](#-contributing) section
+- 📝 **Improve documentation** - Help make guides clearer
+- 📸 **Share your build** - Show off your CryptoBar on social media
+- 🐛 **Report bugs** - Help make CryptoBar better for everyone
+
+**Thank you for your support!** Every contribution, big or small, helps keep this project growing and improving for the entire maker community.
+
+---
+
 ## ⚠️ Disclaimer
 
 This device displays cryptocurrency prices for informational purposes only. It is not financial advice. Always do your own research before making investment decisions.

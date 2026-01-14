@@ -77,6 +77,12 @@ extern double& g_usdToTwd;
 
 // ==================== Global Variables =====================
 
+// V0.99r: Display type detection (E-ink or VFD)
+enum DisplayType;  // Forward declaration
+extern DisplayType g_displayType;        // Detected display type (EINK or VFD)
+class DisplayInterface;                  // Forward declaration
+extern DisplayInterface* g_display;      // Display driver instance
+
 // V0.99m: API source tracking (dynamic display of actual API used)
 extern const char* g_currentPriceApi;    // Current real-time price API (e.g., "Paprika", "Kraken")
 extern const char* g_currentHistoryApi;  // Current historical data API (e.g., "CoinGecko", "Binance")

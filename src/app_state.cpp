@@ -4,7 +4,13 @@
 #include "day_avg.h"  // for DAYAVG_ROLLING constant
 
 // ==================== Version =====================
-const char* CRYPTOBAR_VERSION = "V0.99r";
+const char* CRYPTOBAR_VERSION = "V0.99r (Dual Display Support)";
+
+// ==================== Display Type Detection =====================
+#include "display_interface.h"
+
+DisplayType g_displayType = DISPLAY_UNKNOWN;
+DisplayInterface* g_display = nullptr;
 
 // ==================== Constants =====================
 

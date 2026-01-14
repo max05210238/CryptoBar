@@ -1,4 +1,4 @@
-// CryptoBar V0.99r (Settings Bug Fix & UX Improvements)
+// CryptoBar V0.99s (VFD Display Support)
 #include <Arduino.h>
 #include <WiFi.h>
 #include <HTTPClient.h>
@@ -707,7 +707,7 @@ String apIp = WiFi.softAPIP().toString();
       ensureCurrencyMenuVisible();
       g_currencyDirty = true;
     } else if (g_uiMode == UI_MODE_UPDATE_SUB) {
-      // V0.99r: Handle update interval submenu navigation
+      // V0.99s: Handle update interval submenu navigation
       g_updateMenuIndex += steps;
       while (g_updateMenuIndex < 0) g_updateMenuIndex += UPDATE_PRESETS_COUNT;
       while (g_updateMenuIndex >= UPDATE_PRESETS_COUNT) g_updateMenuIndex -= UPDATE_PRESETS_COUNT;
@@ -736,7 +736,7 @@ String apIp = WiFi.softAPIP().toString();
       g_currencyDirty = false;
       g_lastUiDrawMs = ms;
     } else if (g_uiMode == UI_MODE_UPDATE_SUB && g_updateDirty) {
-      // V0.99r: Handle update interval submenu redraw
+      // V0.99s: Handle update interval submenu redraw
       drawUpdateMenu(false);
       g_updateDirty = false;
       g_lastUiDrawMs = ms;

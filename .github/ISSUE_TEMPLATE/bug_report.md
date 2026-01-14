@@ -12,7 +12,7 @@ assignees: ''
 
 ## Environment
 
-**CryptoBar Version:** (e.g., V0.99r)
+**CryptoBar Version:** (e.g., V0.99s)
 
 **Hardware Configuration:**
 - ESP32-S3 Model: (e.g., N16R8 - 16MB Flash, 8MB PSRAM)

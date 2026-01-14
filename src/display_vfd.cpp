@@ -1,4 +1,4 @@
-// CryptoBar Retro V0.99r - VFD Display Implementation
+// CryptoBar Retro V0.99s - VFD Display Implementation
 #include "display_vfd.h"
 #include "app_state.h"
 #include "coins.h"

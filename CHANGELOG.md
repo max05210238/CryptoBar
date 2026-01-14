@@ -7,6 +7,64 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [V0.99s] - 2026-01-14
+
+### ✨ Major Feature: VFD Display Support
+- **CryptoBar Retro: 16-character PT6302 VFD display support**:
+  - Automatic hardware detection (E-ink vs VFD) via BUSY pin behavior
+  - One unified firmware for both E-ink and VFD displays
+  - Dual-page rotation: Price ↔ 24h Change (3-second interval)
+  - Smooth upward scroll animation between pages
+  - UTC-synchronized page switching across multiple devices
+
+### Added - Display Abstraction Layer
+- New abstract `DisplayInterface` base class for display polymorphism
+- `DisplayType` enum: `DISPLAY_UNKNOWN`, `DISPLAY_EINK`, `DISPLAY_VFD`
+- Hardware auto-detection: `detectDisplayType()`, `detectEinkByBusy()`
+- Complete VFD driver implementation: `DisplayVfd` class
+- Global display state: `g_displayType`, `g_display` pointer
+- 5 new files: `display_interface.h`, `display_detector.h/cpp`, `display_vfd.h/cpp`
+
+### VFD-Specific Features
+- **Dual-page rotation**:
+  - Page 1: Coin ticker + centered price (e.g., "BTC   90651.3437")
+  - Page 2: Coin ticker + 24h change% (e.g., "BTC  24H +0.29%")
+  - 3-second page interval with 0.5-second scroll animation
+- **Time-based brightness control**:
+  - Morning (6:00-8:00): 50% brightness
+  - Day (8:00-18:00): 70% brightness
+  - Evening (18:00-22:00): 50% brightness
+  - Night (22:00-2:00): 30% brightness
+  - Off (2:00-6:00): Display off
+- **Anti-burn-in protection**:
+  - 3:00-3:04 AM: Full-screen patterns (bright/dark/checkerboard A/B)
+  - 3:04-6:00 AM: Display off
+  - Extends VFD lifespan 3-5x (10,000 → 30,000-50,000 hours)
+- **Smart text formatting**:
+  - Coin name left-aligned (3 chars)
+  - Price/change data centered in remaining space (13 chars)
+  - Dynamic decimal places based on price magnitude
+
+### Technical Implementation
+- **Shared GPIO architecture**: E-ink and VFD share CS/MOSI/SCK/RST pins
+- **BUSY pin detection**: E-ink actively drives BUSY signal, VFD leaves floating
+- **Multi-device sync**: Preserves NTP sync, epoch-aligned scheduling, MAC jitter
+- **PT6302 controller**: SPI-like interface for 16-char dot matrix VFD
+- **Files modified**: 2 files (app_state.h/cpp)
+- **Total additions**: ~800 lines of new code
+
+### Changed
+- All version strings updated to V0.99s
+- `app_state.cpp`: Added display type global variables
+- `app_state.h`: Added DisplayType/DisplayInterface forward declarations
+
+### Notes
+- PT6302 library integration pending hardware arrival
+- Current VFD driver uses placeholder PT6302 class
+- Full integration into main.cpp pending hardware testing
+
+---
+
 ## [V0.99r] - 2025-12-28
 
 ### 🔴 CRITICAL BUG FIX

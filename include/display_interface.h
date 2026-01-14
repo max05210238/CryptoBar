@@ -1,4 +1,4 @@
-// CryptoBar V0.99r - Display Abstraction Interface
+// CryptoBar V0.99s - Display Abstraction Interface
 // Supports both E-ink and VFD displays with automatic detection
 #pragma once
 

@@ -55,7 +55,7 @@ void handleShortPress() {
   } else if (g_uiMode == UI_MODE_CURRENCY_SUB) {
     handleCurrencySelect();
   } else if (g_uiMode == UI_MODE_UPDATE_SUB) {
-    // V0.99r: Handle update interval submenu selection
+    // V0.99s: Handle update interval submenu selection
     handleUpdateIntervalSelect();
   }
 }

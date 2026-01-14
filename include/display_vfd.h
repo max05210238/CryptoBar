@@ -1,4 +1,4 @@
-// CryptoBar Retro V0.99r - VFD Display Implementation
+// CryptoBar Retro V0.99s - VFD Display Implementation
 // 16-character PT6302 VFD display with dual-page rotation
 #pragma once
 

@@ -85,7 +85,7 @@ Before reporting a bug, please:
 
 Use the [Bug Report Template](.github/ISSUE_TEMPLATE/bug_report.md) and include:
 
-- **CryptoBar version** (e.g., V0.99r)
+- **CryptoBar version** (e.g., V0.99s)
 - **Hardware configuration** (ESP32-S3 model, display type)
 - **Steps to reproduce** the issue
 - **Expected behavior** vs actual behavior
@@ -94,7 +94,7 @@ Use the [Bug Report Template](.github/ISSUE_TEMPLATE/bug_report.md) and include:
 
 **Example:**
 ```
-**Version:** V0.99r
+**Version:** V0.99s
 **Hardware:** ESP32-S3 N16R8, WaveShare 2.9" display
 **Issue:** Display shows garbled text after 10 minutes
 **Steps:**

@@ -1,4 +1,4 @@
-// CryptoBar V0.99r - Hardware Display Detection Implementation
+// CryptoBar V0.99s - Hardware Display Detection Implementation
 #include "display_detector.h"
 #include "app_state.h"
 

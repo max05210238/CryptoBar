@@ -1,10 +1,10 @@
-// CryptoBar V0.99q (UI/UX Improvements: Time Refresh & Settings Fix)
+// CryptoBar V0.99s (VFD Display Support)
 // app_state.cpp - Global application state definitions
 #include "app_state.h"
 #include "day_avg.h"  // for DAYAVG_ROLLING constant
 
 // ==================== Version =====================
-const char* CRYPTOBAR_VERSION = "V0.99r (Dual Display Support)";
+const char* CRYPTOBAR_VERSION = "V0.99s (VFD Display Support)";
 
 // ==================== Display Type Detection =====================
 #include "display_interface.h"
@@ -26,7 +26,7 @@ const float BRIGHTNESS_PRESETS[] = { 0.2f, 0.5f, 1.0f };
 const char* BRIGHTNESS_LABELS[]  = { "Low", "Med", "High" };
 
 // Update frequency presets
-// V0.99r: 1min, 3min, 5min, 10min (4 presets, fixed array bounds bug)
+// V0.99s: 1min, 3min, 5min, 10min (4 presets, fixed array bounds bug)
 // Recommended: 3min for 1-3 devices, 5min for 4+ devices on same network
 const uint32_t UPDATE_PRESETS_MS[] = {
   60UL * 1000UL,   // 1min

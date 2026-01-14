@@ -1,4 +1,4 @@
-// CryptoBar V0.99r - Hardware Display Detection
+// CryptoBar V0.99s - Hardware Display Detection
 // Automatically detects E-ink or VFD display using BUSY pin
 #pragma once
 

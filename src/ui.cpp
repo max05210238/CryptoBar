@@ -628,6 +628,14 @@ void drawWifiPreparingApScreen(const char* version, bool fullRefresh) {
 
 // WiFi AP portal instructions screen
 void drawWifiPortalScreen(const char* version, const char* apSsid, const char* apIp, bool fullRefresh) {
+  // V0.99s: Check display type for VFD support
+  if (g_displayType == DISPLAY_VFD && g_display != nullptr) {
+    // VFD: Show setup info
+    g_display->drawWifiSetupScreen(apSsid, apIp);
+    return;
+  }
+
+  // E-ink: Full UI with graphics
   if (fullRefresh) {
     display.setFullWindow();
   } else {
@@ -779,6 +787,14 @@ void drawFirmwareUpdateApScreen(const char* version, const char* apSsid, const c
 }
 
 void drawWifiConnectingScreen(const char* version, const char* ssid, bool fullRefresh) {
+  // V0.99s: Check display type for VFD support
+  if (g_displayType == DISPLAY_VFD && g_display != nullptr) {
+    // VFD: Simple text display
+    g_display->drawWifiSetupScreen(ssid, "Connecting...");
+    return;
+  }
+
+  // E-ink: Full UI with graphics
   if (fullRefresh) {
     display.setFullWindow();
   } else {
@@ -822,6 +838,14 @@ void drawWifiConnectingScreen(const char* version, const char* ssid, bool fullRe
 }
 
 void drawWifiConnectFailedScreen(const char* version, bool fullRefresh) {
+  // V0.99s: Check display type for VFD support
+  if (g_displayType == DISPLAY_VFD && g_display != nullptr) {
+    // VFD: Simple error display
+    g_display->drawErrorScreen("WiFi Failed");
+    return;
+  }
+
+  // E-ink: Full UI with graphics
   if (fullRefresh) {
     display.setFullWindow();
   } else {
@@ -932,6 +956,15 @@ void drawWifiInfoScreen(const char* version, const char* mac, const char* staIp,
 
 // Main screen (full / partial refresh)
 void drawMainScreen(double priceUsd, double change24h, bool fullRefresh) {
+  // V0.99s: Check display type for VFD support
+  if (g_displayType == DISPLAY_VFD && g_display != nullptr) {
+    // VFD handles its own page rotation and updates internally
+    // This is called after price updates, so just trigger VFD update
+    g_display->drawMainScreen(fullRefresh);
+    return;
+  }
+
+  // E-ink: Full UI with graphics
   if (fullRefresh) {
     display.setFullWindow();
   } else {
@@ -957,6 +990,12 @@ void drawMainScreen(double priceUsd, double change24h, bool fullRefresh) {
 // GxEPD2 will only refresh pixels that differ from the previous state
 // This avoids artifacts around the price area and ensures clean time updates
 void drawMainScreenTimeOnly(bool fullRefresh) {
+  // V0.99s: VFD doesn't show time, skip
+  if (g_displayType == DISPLAY_VFD) {
+    return;
+  }
+
+  // E-ink: Time update
   if (fullRefresh) {
     display.setFullWindow();
   } else {

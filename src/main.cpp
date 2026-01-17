@@ -35,6 +35,11 @@
 #include "network.h"
 #include "ui.h"
 
+// V0.99s: VFD display support
+#include "display_interface.h"
+#include "display_detector.h"
+#include "display_vfd.h"
+
 #include <string.h> // for strcmp
 
 // ==================== Safe defaults (prevent compilation failure if config.h is missing) =====================
@@ -319,13 +324,32 @@ void setup() {
  // and sync phase across devices (when NTP time becomes valid).
   ledAnimStartTask(30, 0);
 
+  // V0.99s: Hardware display detection (E-ink vs VFD)
+  Serial.println("[Display] Detecting display type...");
   SPI.begin(EPD_SCK, -1, EPD_MOSI);
-  display.init(115200);
-  display.setRotation(1);
+
+  g_displayType = detectDisplayType();
+
+  if (g_displayType == DISPLAY_VFD) {
+    Serial.println("[Display] VFD PT6302 detected - CryptoBar Retro mode");
+    g_display = new DisplayVfd();
+    g_display->init();
+  } else {
+    Serial.println("[Display] E-ink detected - Standard CryptoBar mode");
+    g_displayType = DISPLAY_EINK;
+    // Use existing E-ink display object
+    display.init(115200);
+    display.setRotation(1);
+  }
 
  // ==================== Boot welcome screen =====================
  // Show version to user first; screen stays visible while WiFi/NTP connection takes time
-  drawSplashScreen(CRYPTOBAR_VERSION);
+  if (g_displayType == DISPLAY_VFD) {
+    // VFD shows "CryptoBar Retro" during init, skip splash
+    Serial.println("[Boot] VFD mode: init message shown");
+  } else {
+    drawSplashScreen(CRYPTOBAR_VERSION);
+  }
   uint32_t splashStartMs = millis();
 
   // Encoder button pin (CLK/DT pins are configured inside encoderPcntBegin)
@@ -1037,6 +1061,14 @@ if (doUpdate) {
  // Backoff to avoid spamming the serial log; retry soon.
         g_nextNtpResyncUtc = now2 + 30;
       }
+    }
+  }
+
+  // V0.99s: VFD-specific updates (page rotation, brightness, night mode)
+  if (g_displayType == DISPLAY_VFD && g_display != nullptr) {
+    if (g_uiMode == UI_MODE_NORMAL && g_appState == APP_STATE_RUNNING) {
+      // VFD page rotation and brightness control
+      g_display->drawMainScreen(false);
     }
   }
 

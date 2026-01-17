@@ -15,12 +15,18 @@
 // Page rotation timing
 #define PAGE_SWITCH_INTERVAL_MS 3000  // 3 seconds per page
 
-// Brightness levels (0-255)
-#define BRIGHTNESS_MORNING  127  // 50% (6:00-8:00)
-#define BRIGHTNESS_DAY      178  // 70% (8:00-18:00)
-#define BRIGHTNESS_EVENING  127  // 50% (18:00-22:00)
-#define BRIGHTNESS_NIGHT     76  // 30% (22:00-2:00)
-#define BRIGHTNESS_OFF        0  // Off (2:00-6:00)
+// Brightness levels (PT6302 duty cycle: 8-15, where 8=dimmest, 15=brightest)
+#define DUTY_MORNING   11    // ~50% (6:00-8:00)
+#define DUTY_DAY       14    // ~85% (8:00-18:00)
+#define DUTY_EVENING   11    // ~50% (18:00-22:00)
+#define DUTY_NIGHT      9    // ~25% (22:00-2:00)
+#define DUTY_OFF        8    // Minimum (2:00-6:00)
+
+// Helper: Convert 0-255 brightness to PT6302 duty cycle (8-15)
+inline uint8_t brightnessToDuty(uint8_t brightness) {
+  if (brightness == 0) return DUTY_OFF;
+  return 8 + ((brightness * 7) / 255);  // Map 0-255 → 8-15
+}
 
 // Constructor
 DisplayVfd::DisplayVfd() {
@@ -28,7 +34,7 @@ DisplayVfd::DisplayVfd() {
   currentPage = 1;
   lastPageSwitch = 0;
   priceUpdateTime = 0;
-  currentBrightness = BRIGHTNESS_DAY;
+  currentBrightness = DUTY_DAY;  // Start with day brightness
 }
 
 DisplayVfd::~DisplayVfd() {
@@ -39,14 +45,19 @@ DisplayVfd::~DisplayVfd() {
 void DisplayVfd::init() {
   Serial.println("[VFD] Initializing PT6302 VFD display...");
 
-  vfd->begin();
+  // Initialize PT6302
+  vfd->init();
   delay(50);
 
+  // Configure VFD settings
+  vfd->setGPOP(true, false);                    // Set GPIO ports
+  vfd->setMode(PT6302::Mode::NORMAL);           // Normal operation mode
+  vfd->setDigitNo(16);                          // 16-character display
+  vfd->setDuty(currentBrightness);              // Set initial brightness
+
   vfd->clear();
-  vfd->setBrightness(currentBrightness);
 
   // Show boot message
-  vfd->setCursor(0);
   vfd->print("CryptoBar Retro");
   delay(2000);
 
@@ -130,8 +141,7 @@ void DisplayVfd::drawPricePage() {
 
   formatPrice(displayPrice, coin.ticker, buf, 17);
 
-  vfd->setCursor(0);
-  vfd->print(buf);
+  vfd->print(buf, true);  // overwrite=true to clear previous content
 
   Serial.printf("[VFD] Page 1 (Price): %s\n", buf);
 }
@@ -143,8 +153,7 @@ void DisplayVfd::drawChangePage() {
 
   formatChange(g_lastChange24h, coin.ticker, buf, 17);
 
-  vfd->setCursor(0);
-  vfd->print(buf);
+  vfd->print(buf, true);  // overwrite=true to clear previous content
 
   Serial.printf("[VFD] Page 2 (Change): %s\n", buf);
 }
@@ -207,26 +216,26 @@ void DisplayVfd::applyTimeBrightness() {
   }
 
   uint8_t hour = local.tm_hour;
-  uint8_t targetBrightness = BRIGHTNESS_DAY;
+  uint8_t targetDuty = DUTY_DAY;
 
-  // Determine brightness based on time of day
+  // Determine duty cycle based on time of day
   if (hour >= 6 && hour < 8) {
-    targetBrightness = BRIGHTNESS_MORNING;     // 50% (6:00-8:00)
+    targetDuty = DUTY_MORNING;     // ~50% (6:00-8:00)
   } else if (hour >= 8 && hour < 18) {
-    targetBrightness = BRIGHTNESS_DAY;         // 70% (8:00-18:00)
+    targetDuty = DUTY_DAY;         // ~85% (8:00-18:00)
   } else if (hour >= 18 && hour < 22) {
-    targetBrightness = BRIGHTNESS_EVENING;     // 50% (18:00-22:00)
+    targetDuty = DUTY_EVENING;     // ~50% (18:00-22:00)
   } else if (hour >= 22 || hour < 2) {
-    targetBrightness = BRIGHTNESS_NIGHT;       // 30% (22:00-2:00)
+    targetDuty = DUTY_NIGHT;       // ~25% (22:00-2:00)
   } else {
-    targetBrightness = BRIGHTNESS_OFF;         // 0% (2:00-6:00)
+    targetDuty = DUTY_OFF;         // Minimum (2:00-6:00)
   }
 
-  // Update brightness if changed
-  if (targetBrightness != currentBrightness) {
-    currentBrightness = targetBrightness;
-    vfd->setBrightness(currentBrightness);
-    Serial.printf("[VFD] Brightness: %d%% (hour=%d)\n", (currentBrightness * 100) / 255, hour);
+  // Update duty cycle if changed
+  if (targetDuty != currentBrightness) {
+    currentBrightness = targetDuty;
+    vfd->setDuty(currentBrightness);
+    Serial.printf("[VFD] Duty cycle: %d/15 (hour=%d)\n", currentBrightness, hour);
   }
 }
 
@@ -249,9 +258,8 @@ void DisplayVfd::runNightMode() {
     switch (patternIndex) {
       case 0:
         // Full bright
-        vfd->setBrightness(255);
-        vfd->setCursor(0);
-        vfd->print("████████████████");
+        vfd->setDuty(15);  // Maximum brightness
+        vfd->print("████████████████", true);
         Serial.println("[VFD] Anti-burn-in: Full bright");
         break;
 
@@ -263,17 +271,15 @@ void DisplayVfd::runNightMode() {
 
       case 2:
         // Checkerboard A
-        vfd->setBrightness(255);
-        vfd->setCursor(0);
-        vfd->print("█ █ █ █ █ █ █ █");
+        vfd->setDuty(15);  // Maximum brightness
+        vfd->print("█ █ █ █ █ █ █ █", true);
         Serial.println("[VFD] Anti-burn-in: Checkerboard A");
         break;
 
       case 3:
         // Checkerboard B
-        vfd->setBrightness(255);
-        vfd->setCursor(0);
-        vfd->print(" █ █ █ █ █ █ █ ");
+        vfd->setDuty(15);  // Maximum brightness
+        vfd->print(" █ █ █ █ █ █ █ ", true);
         Serial.println("[VFD] Anti-burn-in: Checkerboard B");
         break;
     }
@@ -283,10 +289,10 @@ void DisplayVfd::runNightMode() {
 
   // 3:04-6:00: Turn off display
   if ((hour == 3 && minute >= 4) || (hour >= 4 && hour < 6)) {
-    if (currentBrightness != BRIGHTNESS_OFF) {
+    if (currentBrightness != DUTY_OFF) {
       vfd->clear();
-      vfd->setBrightness(BRIGHTNESS_OFF);
-      currentBrightness = BRIGHTNESS_OFF;
+      vfd->setDuty(DUTY_OFF);
+      currentBrightness = DUTY_OFF;
       Serial.println("[VFD] Night mode: Display off (3:04-6:00)");
     }
     return;
@@ -313,66 +319,57 @@ void DisplayVfd::drawMainScreenTimeOnly(bool forceFullRefresh) {
 // Menu screens (simplified for VFD)
 void DisplayVfd::drawMenuScreen() {
   vfd->clear();
-  vfd->setCursor(0);
-  vfd->print("Menu            ");
+  vfd->print("Menu            ", true);
 }
 
 void DisplayVfd::drawCoinList() {
   const CoinInfo& coin = coinAt(g_currentCoinIndex);
   char buf[17];
   snprintf(buf, 17, "Coin: %-10s", coin.ticker);
-  vfd->setCursor(0);
-  vfd->print(buf);
+  vfd->print(buf, true);
 }
 
 void DisplayVfd::drawCurrencyList() {
   char buf[17];
   snprintf(buf, 17, "Curr: %-10s", CURRENCY_INFO[g_displayCurrency].code);
-  vfd->setCursor(0);
-  vfd->print(buf);
+  vfd->print(buf, true);
 }
 
 void DisplayVfd::drawTimezoneList() {
   // VFD Retro doesn't show time, so timezone is less relevant
   // But still allow user to set it for scheduler alignment
   vfd->clear();
-  vfd->setCursor(0);
-  vfd->print("Timezone        ");
+  vfd->print("Timezone        ", true);
 }
 
 void DisplayVfd::drawSettingsScreen(const char* key, const char* value) {
   char buf[17];
   snprintf(buf, 17, "%-6s:%-9s", key, value);
-  vfd->setCursor(0);
-  vfd->print(buf);
+  vfd->print(buf, true);
 }
 
 void DisplayVfd::drawWifiSetupScreen(const char* ssid, const char* ip) {
   vfd->clear();
-  vfd->setCursor(0);
-  vfd->print("WiFi: Setup     ");
+  vfd->print("WiFi: Setup     ", true);
   delay(2000);
 
   if (ssid) {
     char buf[17];
     snprintf(buf, 17, "SSID:%-11s", ssid);
-    vfd->setCursor(0);
-    vfd->print(buf);
+    vfd->print(buf, true);
   }
 }
 
 void DisplayVfd::drawOtaScreen(const char* status) {
   char buf[17];
   snprintf(buf, 17, "OTA: %-11s", status);
-  vfd->setCursor(0);
-  vfd->print(buf);
+  vfd->print(buf, true);
 }
 
 void DisplayVfd::drawErrorScreen(const char* message) {
   char buf[17];
   snprintf(buf, 17, "ERR: %-11s", message);
-  vfd->setCursor(0);
-  vfd->print(buf);
+  vfd->print(buf, true);
 }
 
 void DisplayVfd::clear() {
@@ -380,15 +377,17 @@ void DisplayVfd::clear() {
 }
 
 void DisplayVfd::sleep() {
-  vfd->setBrightness(0);
+  vfd->setDuty(DUTY_OFF);
   vfd->clear();
 }
 
 void DisplayVfd::wake() {
-  vfd->setBrightness(currentBrightness);
+  vfd->setDuty(currentBrightness);
 }
 
 void DisplayVfd::setBrightness(uint8_t level) {
-  currentBrightness = level;
-  vfd->setBrightness(level);
+  // Convert 0-255 brightness to PT6302 duty cycle (8-15)
+  uint8_t duty = brightnessToDuty(level);
+  currentBrightness = duty;
+  vfd->setDuty(duty);
 }

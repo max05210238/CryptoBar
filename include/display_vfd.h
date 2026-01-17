@@ -4,18 +4,7 @@
 
 #include "display_interface.h"
 #include <Arduino.h>
-
-// Forward declaration - PT6302 library will be integrated when hardware arrives
-// Placeholder class for now
-class PT6302 {
-public:
-  PT6302(uint8_t clk, uint8_t rst, uint8_t cs, uint8_t din) {}
-  void begin() {}
-  void clear() {}
-  void setCursor(uint8_t pos) {}
-  void print(const char* str) {}
-  void setBrightness(uint8_t level) {}
-};
+#include <PT6302.h>  // Real PT6302 library
 
 class DisplayVfd : public DisplayInterface {
 public:

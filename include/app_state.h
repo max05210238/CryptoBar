@@ -77,10 +77,9 @@ extern double& g_usdToTwd;
 
 // ==================== Global Variables =====================
 
-// V0.99r: Display type detection (E-ink or VFD)
-enum DisplayType;  // Forward declaration
+// V0.99s: Display type detection (E-ink or VFD)
+#include "display_interface.h"           // For DisplayType enum
 extern DisplayType g_displayType;        // Detected display type (EINK or VFD)
-class DisplayInterface;                  // Forward declaration
 extern DisplayInterface* g_display;      // Display driver instance
 
 // V0.99m: API source tracking (dynamic display of actual API used)

@@ -1,6 +1,7 @@
 // CryptoBar Retro V0.99s - VFD Display Implementation
 #include "display_vfd.h"
 #include "app_state.h"
+#include "app_time.h"  // For getLocalTimeLocal()
 #include "coins.h"
 #include "config.h"
 #include <stdio.h>

@@ -47,23 +47,42 @@ void DisplayVfd::init() {
   Serial.println("[VFD] Initializing PT6302 VFD display...");
 
   // Initialize PT6302
+  Serial.println("[VFD] Step 1: Calling vfd->init()...");
   vfd->init();
-  delay(50);
+  delay(100);
 
   // Configure VFD settings
-  vfd->setGPOP(true, false);                    // Set GPIO ports
-  vfd->setMode(PT6302::Mode::NORMAL);           // Normal operation mode
+  Serial.println("[VFD] Step 2: Setting digit count to 16...");
   vfd->setDigitNo(16);                          // 16-character display
-  vfd->setDuty(currentBrightness);              // Set initial brightness
+  delay(10);
 
+  Serial.println("[VFD] Step 3: Setting duty cycle (brightness)...");
+  vfd->setDuty(currentBrightness);              // Set initial brightness (14/15)
+  delay(10);
+
+  Serial.println("[VFD] Step 4: Setting GPOP ports...");
+  vfd->setGPOP(true, false);                    // Set GPIO ports
+  delay(10);
+
+  Serial.println("[VFD] Step 5: Setting NORMAL mode...");
+  vfd->setMode(PT6302::Mode::NORMAL);           // Normal operation mode
+  delay(10);
+
+  Serial.println("[VFD] Step 6: Clearing display...");
   vfd->clear();
+  delay(100);
 
   // Show boot message
-  vfd->print("CryptoBar Retro");
+  Serial.println("[VFD] Step 7: Printing 'CryptoBar Retro'...");
+  vfd->print("CryptoBar Retro", true);  // overwrite=true
   delay(2000);
 
+  Serial.println("[VFD] Step 8: Clearing for ready state...");
   vfd->clear();
-  Serial.println("[VFD] Initialization complete");
+  delay(100);
+
+  Serial.println("[VFD] Initialization complete - VFD should be showing blank screen");
+  Serial.printf("[VFD] Current duty cycle: %d/15\n", currentBrightness);
 }
 
 // Center text in remaining space after prefix
@@ -350,15 +369,23 @@ void DisplayVfd::drawSettingsScreen(const char* key, const char* value) {
 }
 
 void DisplayVfd::drawWifiSetupScreen(const char* ssid, const char* ip) {
-  vfd->clear();
-  vfd->print("WiFi: Setup     ", true);
-  delay(2000);
+  Serial.println("[VFD] drawWifiSetupScreen called");
+  Serial.printf("[VFD] SSID: %s, IP: %s\n", ssid ? ssid : "null", ip ? ip : "null");
 
-  if (ssid) {
+  vfd->clear();
+  delay(50);
+
+  if (ssid && strlen(ssid) > 0) {
     char buf[17];
-    snprintf(buf, 17, "SSID:%-11s", ssid);
+    snprintf(buf, 17, "%-16s", ssid);
+    Serial.printf("[VFD] Printing SSID: '%s'\n", buf);
     vfd->print(buf, true);
+  } else {
+    Serial.println("[VFD] Printing 'WiFi: Setup'");
+    vfd->print("WiFi: Setup     ", true);
   }
+
+  Serial.println("[VFD] drawWifiSetupScreen complete");
 }
 
 void DisplayVfd::drawOtaScreen(const char* status) {
@@ -368,9 +395,15 @@ void DisplayVfd::drawOtaScreen(const char* status) {
 }
 
 void DisplayVfd::drawErrorScreen(const char* message) {
+  Serial.println("[VFD] drawErrorScreen called");
+  Serial.printf("[VFD] Error message: %s\n", message ? message : "null");
+
   char buf[17];
-  snprintf(buf, 17, "ERR: %-11s", message);
+  snprintf(buf, 17, "ERR: %-11s", message ? message : "Unknown");
+  Serial.printf("[VFD] Printing: '%s'\n", buf);
   vfd->print(buf, true);
+
+  Serial.println("[VFD] drawErrorScreen complete");
 }
 
 void DisplayVfd::clear() {

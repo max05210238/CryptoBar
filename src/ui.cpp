@@ -591,6 +591,14 @@ void drawSplashScreen(const char* version) {
 // WiFi provisioning / status screens
 // Preparing AP screen (AP startup can take ~30s on some boards/firmware)
 void drawWifiPreparingApScreen(const char* version, bool fullRefresh) {
+  // V0.99s: Check display type for VFD support
+  if (g_displayType == DISPLAY_VFD && g_display != nullptr) {
+    // VFD: Simple preparing message
+    g_display->drawWifiSetupScreen("Preparing...", nullptr);
+    return;
+  }
+
+  // E-ink: Full UI
   if (fullRefresh) {
     display.setFullWindow();
   } else {

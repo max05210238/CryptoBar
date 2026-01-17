@@ -45,44 +45,60 @@ DisplayVfd::~DisplayVfd() {
 // Initialize VFD
 void DisplayVfd::init() {
   Serial.println("[VFD] Initializing PT6302 VFD display...");
+  Serial.println("[VFD] WARNING: Your VFD module has no RST pin - using manual initialization");
 
-  // Initialize PT6302
-  Serial.println("[VFD] Step 1: Calling vfd->init()...");
-  vfd->init();
+  // Manual GPIO initialization (PT6302 library's init() but without reset)
+  Serial.println("[VFD] Step 1: Manually setting up GPIO pins...");
+  pinMode(VFD_CLK, OUTPUT);
+  pinMode(VFD_CS, OUTPUT);
+  pinMode(VFD_DIN, OUTPUT);
+  pinMode(VFD_RST, OUTPUT);  // Set but won't be used (not connected)
+
+  // Initialize to default states
+  digitalWrite(VFD_CS, HIGH);   // CS high (inactive)
+  digitalWrite(VFD_CLK, HIGH);  // CLK high
+  digitalWrite(VFD_DIN, LOW);   // Data low
+  digitalWrite(VFD_RST, HIGH);  // RST high (inactive)
   delay(100);
 
+  Serial.println("[VFD] Step 2: Trying ALLON mode to test VFD...");
+  vfd->setMode(PT6302::Mode::ALLON);  // Turn all segments ON for testing
+  delay(2000);
+  Serial.println("[VFD] If VFD is working, all segments should be lit now!");
+
   // Configure VFD settings
-  Serial.println("[VFD] Step 2: Setting digit count to 16...");
+  Serial.println("[VFD] Step 3: Setting digit count to 16...");
   vfd->setDigitNo(16);                          // 16-character display
   delay(10);
 
-  Serial.println("[VFD] Step 3: Setting duty cycle (brightness)...");
-  vfd->setDuty(currentBrightness);              // Set initial brightness (14/15)
+  Serial.println("[VFD] Step 4: Setting duty cycle (brightness)...");
+  vfd->setDuty(15);  // Maximum brightness for testing
   delay(10);
 
-  Serial.println("[VFD] Step 4: Setting GPOP ports...");
+  Serial.println("[VFD] Step 5: Setting GPOP ports...");
   vfd->setGPOP(true, false);                    // Set GPIO ports
   delay(10);
 
-  Serial.println("[VFD] Step 5: Setting NORMAL mode...");
+  Serial.println("[VFD] Step 6: Setting NORMAL mode...");
   vfd->setMode(PT6302::Mode::NORMAL);           // Normal operation mode
   delay(10);
 
-  Serial.println("[VFD] Step 6: Clearing display...");
+  Serial.println("[VFD] Step 7: Clearing display...");
   vfd->clear();
   delay(100);
 
   // Show boot message
-  Serial.println("[VFD] Step 7: Printing 'CryptoBar Retro'...");
+  Serial.println("[VFD] Step 8: Printing 'CryptoBar Retro'...");
   vfd->print("CryptoBar Retro", true);  // overwrite=true
   delay(2000);
 
-  Serial.println("[VFD] Step 8: Clearing for ready state...");
+  Serial.println("[VFD] Step 9: Clearing for ready state...");
   vfd->clear();
   delay(100);
 
   Serial.println("[VFD] Initialization complete - VFD should be showing blank screen");
-  Serial.printf("[VFD] Current duty cycle: %d/15\n", currentBrightness);
+  Serial.printf("[VFD] Current duty cycle: 15/15 (max for testing)\n");
+  currentBrightness = 15;  // Keep at max for now
 }
 
 // Center text in remaining space after prefix

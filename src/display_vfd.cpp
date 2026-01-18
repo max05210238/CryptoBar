@@ -346,12 +346,12 @@ void DisplayVfd::mixCharPixels(uint8_t* output, const uint8_t* oldChar, const ui
     // This makes pixels exit from top (bit 0 disappears first)
     uint8_t oldPart = oldPixels >> offset;
 
-    // New character: take bottom 'offset' pixels (high bits) WITHOUT shifting
-    // offset=1: take bit 6 only
-    // offset=2: take bits 6,5
-    // offset=3: take bits 6,5,4, etc.
-    uint8_t newMask = ((1 << offset) - 1) << (7 - offset);
-    uint8_t newPart = newPixels & newMask;
+    // New character: take TOP 'offset' pixels and shift to bottom position
+    // offset=1: take bit 0, shift to bit 6
+    // offset=2: take bits 0-1, shift to bits 5-6
+    // offset=3: take bits 0-2, shift to bits 4-6, etc.
+    uint8_t newMask = (1 << offset) - 1;              // Mask for low bits
+    uint8_t newPart = (newPixels & newMask) << (7 - offset);  // Shift to high bits
 
     output[col] = oldPart | newPart;
   }

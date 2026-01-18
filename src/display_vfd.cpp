@@ -453,7 +453,7 @@ void DisplayVfd::scrollUpPixelLevel(const char* oldText, const char* newText) {
 }
 
 // Horizontal left scroll (character-level)
-// Old text stays on left, new text slides in from right
+// Old text stays in place, new text slides in from right and covers it
 void DisplayVfd::scrollLeftCharLevel(const char* oldText, const char* newText) {
   const uint8_t DISPLAY_WIDTH = 16;
   const uint8_t FRAME_COUNT = DISPLAY_WIDTH + 1;  // 17 frames (0 to 16)
@@ -463,20 +463,18 @@ void DisplayVfd::scrollLeftCharLevel(const char* oldText, const char* newText) {
   snprintf(oldBuf, 17, "%-16s", oldText);  // Pad to 16 chars
   snprintf(newBuf, 17, "%-16s", newText);
 
-  // Animate: old text scrolls left, new text enters from right
+  // Animate: old text stays, new text covers from right to left
   for (uint8_t frame = 0; frame <= DISPLAY_WIDTH; frame++) {
     char displayBuf[17];
 
     // Build the display buffer for this frame
     for (uint8_t i = 0; i < DISPLAY_WIDTH; i++) {
       if (i < (DISPLAY_WIDTH - frame)) {
-        // Show old text (shifted left by 'frame' positions)
-        uint8_t oldIndex = i + frame;
-        displayBuf[i] = (oldIndex < DISPLAY_WIDTH) ? oldBuf[oldIndex] : ' ';
+        // Show old text (stays in place)
+        displayBuf[i] = oldBuf[i];
       } else {
-        // Show new text (entering from right)
-        uint8_t newIndex = i - (DISPLAY_WIDTH - frame);
-        displayBuf[i] = (newIndex < DISPLAY_WIDTH) ? newBuf[newIndex] : ' ';
+        // Show new text (covering from right)
+        displayBuf[i] = newBuf[i];
       }
     }
     displayBuf[DISPLAY_WIDTH] = '\0';

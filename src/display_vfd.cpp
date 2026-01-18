@@ -453,7 +453,7 @@ void DisplayVfd::scrollUpPixelLevel(const char* oldText, const char* newText) {
 }
 
 // Horizontal left scroll (character-level)
-// New screen slides in from right side, covering (not pushing) old screen
+// Old screen slides out to left, new screen slides in from right
 void DisplayVfd::scrollLeftCharLevel(const char* oldText, const char* newText) {
   const uint8_t DISPLAY_WIDTH = 16;
   const uint8_t FRAME_COUNT = DISPLAY_WIDTH + 1;  // 17 frames (0 to 16)
@@ -463,22 +463,17 @@ void DisplayVfd::scrollLeftCharLevel(const char* oldText, const char* newText) {
   snprintf(oldBuf, 17, "%-16s", oldText);  // Pad to 16 chars
   snprintf(newBuf, 17, "%-16s", newText);
 
-  // Animate: new screen slides in from right, covering old screen
+  // Create a 32-character virtual buffer: [old text][new text]
+  char virtualBuf[33];
+  snprintf(virtualBuf, 33, "%s%s", oldBuf, newBuf);
+
+  // Animate: slide viewing window from left to right across virtual buffer
   for (uint8_t frame = 0; frame <= DISPLAY_WIDTH; frame++) {
     char displayBuf[17];
 
-    // New screen position: starts at 16 (off-screen right), ends at 0 (fully covers)
-    uint8_t newStartPos = DISPLAY_WIDTH - frame;
-
+    // Extract 16-character window starting at position 'frame'
     for (uint8_t i = 0; i < DISPLAY_WIDTH; i++) {
-      if (i < newStartPos) {
-        // Not yet covered by new screen, show old screen
-        displayBuf[i] = oldBuf[i];
-      } else {
-        // Covered by new screen
-        uint8_t newIndex = i - newStartPos;
-        displayBuf[i] = newBuf[newIndex];
-      }
+      displayBuf[i] = virtualBuf[frame + i];
     }
     displayBuf[DISPLAY_WIDTH] = '\0';
 

@@ -304,8 +304,8 @@ void DisplayVfd::drawChangePage() {
 // ===== Pixel-level scrolling functions =====
 
 // Write custom character to CGRAM slot (0-7)
-// pixelData: 5 bytes (columns), each byte = 7 pixels in VFD format
-// VFD format: bit 0 = bottom pixel, bit 6 = top pixel
+// pixelData: 5 bytes (columns), each byte = 7 pixels
+// Format: bit 0 = top pixel, bit 6 = bottom pixel
 void DisplayVfd::writeCustomChar(uint8_t cgramSlot, const uint8_t* pixelData) {
   if (cgramSlot > 7) return;
 
@@ -324,7 +324,7 @@ void DisplayVfd::writeCustomChar(uint8_t cgramSlot, const uint8_t* pixelData) {
 
 // Mix pixels from old and new character based on scroll offset
 // offset: 0-7 (0=show old, 7=show new)
-// NOTE: Input chars are in VFD format (bit 0 = bottom, bit 6 = top)
+// Font format: bit 0 = top pixel, bit 6 = bottom pixel
 void DisplayVfd::mixCharPixels(uint8_t* output, const uint8_t* oldChar, const uint8_t* newChar, uint8_t offset) {
   if (offset == 0) {
     // Show old character completely
@@ -339,19 +339,20 @@ void DisplayVfd::mixCharPixels(uint8_t* output, const uint8_t* oldChar, const ui
   }
 
   // Scroll UP: old text moves up (exits from top), new text enters from bottom
-  // VFD format: bit 0 = bottom pixel, bit 6 = top pixel
+  // Format: bit 0 = top pixel, bit 6 = bottom pixel
   for (uint8_t col = 0; col < 5; col++) {
     uint8_t oldPixels = oldChar[col];
     uint8_t newPixels = newChar[col];
 
-    // Old text: left shift (move to higher bits = move up in VFD format)
-    // This makes bottom rows empty as text moves upward
-    uint8_t oldPart = (oldPixels << offset) & 0x7F;
+    // Old text: right shift (pixels move upward, exit from top/bit 0)
+    // offset=1: bits 1-6 → bits 0-5, bit 6 cleared
+    uint8_t oldPart = oldPixels >> offset;
 
-    // New text: take TOP 'offset' pixels (high bits) and place at BOTTOM (low bits)
-    // offset=1: take bit 6 (top), place at bit 0 (bottom)
-    // offset=2: take bits 6,5, place at bits 1,0
-    uint8_t newPart = newPixels >> (7 - offset);
+    // New text: take top 'offset' pixels (bits 0 to offset-1) and shift to bottom
+    // offset=1: take bit 0 (top), shift to bit 6 (bottom)
+    // offset=2: take bits 0-1, shift to bits 5-6
+    uint8_t newMask = (1 << offset) - 1;
+    uint8_t newPart = (newPixels & newMask) << (7 - offset);
 
     output[col] = oldPart | newPart;
   }

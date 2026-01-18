@@ -359,94 +359,94 @@ void DisplayVfd::mixCharPixels(uint8_t* output, const uint8_t* oldChar, const ui
 }
 
 // Pixel-level vertical scroll (old text -> new text)
-// Uses rapid CGRAM switching (>100Hz) to simulate 16-character simultaneous animation
+// Two-phase animation with proper CGRAM stabilization
 void DisplayVfd::scrollUpPixelLevel(const char* oldText, const char* newText) {
   const uint8_t FRAME_COUNT = 8;  // 8 frames for 7 pixel rows
   const uint8_t frameDelay = SCROLL_DURATION_MS / FRAME_COUNT;
-  const uint8_t switchDelay = 5;  // 5ms per sub-frame = 200Hz switching rate
 
   char oldBuf[17], newBuf[17];
   snprintf(oldBuf, 17, "%-16s", oldText);  // Pad to 16 chars
   snprintf(newBuf, 17, "%-16s", newText);
 
-  // Animate all 16 characters with rapid CGRAM switching
+  // === Phase 1: Animate left half (positions 0-7) ===
   for (uint8_t frame = 0; frame < FRAME_COUNT; frame++) {
     uint8_t offset = frame;  // 0 to 7
-    unsigned long frameStartTime = millis();
 
-    // Pre-generate mixed pixels for both halves
-    uint8_t leftMixed[8][5];
-    uint8_t rightMixed[8][5];
-
+    // Update CGRAM 0-7 with mixed pixels for left half
     for (uint8_t i = 0; i < 8; i++) {
       uint8_t oldCharBitmap[5], newCharBitmap[5];
-
-      // Left half
       getCharBitmap(oldBuf[i], oldCharBitmap);
       getCharBitmap(newBuf[i], newCharBitmap);
-      mixCharPixels(leftMixed[i], oldCharBitmap, newCharBitmap, offset);
 
-      // Right half
-      getCharBitmap(oldBuf[8 + i], oldCharBitmap);
-      getCharBitmap(newBuf[8 + i], newCharBitmap);
-      mixCharPixels(rightMixed[i], oldCharBitmap, newCharBitmap, offset);
+      uint8_t mixed[5];
+      mixCharPixels(mixed, oldCharBitmap, newCharBitmap, offset);
+      writeCustomChar(i, mixed);
     }
 
-    // Rapidly alternate between left and right half display
-    while (millis() - frameStartTime < frameDelay) {
-      // === Sub-frame 1: Display left half animated ===
-      // Update CGRAM with left half mixed pixels
-      for (uint8_t i = 0; i < 8; i++) {
-        writeCustomChar(i, leftMixed[i]);
-      }
-      delayMicroseconds(100);  // Wait for CGRAM to stabilize (critical!)
+    // Critical: Wait for CGRAM to fully stabilize
+    delay(2);  // 2ms for CGRAM to settle
 
-      // Display: left half CGRAM (animated), right half ASCII transition
-      digitalWrite(VFD_CS, LOW);
-      vfdWriteByte(0x20);
-      for (uint8_t i = 0; i < 16; i++) {
-        if (i < 8) {
-          vfdWriteByte(0x00 + i);  // Left: CGRAM (animated)
-        } else {
-          // Right: gradual ASCII transition
-          char displayChar = (offset < 4) ? oldBuf[i] : newBuf[i];
-          vfdWriteByte(displayChar);
-        }
+    // Display: left half CGRAM (animated), right half ASCII smooth transition
+    digitalWrite(VFD_CS, LOW);
+    vfdWriteByte(0x20);  // Start at position 0
+    for (uint8_t i = 0; i < 16; i++) {
+      if (i < 8) {
+        vfdWriteByte(0x00 + i);  // Left: CGRAM (pixel-level animation)
+      } else {
+        // Right: smooth ASCII transition (no jumping)
+        char displayChar = (offset < 4) ? oldBuf[i] : newBuf[i];
+        vfdWriteByte(displayChar);
       }
-      digitalWrite(VFD_CS, HIGH);
-      delayMicroseconds(50);  // Wait before vfdShow
-      vfdShow();
-      delay(switchDelay);
-
-      if (millis() - frameStartTime >= frameDelay) break;
-
-      // === Sub-frame 2: Display right half animated ===
-      // Update CGRAM with right half mixed pixels
-      for (uint8_t i = 0; i < 8; i++) {
-        writeCustomChar(i, rightMixed[i]);
-      }
-      delayMicroseconds(100);  // Wait for CGRAM to stabilize (critical!)
-
-      // Display: left half ASCII transition, right half CGRAM (animated)
-      digitalWrite(VFD_CS, LOW);
-      vfdWriteByte(0x20);
-      for (uint8_t i = 0; i < 16; i++) {
-        if (i < 8) {
-          // Left: gradual ASCII transition
-          char displayChar = (offset < 4) ? oldBuf[i] : newBuf[i];
-          vfdWriteByte(displayChar);
-        } else {
-          vfdWriteByte(0x00 + (i - 8));  // Right: CGRAM (animated)
-        }
-      }
-      digitalWrite(VFD_CS, HIGH);
-      delayMicroseconds(50);  // Wait before vfdShow
-      vfdShow();
-      delay(switchDelay);
     }
+    digitalWrite(VFD_CS, HIGH);
+
+    vfdShow();
+    delay(frameDelay - 2);  // Subtract CGRAM stabilization time
   }
 
-  // Final: display new text using normal ASCII
+  // === Inter-phase stabilization: Clear CGRAM to prevent artifacts ===
+  for (uint8_t i = 0; i < 8; i++) {
+    uint8_t blank[5] = {0, 0, 0, 0, 0};
+    writeCustomChar(i, blank);
+  }
+  delay(5);  // Extra delay to ensure CGRAM is completely cleared
+
+  // === Phase 2: Animate right half (positions 8-15) ===
+  for (uint8_t frame = 0; frame < FRAME_COUNT; frame++) {
+    uint8_t offset = frame;  // 0 to 7
+
+    // Update CGRAM 0-7 with mixed pixels for right half
+    for (uint8_t i = 0; i < 8; i++) {
+      uint8_t oldCharBitmap[5], newCharBitmap[5];
+      getCharBitmap(oldBuf[8 + i], oldCharBitmap);
+      getCharBitmap(newBuf[8 + i], newCharBitmap);
+
+      uint8_t mixed[5];
+      mixCharPixels(mixed, oldCharBitmap, newCharBitmap, offset);
+      writeCustomChar(i, mixed);
+    }
+
+    // Critical: Wait for CGRAM to fully stabilize
+    delay(2);  // 2ms for CGRAM to settle
+
+    // Display: left half shows final text, right half CGRAM (animated)
+    digitalWrite(VFD_CS, LOW);
+    vfdWriteByte(0x20);  // Start at position 0
+    for (uint8_t i = 0; i < 16; i++) {
+      if (i < 8) {
+        // Left: show final new text (already animated in phase 1)
+        vfdWriteByte(newBuf[i]);
+      } else {
+        vfdWriteByte(0x00 + (i - 8));  // Right: CGRAM (pixel-level animation)
+      }
+    }
+    digitalWrite(VFD_CS, HIGH);
+
+    vfdShow();
+    delay(frameDelay - 2);  // Subtract CGRAM stabilization time
+  }
+
+  // Final: display new text using normal ASCII (clear CGRAM usage)
   vfdWriteStr(0, newText);
 
   Serial.println("[VFD] Pixel-level scroll complete");

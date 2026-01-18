@@ -371,41 +371,69 @@ void DisplayVfd::scrollUpPixelLevel(const char* oldText, const char* newText) {
   for (uint8_t frame = 0; frame < FRAME_COUNT; frame++) {
     uint8_t offset = frame;  // 0 to 7
 
-    // Process characters in 2 batches (CGRAM only has 8 slots)
-    // CRITICAL: Must call vfdShow() after EACH batch to prevent CGRAM overwrite issues
-    for (uint8_t batch = 0; batch < 2; batch++) {
-      uint8_t startPos = batch * 8;
+    // === Batch 0: Animate positions 0-7 with CGRAM ===
+    // Update CGRAM 0-7 with mixed pixels for positions 0-7
+    for (uint8_t i = 0; i < 8; i++) {
+      uint8_t oldCharBitmap[5];
+      uint8_t newCharBitmap[5];
+      getCharBitmap(oldBuf[i], oldCharBitmap);
+      getCharBitmap(newBuf[i], newCharBitmap);
 
-      // Generate custom characters for this batch
-      for (uint8_t i = 0; i < 8 && (startPos + i) < 16; i++) {
-        uint8_t charPos = startPos + i;
-
-        // Read bitmaps from PROGMEM to RAM
-        uint8_t oldCharBitmap[5];
-        uint8_t newCharBitmap[5];
-        getCharBitmap(oldBuf[charPos], oldCharBitmap);
-        getCharBitmap(newBuf[charPos], newCharBitmap);
-
-        uint8_t mixed[5];
-        mixCharPixels(mixed, oldCharBitmap, newCharBitmap, offset);
-
-        writeCustomChar(i, mixed);
-      }
-
-      // Display this batch using CGRAM characters
-      digitalWrite(VFD_CS, LOW);
-      vfdWriteByte(0x20 + startPos);  // Set position
-
-      for (uint8_t i = 0; i < 8 && (startPos + i) < 16; i++) {
-        vfdWriteByte(0x00 + i);  // Display CGRAM char 0-7
-      }
-
-      digitalWrite(VFD_CS, HIGH);
-
-      // Show this batch immediately to lock in the display
-      // This prevents the second batch from overwriting CGRAM and affecting first batch
-      vfdShow();
+      uint8_t mixed[5];
+      mixCharPixels(mixed, oldCharBitmap, newCharBitmap, offset);
+      writeCustomChar(i, mixed);
     }
+
+    // Write full 16-char display:
+    // - Positions 0-7: CGRAM 0-7 (animated)
+    // - Positions 8-15: ASCII chars (static intermediate state to avoid CGRAM conflict)
+    digitalWrite(VFD_CS, LOW);
+    vfdWriteByte(0x20);  // Start at position 0
+
+    for (uint8_t i = 0; i < 16; i++) {
+      if (i < 8) {
+        vfdWriteByte(0x00 + i);  // Use CGRAM for positions 0-7
+      } else {
+        // Show intermediate ASCII based on offset
+        char displayChar = (offset < 4) ? oldBuf[i] : newBuf[i];
+        vfdWriteByte(displayChar);
+      }
+    }
+
+    digitalWrite(VFD_CS, HIGH);
+    vfdShow();
+
+    // === Batch 1: Animate positions 8-15 with CGRAM ===
+    // Update CGRAM 0-7 with mixed pixels for positions 8-15
+    for (uint8_t i = 0; i < 8; i++) {
+      uint8_t oldCharBitmap[5];
+      uint8_t newCharBitmap[5];
+      getCharBitmap(oldBuf[8 + i], oldCharBitmap);
+      getCharBitmap(newBuf[8 + i], newCharBitmap);
+
+      uint8_t mixed[5];
+      mixCharPixels(mixed, oldCharBitmap, newCharBitmap, offset);
+      writeCustomChar(i, mixed);
+    }
+
+    // Write full 16-char display:
+    // - Positions 0-7: ASCII chars (static intermediate state to avoid CGRAM conflict)
+    // - Positions 8-15: CGRAM 0-7 (animated)
+    digitalWrite(VFD_CS, LOW);
+    vfdWriteByte(0x20);  // Start at position 0
+
+    for (uint8_t i = 0; i < 16; i++) {
+      if (i < 8) {
+        // Show intermediate ASCII based on offset
+        char displayChar = (offset < 4) ? oldBuf[i] : newBuf[i];
+        vfdWriteByte(displayChar);
+      } else {
+        vfdWriteByte(0x00 + (i - 8));  // Use CGRAM for positions 8-15
+      }
+    }
+
+    digitalWrite(VFD_CS, HIGH);
+    vfdShow();
 
     delay(frameDelay);
   }

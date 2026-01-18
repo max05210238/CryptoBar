@@ -367,11 +367,10 @@ void DisplayVfd::scrollUpPixelLevel(const char* oldText, const char* newText) {
   snprintf(oldBuf, 17, "%-16s", oldText);  // Pad to 16 chars
   snprintf(newBuf, 17, "%-16s", newText);
 
-  // Animate scroll for each frame
+  // === Phase 1: Animate left half (positions 0-7) ===
   for (uint8_t frame = 0; frame < FRAME_COUNT; frame++) {
     uint8_t offset = frame;  // 0 to 7
 
-    // === Batch 0: Animate positions 0-7 with CGRAM ===
     // Update CGRAM 0-7 with mixed pixels for positions 0-7
     for (uint8_t i = 0; i < 8; i++) {
       uint8_t oldCharBitmap[5];
@@ -384,17 +383,15 @@ void DisplayVfd::scrollUpPixelLevel(const char* oldText, const char* newText) {
       writeCustomChar(i, mixed);
     }
 
-    // Write full 16-char display:
-    // - Positions 0-7: CGRAM 0-7 (animated)
-    // - Positions 8-15: ASCII chars (static intermediate state to avoid CGRAM conflict)
+    // Display: left half uses CGRAM (animated), right half shows intermediate ASCII
     digitalWrite(VFD_CS, LOW);
     vfdWriteByte(0x20);  // Start at position 0
 
     for (uint8_t i = 0; i < 16; i++) {
       if (i < 8) {
-        vfdWriteByte(0x00 + i);  // Use CGRAM for positions 0-7
+        vfdWriteByte(0x00 + i);  // CGRAM for left half (animated)
       } else {
-        // Show intermediate ASCII based on offset
+        // Right half: gradual ASCII transition based on progress
         char displayChar = (offset < 4) ? oldBuf[i] : newBuf[i];
         vfdWriteByte(displayChar);
       }
@@ -402,8 +399,13 @@ void DisplayVfd::scrollUpPixelLevel(const char* oldText, const char* newText) {
 
     digitalWrite(VFD_CS, HIGH);
     vfdShow();
+    delay(frameDelay);
+  }
 
-    // === Batch 1: Animate positions 8-15 with CGRAM ===
+  // === Phase 2: Animate right half (positions 8-15) ===
+  for (uint8_t frame = 0; frame < FRAME_COUNT; frame++) {
+    uint8_t offset = frame;  // 0 to 7
+
     // Update CGRAM 0-7 with mixed pixels for positions 8-15
     for (uint8_t i = 0; i < 8; i++) {
       uint8_t oldCharBitmap[5];
@@ -416,25 +418,21 @@ void DisplayVfd::scrollUpPixelLevel(const char* oldText, const char* newText) {
       writeCustomChar(i, mixed);
     }
 
-    // Write full 16-char display:
-    // - Positions 0-7: ASCII chars (static intermediate state to avoid CGRAM conflict)
-    // - Positions 8-15: CGRAM 0-7 (animated)
+    // Display: left half shows new ASCII (already scrolled), right half uses CGRAM (animated)
     digitalWrite(VFD_CS, LOW);
     vfdWriteByte(0x20);  // Start at position 0
 
     for (uint8_t i = 0; i < 16; i++) {
       if (i < 8) {
-        // Show intermediate ASCII based on offset
-        char displayChar = (offset < 4) ? oldBuf[i] : newBuf[i];
-        vfdWriteByte(displayChar);
+        // Left half: show final text (already animated in phase 1)
+        vfdWriteByte(newBuf[i]);
       } else {
-        vfdWriteByte(0x00 + (i - 8));  // Use CGRAM for positions 8-15
+        vfdWriteByte(0x00 + (i - 8));  // CGRAM for right half (animated)
       }
     }
 
     digitalWrite(VFD_CS, HIGH);
     vfdShow();
-
     delay(frameDelay);
   }
 

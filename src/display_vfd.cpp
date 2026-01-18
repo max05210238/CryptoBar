@@ -399,6 +399,7 @@ void DisplayVfd::scrollUpPixelLevel(const char* oldText, const char* newText) {
       for (uint8_t i = 0; i < 8; i++) {
         writeCustomChar(i, leftMixed[i]);
       }
+      delayMicroseconds(100);  // Wait for CGRAM to stabilize (critical!)
 
       // Display: left half CGRAM (animated), right half ASCII transition
       digitalWrite(VFD_CS, LOW);
@@ -413,6 +414,7 @@ void DisplayVfd::scrollUpPixelLevel(const char* oldText, const char* newText) {
         }
       }
       digitalWrite(VFD_CS, HIGH);
+      delayMicroseconds(50);  // Wait before vfdShow
       vfdShow();
       delay(switchDelay);
 
@@ -423,6 +425,7 @@ void DisplayVfd::scrollUpPixelLevel(const char* oldText, const char* newText) {
       for (uint8_t i = 0; i < 8; i++) {
         writeCustomChar(i, rightMixed[i]);
       }
+      delayMicroseconds(100);  // Wait for CGRAM to stabilize (critical!)
 
       // Display: left half ASCII transition, right half CGRAM (animated)
       digitalWrite(VFD_CS, LOW);
@@ -437,6 +440,7 @@ void DisplayVfd::scrollUpPixelLevel(const char* oldText, const char* newText) {
         }
       }
       digitalWrite(VFD_CS, HIGH);
+      delayMicroseconds(50);  // Wait before vfdShow
       vfdShow();
       delay(switchDelay);
     }

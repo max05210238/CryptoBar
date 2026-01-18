@@ -383,8 +383,11 @@ void DisplayVfd::scrollUpPixelLevel(const char* oldText, const char* newText) {
       for (uint8_t i = 0; i < 8 && (startPos + i) < 16; i++) {
         uint8_t charPos = startPos + i;
 
-        const uint8_t* oldCharBitmap = getCharBitmap(oldBuf[charPos]);
-        const uint8_t* newCharBitmap = getCharBitmap(newBuf[charPos]);
+        // Read bitmaps from PROGMEM to RAM
+        uint8_t oldCharBitmap[5];
+        uint8_t newCharBitmap[5];
+        getCharBitmap(oldBuf[charPos], oldCharBitmap);
+        getCharBitmap(newBuf[charPos], newCharBitmap);
 
         uint8_t mixed[5];
         mixCharPixels(mixed, oldCharBitmap, newCharBitmap, offset);

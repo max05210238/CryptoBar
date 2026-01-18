@@ -106,10 +106,19 @@ const uint8_t FONT_5X7[][5] PROGMEM = {
   {0x10, 0x08, 0x08, 0x10, 0x08}, // 126: ~
 };
 
-// Get 5x7 bitmap for a character (returns 5 bytes)
-inline const uint8_t* getCharBitmap(char c) {
+// Get 5x7 bitmap for a character (copy from PROGMEM to RAM)
+// Must use pgm_read_byte() to read from PROGMEM on ESP32
+inline void getCharBitmap(char c, uint8_t* output) {
+  const uint8_t* src;
+
   if (c < 32 || c > 126) {
-    return FONT_5X7[0];  // Return space for unsupported chars
+    src = FONT_5X7[0];  // Use space for unsupported chars
+  } else {
+    src = FONT_5X7[c - 32];
   }
-  return FONT_5X7[c - 32];
+
+  // Copy 5 bytes from PROGMEM to RAM
+  for (uint8_t i = 0; i < 5; i++) {
+    output[i] = pgm_read_byte(&src[i]);
+  }
 }

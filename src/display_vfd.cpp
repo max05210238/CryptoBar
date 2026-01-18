@@ -452,6 +452,44 @@ void DisplayVfd::scrollUpPixelLevel(const char* oldText, const char* newText) {
   Serial.println("[VFD] Pixel-level scroll complete");
 }
 
+// Horizontal left scroll (character-level)
+// Old text stays on left, new text slides in from right
+void DisplayVfd::scrollLeftCharLevel(const char* oldText, const char* newText) {
+  const uint8_t DISPLAY_WIDTH = 16;
+  const uint8_t FRAME_COUNT = DISPLAY_WIDTH + 1;  // 17 frames (0 to 16)
+  const uint8_t frameDelay = SCROLL_DURATION_MS / FRAME_COUNT;
+
+  char oldBuf[17], newBuf[17];
+  snprintf(oldBuf, 17, "%-16s", oldText);  // Pad to 16 chars
+  snprintf(newBuf, 17, "%-16s", newText);
+
+  // Animate: old text scrolls left, new text enters from right
+  for (uint8_t frame = 0; frame <= DISPLAY_WIDTH; frame++) {
+    char displayBuf[17];
+
+    // Build the display buffer for this frame
+    for (uint8_t i = 0; i < DISPLAY_WIDTH; i++) {
+      if (i < (DISPLAY_WIDTH - frame)) {
+        // Show old text (shifted left by 'frame' positions)
+        uint8_t oldIndex = i + frame;
+        displayBuf[i] = (oldIndex < DISPLAY_WIDTH) ? oldBuf[oldIndex] : ' ';
+      } else {
+        // Show new text (entering from right)
+        uint8_t newIndex = i - (DISPLAY_WIDTH - frame);
+        displayBuf[i] = (newIndex < DISPLAY_WIDTH) ? newBuf[newIndex] : ' ';
+      }
+    }
+    displayBuf[DISPLAY_WIDTH] = '\0';
+
+    // Display this frame
+    vfdWriteStr(0, displayBuf);
+    vfdShow();
+    delay(frameDelay);
+  }
+
+  Serial.println("[VFD] Left scroll complete");
+}
+
 // Scroll-up animation (calls pixel-level implementation)
 void DisplayVfd::scrollUp() {
   // This will be called with the old and new page content
@@ -492,9 +530,9 @@ void DisplayVfd::updatePageRotation() {
       formatChange(g_lastChange24h, coin.ticker, newPageBuf, 17);
     }
 
-    // Pixel-level scroll from old to new page
+    // Horizontal left scroll from old to new page
     if (lastPageContent[0] != '\0') {
-      scrollUpPixelLevel(lastPageContent, newPageBuf);
+      scrollLeftCharLevel(lastPageContent, newPageBuf);
     } else {
       // First display, no animation
       vfdWriteStr(0, newPageBuf);

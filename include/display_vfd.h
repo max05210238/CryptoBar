@@ -48,7 +48,7 @@ public:
   void runNightMode();        // Night mode (3:00-6:00)
 
   // Configuration
-  static const uint16_t SCROLL_DURATION_MS = 500;  // Adjustable scroll animation time
+  static const uint16_t SCROLL_DURATION_MS = 500;  // Scroll animation time (adjustable)
 
 private:
   // Low-level VFD communication
@@ -62,6 +62,7 @@ private:
 
   // Pixel-level scrolling functions
   void scrollUpPixelLevel(const char* oldText, const char* newText);
+  void scrollLeftCharLevel(const char* oldText, const char* newText);  // NEW: Horizontal scroll
   void writeCustomChar(uint8_t cgramSlot, const uint8_t* pixelData);
   void mixCharPixels(uint8_t* output, const uint8_t* oldChar, const uint8_t* newChar, uint8_t offset);
 

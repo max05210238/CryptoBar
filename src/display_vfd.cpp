@@ -372,9 +372,9 @@ void DisplayVfd::scrollUpPixelLevel(const char* oldText, const char* newText) {
     uint8_t offset = frame;  // 0 to 7
 
     // Process characters in 2 batches (CGRAM only has 8 slots)
+    // CRITICAL: Must call vfdShow() after EACH batch to prevent CGRAM overwrite issues
     for (uint8_t batch = 0; batch < 2; batch++) {
       uint8_t startPos = batch * 8;
-      uint8_t endPos = startPos + 8;
 
       // Generate custom characters for this batch
       for (uint8_t i = 0; i < 8 && (startPos + i) < 16; i++) {
@@ -401,9 +401,12 @@ void DisplayVfd::scrollUpPixelLevel(const char* oldText, const char* newText) {
       }
 
       digitalWrite(VFD_CS, HIGH);
+
+      // Show this batch immediately to lock in the display
+      // This prevents the second batch from overwriting CGRAM and affecting first batch
+      vfdShow();
     }
 
-    vfdShow();
     delay(frameDelay);
   }
 

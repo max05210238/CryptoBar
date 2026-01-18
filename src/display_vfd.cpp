@@ -7,6 +7,7 @@
 #include "config.h"
 #include <stdio.h>
 #include <time.h>
+#include <cmath>  // For floor() and log10()
 
 // VFD GPIO pins (shared with E-ink)
 #define VFD_CLK   EPD_SCK   // GPIO 12
@@ -217,27 +218,40 @@ void DisplayVfd::centerText(const char* text, char* output, uint8_t totalWidth, 
   output[totalWidth] = '\0';
 }
 
-// Format price for display
+// Format price for display (using same logic as E-ink)
 void DisplayVfd::formatPrice(double price, const char* coin, char* output, uint8_t maxLen) {
-  // Format: "BTC   90651.3437"
-  // Coin name (3 chars) + space + price (right-aligned in remaining space)
+  // Format: "BTC 90651.3437" or "BTC  1234.56" (coin + space + price)
+  // VFD: 16 chars total, coin=3 chars, min 1 space, leaves 12 chars for price
+  // E-ink logic: try 4 decimals → 2 → 0 based on total length
 
-  char priceStr[13];
-
-  // Determine decimal places based on price magnitude
-  if (price >= 100000.0) {
-    snprintf(priceStr, sizeof(priceStr), "%.2f", price);  // 6 digits + 2 decimals
-  } else if (price >= 10000.0) {
-    snprintf(priceStr, sizeof(priceStr), "%.3f", price);  // 5 digits + 3 decimals
-  } else if (price >= 100.0) {
-    snprintf(priceStr, sizeof(priceStr), "%.4f", price);  // 3+ digits + 4 decimals
-  } else if (price >= 1.0) {
-    snprintf(priceStr, sizeof(priceStr), "%.4f", price);  // 1-2 digits + 4 decimals
+  // Calculate integer part digit count
+  int intDigits;
+  if (price < 1.0) {
+    intDigits = 1;  // "0.xxxx"
   } else {
-    snprintf(priceStr, sizeof(priceStr), "%.4f", price);  // 0. + 4 decimals
+    intDigits = (int)floor(log10(price)) + 1;
   }
 
-  // Build output: "BTC" + centered price
+  // Try decimal places: 4 → 2 → 0 (same as E-ink)
+  // Max price length: 12 chars (16 total - 3 coin - 1 space)
+  const int decimals[] = {4, 2, 0};
+  int chosenDecimals = 0;
+
+  for (int i = 0; i < 3; i++) {
+    int dec = decimals[i];
+    int totalLen = intDigits + (dec > 0 ? 1 : 0) + dec;  // digits + decimal point + decimals
+
+    if (totalLen <= 12) {
+      chosenDecimals = dec;
+      break;
+    }
+  }
+
+  // Format price with chosen decimal places
+  char priceStr[13];
+  snprintf(priceStr, sizeof(priceStr), "%.*f", chosenDecimals, price);
+
+  // Build output: "BTC" + centered price (with at least 1 space)
   snprintf(output, 4, "%-3s", coin);  // Left-align coin name (3 chars)
   centerText(priceStr, output, 16, 3);
 }
@@ -286,15 +300,29 @@ void DisplayVfd::drawChangePage() {
 }
 
 // Scroll-up animation (0.5 second)
+// Uses character-by-character wipe effect (simpler than pixel-level scrolling)
 void DisplayVfd::scrollUp() {
-  // Simple scroll effect
-  const uint8_t frameCount = 4;
-  const uint8_t frameDelay = 500 / frameCount;  // 0.5 sec / 4 frames = 125ms per frame
+  const uint8_t frameCount = 8;
+  const uint8_t frameDelay = 500 / frameCount;  // 0.5 sec / 8 frames = 62.5ms per frame
 
-  for (uint8_t i = 0; i < frameCount; i++) {
-    vfdClear();
+  // Phase 1: Wipe out old content from left to right (4 frames)
+  for (uint8_t frame = 0; frame < 4; frame++) {
+    uint8_t clearCount = (frame + 1) * 4;  // Clear 4 chars per frame
+
+    digitalWrite(VFD_CS, LOW);
+    vfdWriteByte(0x20);  // Start at position 0
+    for (uint8_t i = 0; i < clearCount && i < 16; i++) {
+      vfdWriteByte(' ');
+    }
+    digitalWrite(VFD_CS, HIGH);
+    vfdShow();
+
     delay(frameDelay);
   }
+
+  // Phase 2: Short blank pause (1 frame)
+  vfdClear();
+  delay(frameDelay);
 
   Serial.println("[VFD] Scroll-up animation complete");
 }

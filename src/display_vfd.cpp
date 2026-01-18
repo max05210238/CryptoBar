@@ -303,21 +303,9 @@ void DisplayVfd::drawChangePage() {
 
 // ===== Pixel-level scrolling functions =====
 
-// Reverse 7 bits for VFD CGRAM format conversion
-// Our font: bit 0 = top pixel, bit 6 = bottom pixel
-// VFD expects: bit 0 = bottom pixel, bit 6 = top pixel
-inline uint8_t reverseBits7(uint8_t b) {
-  uint8_t result = 0;
-  for (uint8_t i = 0; i < 7; i++) {
-    if (b & (1 << i)) {
-      result |= (1 << (6 - i));
-    }
-  }
-  return result;
-}
-
 // Write custom character to CGRAM slot (0-7)
-// pixelData: 5 bytes (columns), each byte = 7 pixels
+// pixelData: 5 bytes (columns), each byte = 7 pixels in VFD format
+// VFD format: bit 0 = bottom pixel, bit 6 = top pixel
 void DisplayVfd::writeCustomChar(uint8_t cgramSlot, const uint8_t* pixelData) {
   if (cgramSlot > 7) return;
 
@@ -325,11 +313,9 @@ void DisplayVfd::writeCustomChar(uint8_t cgramSlot, const uint8_t* pixelData) {
   digitalWrite(VFD_CS, LOW);
   vfdWriteByte(0x40 + cgramSlot);
 
-  // Write 5 columns of pixel data with bit reversal
-  // VFD CGRAM expects: bit 0 = bottom, bit 6 = top
-  // Our font format is: bit 0 = top, bit 6 = bottom
+  // Write 5 columns of pixel data directly (already in VFD format)
   for (uint8_t col = 0; col < 5; col++) {
-    vfdWriteByte(reverseBits7(pixelData[col]));
+    vfdWriteByte(pixelData[col]);
   }
 
   digitalWrite(VFD_CS, HIGH);
@@ -338,6 +324,7 @@ void DisplayVfd::writeCustomChar(uint8_t cgramSlot, const uint8_t* pixelData) {
 
 // Mix pixels from old and new character based on scroll offset
 // offset: 0-7 (0=show old, 7=show new)
+// NOTE: Input chars are in VFD format (bit 0 = bottom, bit 6 = top)
 void DisplayVfd::mixCharPixels(uint8_t* output, const uint8_t* oldChar, const uint8_t* newChar, uint8_t offset) {
   if (offset == 0) {
     // Show old character completely
@@ -352,21 +339,19 @@ void DisplayVfd::mixCharPixels(uint8_t* output, const uint8_t* oldChar, const ui
   }
 
   // Scroll UP: old text moves up (exits from top), new text enters from bottom
-  // Font format: bit 0 = top pixel, bit 6 = bottom pixel
+  // VFD format: bit 0 = bottom pixel, bit 6 = top pixel
   for (uint8_t col = 0; col < 5; col++) {
     uint8_t oldPixels = oldChar[col];
     uint8_t newPixels = newChar[col];
 
-    // Old character: right shift to move pixels upward (bit 1→bit 0, etc.)
-    // This makes pixels exit from top (bit 0 disappears first)
-    uint8_t oldPart = oldPixels >> offset;
+    // Old text: left shift (move to higher bits = move up in VFD format)
+    // This makes bottom rows empty as text moves upward
+    uint8_t oldPart = (oldPixels << offset) & 0x7F;
 
-    // New character: take TOP 'offset' pixels and shift to bottom position
-    // offset=1: take bit 0, shift to bit 6
-    // offset=2: take bits 0-1, shift to bits 5-6
-    // offset=3: take bits 0-2, shift to bits 4-6, etc.
-    uint8_t newMask = (1 << offset) - 1;              // Mask for low bits
-    uint8_t newPart = (newPixels & newMask) << (7 - offset);  // Shift to high bits
+    // New text: take TOP 'offset' pixels (high bits) and place at BOTTOM (low bits)
+    // offset=1: take bit 6 (top), place at bit 0 (bottom)
+    // offset=2: take bits 6,5, place at bits 1,0
+    uint8_t newPart = newPixels >> (7 - offset);
 
     output[col] = oldPart | newPart;
   }

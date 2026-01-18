@@ -108,6 +108,9 @@ const uint8_t FONT_5X7[][5] PROGMEM = {
 
 // Get 5x7 bitmap for a character (copy from PROGMEM to RAM)
 // Must use pgm_read_byte() to read from PROGMEM on ESP32
+// Converts font format to VFD CGRAM format:
+//   Font: bit 0 = top pixel, bit 6 = bottom pixel
+//   VFD:  bit 0 = bottom pixel, bit 6 = top pixel
 inline void getCharBitmap(char c, uint8_t* output) {
   const uint8_t* src;
 
@@ -117,8 +120,17 @@ inline void getCharBitmap(char c, uint8_t* output) {
     src = FONT_5X7[c - 32];
   }
 
-  // Copy 5 bytes from PROGMEM to RAM
+  // Copy 5 bytes from PROGMEM to RAM with bit reversal
   for (uint8_t i = 0; i < 5; i++) {
-    output[i] = pgm_read_byte(&src[i]);
+    uint8_t byte = pgm_read_byte(&src[i]);
+
+    // Reverse 7 bits for VFD format
+    uint8_t reversed = 0;
+    for (uint8_t j = 0; j < 7; j++) {
+      if (byte & (1 << j)) {
+        reversed |= (1 << (6 - j));
+      }
+    }
+    output[i] = reversed;
   }
 }

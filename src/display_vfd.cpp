@@ -1,13 +1,14 @@
 // CryptoBar Retro V0.99s - VFD Display Implementation
+// IGL VFD STUDIO 16-character display
 #include "display_vfd.h"
 #include "app_state.h"
-#include "app_time.h"  // For getLocalTimeLocal()
+#include "app_time.h"
 #include "coins.h"
 #include "config.h"
 #include <stdio.h>
 #include <time.h>
 
-// PT6302 connection (shared GPIO with E-ink)
+// VFD GPIO pins (shared with E-ink)
 #define VFD_CLK   EPD_SCK   // GPIO 12
 #define VFD_RST   EPD_RST   // GPIO 16
 #define VFD_CS    EPD_CS    // GPIO 10
@@ -16,89 +17,179 @@
 // Page rotation timing
 #define PAGE_SWITCH_INTERVAL_MS 3000  // 3 seconds per page
 
-// Brightness levels (PT6302 duty cycle: 8-15, where 8=dimmest, 15=brightest)
-#define DUTY_MORNING   11    // ~50% (6:00-8:00)
-#define DUTY_DAY       14    // ~85% (8:00-18:00)
-#define DUTY_EVENING   11    // ~50% (18:00-22:00)
-#define DUTY_NIGHT      9    // ~25% (22:00-2:00)
-#define DUTY_OFF        8    // Minimum (2:00-6:00)
-
-// Helper: Convert 0-255 brightness to PT6302 duty cycle (8-15)
-inline uint8_t brightnessToDuty(uint8_t brightness) {
-  if (brightness == 0) return DUTY_OFF;
-  return 8 + ((brightness * 7) / 255);  // Map 0-255 → 8-15
-}
+// Brightness levels (0-255)
+#define BRIGHT_MORNING   128    // ~50% (6:00-8:00)
+#define BRIGHT_DAY       220    // ~85% (8:00-18:00)
+#define BRIGHT_EVENING   128    // ~50% (18:00-22:00)
+#define BRIGHT_NIGHT      64    // ~25% (22:00-2:00)
+#define BRIGHT_OFF         1    // Minimum (2:00-6:00)
 
 // Constructor
 DisplayVfd::DisplayVfd() {
-  vfd = new PT6302(VFD_CLK, VFD_RST, VFD_CS, VFD_DIN);
   currentPage = 1;
   lastPageSwitch = 0;
   priceUpdateTime = 0;
-  currentBrightness = DUTY_DAY;  // Start with day brightness
+  currentBrightness = BRIGHT_DAY;
 }
 
 DisplayVfd::~DisplayVfd() {
-  delete vfd;
+  // Nothing to clean up
+}
+
+// ===== Low-level VFD communication =====
+
+// Write a single byte via software SPI
+void DisplayVfd::vfdWriteByte(uint8_t data) {
+  for (uint8_t i = 0; i < 8; i++) {
+    digitalWrite(VFD_CLK, LOW);
+    delayMicroseconds(2);  // ESP32 needs delay for 0.5MHz SPI clock
+
+    if (data & 0x01) {
+      digitalWrite(VFD_DIN, HIGH);
+    } else {
+      digitalWrite(VFD_DIN, LOW);
+    }
+
+    data >>= 1;
+    delayMicroseconds(2);
+    digitalWrite(VFD_CLK, HIGH);
+    delayMicroseconds(2);
+  }
+}
+
+// Send a command to VFD
+void DisplayVfd::vfdCommand(uint8_t cmd) {
+  digitalWrite(VFD_CS, LOW);
+  vfdWriteByte(cmd);
+  digitalWrite(VFD_CS, HIGH);
+  delayMicroseconds(5);
+}
+
+// Show command (update display)
+void DisplayVfd::vfdShow() {
+  digitalWrite(VFD_CS, LOW);
+  vfdWriteByte(0xE8);  // Display ON command
+  digitalWrite(VFD_CS, HIGH);
+  delayMicroseconds(5);
 }
 
 // Initialize VFD
-void DisplayVfd::init() {
-  Serial.println("[VFD] Initializing PT6302 VFD display...");
-  Serial.println("[VFD] WARNING: Your VFD module has no RST pin - using manual initialization");
+void DisplayVfd::vfdInit() {
+  Serial.println("[VFD] Initializing IGL VFD display...");
 
-  // Manual GPIO initialization (PT6302 library's init() but without reset)
-  Serial.println("[VFD] Step 1: Manually setting up GPIO pins...");
+  // Set digit count to 16
+  digitalWrite(VFD_CS, LOW);
+  vfdWriteByte(0xE0);
+  delayMicroseconds(5);
+  vfdWriteByte(0x0F);  // 0x0F = 16 digits
+  digitalWrite(VFD_CS, HIGH);
+  delayMicroseconds(5);
+
+  Serial.println("[VFD] Set digit count: 16");
+
+  // Set brightness to maximum for testing
+  digitalWrite(VFD_CS, LOW);
+  vfdWriteByte(0xE4);
+  delayMicroseconds(5);
+  vfdWriteByte(0xFF);  // 0xFF = max brightness
+  digitalWrite(VFD_CS, HIGH);
+  delayMicroseconds(5);
+
+  Serial.println("[VFD] Set brightness: 255 (max)");
+}
+
+// Clear display
+void DisplayVfd::vfdClear() {
+  digitalWrite(VFD_CS, LOW);
+  vfdWriteByte(0x20);  // Address 0
+  for (uint8_t i = 0; i < 16; i++) {
+    vfdWriteByte(' ');  // Write spaces
+  }
+  digitalWrite(VFD_CS, HIGH);
+  vfdShow();
+}
+
+// Write string at position
+void DisplayVfd::vfdWriteStr(uint8_t pos, const char* str) {
+  if (pos > 15) return;
+
+  digitalWrite(VFD_CS, LOW);
+  vfdWriteByte(0x20 + pos);  // Set cursor position
+
+  while (*str && pos < 16) {
+    vfdWriteByte(*str);
+    str++;
+    pos++;
+  }
+
+  digitalWrite(VFD_CS, HIGH);
+  vfdShow();
+}
+
+// Set brightness (0-255)
+void DisplayVfd::vfdSetBrightness(uint8_t level) {
+  digitalWrite(VFD_CS, LOW);
+  vfdWriteByte(0xE4);
+  delayMicroseconds(5);
+  vfdWriteByte(level);
+  digitalWrite(VFD_CS, HIGH);
+  delayMicroseconds(5);
+
+  currentBrightness = level;
+}
+
+// ===== DisplayInterface implementation =====
+
+void DisplayVfd::init() {
+  Serial.println("[VFD] === IGL VFD Display Initialization ===");
+
+  // Step 1: Setup GPIO pins
+  Serial.println("[VFD] Step 1: Setting up GPIO pins...");
   pinMode(VFD_CLK, OUTPUT);
   pinMode(VFD_CS, OUTPUT);
   pinMode(VFD_DIN, OUTPUT);
-  pinMode(VFD_RST, OUTPUT);  // Set but won't be used (not connected)
+  pinMode(VFD_RST, OUTPUT);
 
-  // Initialize to default states
   digitalWrite(VFD_CS, HIGH);   // CS high (inactive)
   digitalWrite(VFD_CLK, HIGH);  // CLK high
   digitalWrite(VFD_DIN, LOW);   // Data low
   digitalWrite(VFD_RST, HIGH);  // RST high (inactive)
   delay(100);
 
-  Serial.println("[VFD] Step 2: Trying ALLON mode to test VFD...");
-  vfd->setMode(PT6302::Mode::ALLON);  // Turn all segments ON for testing
+  // Step 2: Reset VFD (quick pulse)
+  Serial.println("[VFD] Step 2: Resetting VFD...");
+  digitalWrite(VFD_RST, LOW);
+  delayMicroseconds(5);
+  digitalWrite(VFD_RST, HIGH);
+  delay(100);
+
+  // Step 3: Initialize VFD
+  Serial.println("[VFD] Step 3: Sending initialization commands...");
+  vfdInit();
+
+  // Step 4: Test with ALL-ON mode
+  Serial.println("[VFD] Step 4: Testing ALL-ON mode...");
+  vfdCommand(0xE9);  // All segments ON
   delay(2000);
   Serial.println("[VFD] If VFD is working, all segments should be lit now!");
 
-  // Configure VFD settings
-  Serial.println("[VFD] Step 3: Setting digit count to 16...");
-  vfd->setDigitNo(16);                          // 16-character display
-  delay(10);
-
-  Serial.println("[VFD] Step 4: Setting duty cycle (brightness)...");
-  vfd->setDuty(15);  // Maximum brightness for testing
-  delay(10);
-
-  Serial.println("[VFD] Step 5: Setting GPOP ports...");
-  vfd->setGPOP(true, false);                    // Set GPIO ports
-  delay(10);
-
-  Serial.println("[VFD] Step 6: Setting NORMAL mode...");
-  vfd->setMode(PT6302::Mode::NORMAL);           // Normal operation mode
-  delay(10);
-
-  Serial.println("[VFD] Step 7: Clearing display...");
-  vfd->clear();
+  // Step 5: Clear display
+  Serial.println("[VFD] Step 5: Clearing display...");
+  vfdClear();
   delay(100);
 
-  // Show boot message
-  Serial.println("[VFD] Step 8: Printing 'CryptoBar Retro'...");
-  vfd->print("CryptoBar Retro", true);  // overwrite=true
+  // Step 6: Show boot message
+  Serial.println("[VFD] Step 6: Showing boot message...");
+  vfdWriteStr(0, "CryptoBar Retro");
   delay(2000);
 
-  Serial.println("[VFD] Step 9: Clearing for ready state...");
-  vfd->clear();
+  // Step 7: Clear for ready state
+  Serial.println("[VFD] Step 7: Ready!");
+  vfdClear();
   delay(100);
 
-  Serial.println("[VFD] Initialization complete - VFD should be showing blank screen");
-  Serial.printf("[VFD] Current duty cycle: 15/15 (max for testing)\n");
-  currentBrightness = 15;  // Keep at max for now
+  Serial.println("[VFD] === Initialization Complete ===");
+  Serial.printf("[VFD] GPIO - CS:%d CLK:%d DIN:%d RST:%d\n", VFD_CS, VFD_CLK, VFD_DIN, VFD_RST);
 }
 
 // Center text in remaining space after prefix
@@ -177,7 +268,7 @@ void DisplayVfd::drawPricePage() {
 
   formatPrice(displayPrice, coin.ticker, buf, 17);
 
-  vfd->print(buf, true);  // overwrite=true to clear previous content
+  vfdWriteStr(0, buf);
 
   Serial.printf("[VFD] Page 1 (Price): %s\n", buf);
 }
@@ -189,24 +280,19 @@ void DisplayVfd::drawChangePage() {
 
   formatChange(g_lastChange24h, coin.ticker, buf, 17);
 
-  vfd->print(buf, true);  // overwrite=true to clear previous content
+  vfdWriteStr(0, buf);
 
   Serial.printf("[VFD] Page 2 (Change): %s\n", buf);
 }
 
-// Scroll-up animation (0.5 second, 8 frames)
+// Scroll-up animation (0.5 second)
 void DisplayVfd::scrollUp() {
-  // Simple scroll effect: shift content up
-  // Frame 1-4: Current page shifts up gradually
-  // Frame 5-8: New page shifts in from bottom
+  // Simple scroll effect
+  const uint8_t frameCount = 4;
+  const uint8_t frameDelay = 500 / frameCount;  // 0.5 sec / 4 frames = 125ms per frame
 
-  const uint8_t frameCount = 8;
-  const uint8_t frameDelay = 500 / frameCount;  // 0.5 sec / 8 frames = 62ms per frame
-
-  // For simplicity, just do a quick clear and redraw
-  // True pixel-level scrolling would require PT6302 custom character support
   for (uint8_t i = 0; i < frameCount; i++) {
-    vfd->clear();
+    vfdClear();
     delay(frameDelay);
   }
 
@@ -252,26 +338,25 @@ void DisplayVfd::applyTimeBrightness() {
   }
 
   uint8_t hour = local.tm_hour;
-  uint8_t targetDuty = DUTY_DAY;
+  uint8_t targetBright = BRIGHT_DAY;
 
-  // Determine duty cycle based on time of day
+  // Determine brightness based on time of day
   if (hour >= 6 && hour < 8) {
-    targetDuty = DUTY_MORNING;     // ~50% (6:00-8:00)
+    targetBright = BRIGHT_MORNING;     // ~50% (6:00-8:00)
   } else if (hour >= 8 && hour < 18) {
-    targetDuty = DUTY_DAY;         // ~85% (8:00-18:00)
+    targetBright = BRIGHT_DAY;         // ~85% (8:00-18:00)
   } else if (hour >= 18 && hour < 22) {
-    targetDuty = DUTY_EVENING;     // ~50% (18:00-22:00)
+    targetBright = BRIGHT_EVENING;     // ~50% (18:00-22:00)
   } else if (hour >= 22 || hour < 2) {
-    targetDuty = DUTY_NIGHT;       // ~25% (22:00-2:00)
+    targetBright = BRIGHT_NIGHT;       // ~25% (22:00-2:00)
   } else {
-    targetDuty = DUTY_OFF;         // Minimum (2:00-6:00)
+    targetBright = BRIGHT_OFF;         // Minimum (2:00-6:00)
   }
 
-  // Update duty cycle if changed
-  if (targetDuty != currentBrightness) {
-    currentBrightness = targetDuty;
-    vfd->setDuty(currentBrightness);
-    Serial.printf("[VFD] Duty cycle: %d/15 (hour=%d)\n", currentBrightness, hour);
+  // Update brightness if changed
+  if (targetBright != currentBrightness) {
+    vfdSetBrightness(targetBright);
+    Serial.printf("[VFD] Brightness: %d/255 (hour=%d)\n", targetBright, hour);
   }
 }
 
@@ -294,29 +379,29 @@ void DisplayVfd::runNightMode() {
     switch (patternIndex) {
       case 0:
         // Full bright
-        vfd->setDuty(15);  // Maximum brightness
-        vfd->print("████████████████", true);
+        vfdSetBrightness(255);
+        vfdCommand(0xE9);  // All segments ON
         Serial.println("[VFD] Anti-burn-in: Full bright");
         break;
 
       case 1:
         // Full dark
-        vfd->clear();
+        vfdClear();
         Serial.println("[VFD] Anti-burn-in: Full dark");
         break;
 
       case 2:
-        // Checkerboard A
-        vfd->setDuty(15);  // Maximum brightness
-        vfd->print("█ █ █ █ █ █ █ █", true);
-        Serial.println("[VFD] Anti-burn-in: Checkerboard A");
+        // Pattern A
+        vfdSetBrightness(255);
+        vfdWriteStr(0, "****************");
+        Serial.println("[VFD] Anti-burn-in: Pattern A");
         break;
 
       case 3:
-        // Checkerboard B
-        vfd->setDuty(15);  // Maximum brightness
-        vfd->print(" █ █ █ █ █ █ █ ", true);
-        Serial.println("[VFD] Anti-burn-in: Checkerboard B");
+        // Pattern B
+        vfdSetBrightness(255);
+        vfdWriteStr(0, "8888888888888888");
+        Serial.println("[VFD] Anti-burn-in: Pattern B");
         break;
     }
 
@@ -325,10 +410,9 @@ void DisplayVfd::runNightMode() {
 
   // 3:04-6:00: Turn off display
   if ((hour == 3 && minute >= 4) || (hour >= 4 && hour < 6)) {
-    if (currentBrightness != DUTY_OFF) {
-      vfd->clear();
-      vfd->setDuty(DUTY_OFF);
-      currentBrightness = DUTY_OFF;
+    if (currentBrightness != BRIGHT_OFF) {
+      vfdClear();
+      vfdSetBrightness(BRIGHT_OFF);
       Serial.println("[VFD] Night mode: Display off (3:04-6:00)");
     }
     return;
@@ -354,51 +438,49 @@ void DisplayVfd::drawMainScreenTimeOnly(bool forceFullRefresh) {
 
 // Menu screens (simplified for VFD)
 void DisplayVfd::drawMenuScreen() {
-  vfd->clear();
-  vfd->print("Menu            ", true);
+  vfdClear();
+  vfdWriteStr(0, "Menu            ");
 }
 
 void DisplayVfd::drawCoinList() {
   const CoinInfo& coin = coinAt(g_currentCoinIndex);
   char buf[17];
   snprintf(buf, 17, "Coin: %-10s", coin.ticker);
-  vfd->print(buf, true);
+  vfdWriteStr(0, buf);
 }
 
 void DisplayVfd::drawCurrencyList() {
   char buf[17];
   snprintf(buf, 17, "Curr: %-10s", CURRENCY_INFO[g_displayCurrency].code);
-  vfd->print(buf, true);
+  vfdWriteStr(0, buf);
 }
 
 void DisplayVfd::drawTimezoneList() {
-  // VFD Retro doesn't show time, so timezone is less relevant
-  // But still allow user to set it for scheduler alignment
-  vfd->clear();
-  vfd->print("Timezone        ", true);
+  vfdClear();
+  vfdWriteStr(0, "Timezone        ");
 }
 
 void DisplayVfd::drawSettingsScreen(const char* key, const char* value) {
   char buf[17];
   snprintf(buf, 17, "%-6s:%-9s", key, value);
-  vfd->print(buf, true);
+  vfdWriteStr(0, buf);
 }
 
 void DisplayVfd::drawWifiSetupScreen(const char* ssid, const char* ip) {
   Serial.println("[VFD] drawWifiSetupScreen called");
   Serial.printf("[VFD] SSID: %s, IP: %s\n", ssid ? ssid : "null", ip ? ip : "null");
 
-  vfd->clear();
+  vfdClear();
   delay(50);
 
   if (ssid && strlen(ssid) > 0) {
     char buf[17];
     snprintf(buf, 17, "%-16s", ssid);
     Serial.printf("[VFD] Printing SSID: '%s'\n", buf);
-    vfd->print(buf, true);
+    vfdWriteStr(0, buf);
   } else {
     Serial.println("[VFD] Printing 'WiFi: Setup'");
-    vfd->print("WiFi: Setup     ", true);
+    vfdWriteStr(0, "WiFi: Setup     ");
   }
 
   Serial.println("[VFD] drawWifiSetupScreen complete");
@@ -407,7 +489,7 @@ void DisplayVfd::drawWifiSetupScreen(const char* ssid, const char* ip) {
 void DisplayVfd::drawOtaScreen(const char* status) {
   char buf[17];
   snprintf(buf, 17, "OTA: %-11s", status);
-  vfd->print(buf, true);
+  vfdWriteStr(0, buf);
 }
 
 void DisplayVfd::drawErrorScreen(const char* message) {
@@ -417,27 +499,24 @@ void DisplayVfd::drawErrorScreen(const char* message) {
   char buf[17];
   snprintf(buf, 17, "ERR: %-11s", message ? message : "Unknown");
   Serial.printf("[VFD] Printing: '%s'\n", buf);
-  vfd->print(buf, true);
+  vfdWriteStr(0, buf);
 
   Serial.println("[VFD] drawErrorScreen complete");
 }
 
 void DisplayVfd::clear() {
-  vfd->clear();
+  vfdClear();
 }
 
 void DisplayVfd::sleep() {
-  vfd->setDuty(DUTY_OFF);
-  vfd->clear();
+  vfdSetBrightness(BRIGHT_OFF);
+  vfdClear();
 }
 
 void DisplayVfd::wake() {
-  vfd->setDuty(currentBrightness);
+  vfdSetBrightness(currentBrightness);
 }
 
 void DisplayVfd::setBrightness(uint8_t level) {
-  // Convert 0-255 brightness to PT6302 duty cycle (8-15)
-  uint8_t duty = brightnessToDuty(level);
-  currentBrightness = duty;
-  vfd->setDuty(duty);
+  vfdSetBrightness(level);
 }

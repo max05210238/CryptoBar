@@ -1,10 +1,9 @@
 // CryptoBar Retro V0.99s - VFD Display Implementation
-// 16-character PT6302 VFD display with dual-page rotation
+// 16-character IGL VFD display with dual-page rotation
 #pragma once
 
 #include "display_interface.h"
 #include <Arduino.h>
-#include <PT6302.h>  // Real PT6302 library
 
 class DisplayVfd : public DisplayInterface {
 public:
@@ -40,7 +39,7 @@ public:
 
   uint16_t getWidth() override { return 16; }   // 16 characters
   uint16_t getHeight() override { return 1; }   // Single line
-  const char* getName() override { return "VFD PT6302 16-char"; }
+  const char* getName() override { return "VFD IGL 16-char"; }
 
   // ===== VFD-specific functions =====
   void updatePageRotation();  // Handle 3-second page rotation
@@ -49,7 +48,14 @@ public:
   void runNightMode();        // Night mode (3:00-6:00)
 
 private:
-  PT6302* vfd;
+  // Low-level VFD communication
+  void vfdWriteByte(uint8_t data);
+  void vfdCommand(uint8_t cmd);
+  void vfdShow();
+  void vfdInit();
+  void vfdClear();
+  void vfdWriteStr(uint8_t pos, const char* str);
+  void vfdSetBrightness(uint8_t level);  // 0-255
 
   // Page rotation state
   uint8_t currentPage;        // 1=price, 2=change%

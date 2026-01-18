@@ -5,6 +5,7 @@
 #include "app_time.h"
 #include "coins.h"
 #include "config.h"
+#include "vfd_font_5x7.h"
 #include <stdio.h>
 #include <time.h>
 #include <cmath>  // For floor() and log10()
@@ -31,6 +32,7 @@ DisplayVfd::DisplayVfd() {
   lastPageSwitch = 0;
   priceUpdateTime = 0;
   currentBrightness = BRIGHT_DAY;
+  memset(lastPageContent, 0, sizeof(lastPageContent));
 }
 
 DisplayVfd::~DisplayVfd() {
@@ -299,32 +301,125 @@ void DisplayVfd::drawChangePage() {
   Serial.printf("[VFD] Page 2 (Change): %s\n", buf);
 }
 
-// Scroll-up animation (0.5 second)
-// Uses character-by-character wipe effect (simpler than pixel-level scrolling)
-void DisplayVfd::scrollUp() {
-  const uint8_t frameCount = 8;
-  const uint8_t frameDelay = 500 / frameCount;  // 0.5 sec / 8 frames = 62.5ms per frame
+// ===== Pixel-level scrolling functions =====
 
-  // Phase 1: Wipe out old content from left to right (4 frames)
-  for (uint8_t frame = 0; frame < 4; frame++) {
-    uint8_t clearCount = (frame + 1) * 4;  // Clear 4 chars per frame
+// Write custom character to CGRAM slot (0-7)
+// pixelData: 5 bytes (columns), each byte = 7 pixels
+void DisplayVfd::writeCustomChar(uint8_t cgramSlot, const uint8_t* pixelData) {
+  if (cgramSlot > 7) return;
 
-    digitalWrite(VFD_CS, LOW);
-    vfdWriteByte(0x20);  // Start at position 0
-    for (uint8_t i = 0; i < clearCount && i < 16; i++) {
-      vfdWriteByte(' ');
+  // Write to CGRAM address (0x40 + slot number)
+  digitalWrite(VFD_CS, LOW);
+  vfdWriteByte(0x40 + cgramSlot);
+
+  // Write 5 columns of pixel data
+  for (uint8_t col = 0; col < 5; col++) {
+    vfdWriteByte(pixelData[col]);
+  }
+
+  digitalWrite(VFD_CS, HIGH);
+  delayMicroseconds(5);
+}
+
+// Mix pixels from old and new character based on scroll offset
+// offset: 0-7 (0=show old, 7=show new)
+void DisplayVfd::mixCharPixels(uint8_t* output, const uint8_t* oldChar, const uint8_t* newChar, uint8_t offset) {
+  if (offset == 0) {
+    // Show old character completely
+    memcpy(output, oldChar, 5);
+    return;
+  }
+
+  if (offset >= 7) {
+    // Show new character completely
+    memcpy(output, newChar, 5);
+    return;
+  }
+
+  // Mix old (bottom) and new (top) character pixels
+  for (uint8_t col = 0; col < 5; col++) {
+    uint8_t mixed = 0;
+
+    // Extract pixels from old character (bottom part)
+    uint8_t oldPixels = oldChar[col];
+    // Extract pixels from new character (top part)
+    uint8_t newPixels = newChar[col];
+
+    // Shift old character up by 'offset' pixels (lose top pixels)
+    // Shift new character down to fill the top
+    // VFD format: bit 0 = top pixel, bit 6 = bottom pixel
+
+    // Take bottom (7-offset) pixels from old character
+    uint8_t oldMask = (1 << (7 - offset)) - 1;  // Mask for bottom pixels
+    mixed = (oldPixels >> offset) & oldMask;
+
+    // Take top 'offset' pixels from new character
+    uint8_t newPart = (newPixels << (7 - offset)) & 0x7F;
+    mixed |= newPart;
+
+    output[col] = mixed;
+  }
+}
+
+// Pixel-level vertical scroll (old text -> new text)
+void DisplayVfd::scrollUpPixelLevel(const char* oldText, const char* newText) {
+  const uint8_t FRAME_COUNT = 8;  // 8 frames for 7 pixel rows
+  const uint8_t frameDelay = SCROLL_DURATION_MS / FRAME_COUNT;
+
+  char oldBuf[17], newBuf[17];
+  snprintf(oldBuf, 17, "%-16s", oldText);  // Pad to 16 chars
+  snprintf(newBuf, 17, "%-16s", newText);
+
+  // Animate scroll for each frame
+  for (uint8_t frame = 0; frame < FRAME_COUNT; frame++) {
+    uint8_t offset = frame;  // 0 to 7
+
+    // Process characters in 2 batches (CGRAM only has 8 slots)
+    for (uint8_t batch = 0; batch < 2; batch++) {
+      uint8_t startPos = batch * 8;
+      uint8_t endPos = startPos + 8;
+
+      // Generate custom characters for this batch
+      for (uint8_t i = 0; i < 8 && (startPos + i) < 16; i++) {
+        uint8_t charPos = startPos + i;
+
+        const uint8_t* oldCharBitmap = getCharBitmap(oldBuf[charPos]);
+        const uint8_t* newCharBitmap = getCharBitmap(newBuf[charPos]);
+
+        uint8_t mixed[5];
+        mixCharPixels(mixed, oldCharBitmap, newCharBitmap, offset);
+
+        writeCustomChar(i, mixed);
+      }
+
+      // Display this batch using CGRAM characters
+      digitalWrite(VFD_CS, LOW);
+      vfdWriteByte(0x20 + startPos);  // Set position
+
+      for (uint8_t i = 0; i < 8 && (startPos + i) < 16; i++) {
+        vfdWriteByte(0x00 + i);  // Display CGRAM char 0-7
+      }
+
+      digitalWrite(VFD_CS, HIGH);
     }
-    digitalWrite(VFD_CS, HIGH);
-    vfdShow();
 
+    vfdShow();
     delay(frameDelay);
   }
 
-  // Phase 2: Short blank pause (1 frame)
-  vfdClear();
-  delay(frameDelay);
+  // Final: display new text using normal ASCII
+  vfdWriteStr(0, newText);
 
-  Serial.println("[VFD] Scroll-up animation complete");
+  Serial.println("[VFD] Pixel-level scroll complete");
+}
+
+// Scroll-up animation (calls pixel-level implementation)
+void DisplayVfd::scrollUp() {
+  // This will be called with the old and new page content
+  // For now, just clear (will be replaced by actual content in updatePageRotation)
+  vfdClear();
+  delay(SCROLL_DURATION_MS / 8);
+  Serial.println("[VFD] Scroll-up animation (placeholder)");
 }
 
 // Update page rotation (called in loop)
@@ -340,21 +435,40 @@ void DisplayVfd::updatePageRotation() {
     // Switch page
     uint8_t nextPage = (currentPage == 1) ? 2 : 1;
 
-    Serial.printf("[VFD] Switching page %d → %d\n", currentPage, nextPage);
+    Serial.printf("[VFD] Switching page %d → %d (pixel scroll)\n", currentPage, nextPage);
 
-    // Play scroll animation
-    scrollUp();
+    // Generate new page content
+    char newPageBuf[17];
+    const CoinInfo& coin = coinAt(g_currentCoinIndex);
 
-    // Update page
+    if (nextPage == 1) {
+      // Price page
+      double displayPrice = g_lastPriceUsd;
+      if (g_displayCurrency != (int)CURR_USD && g_fxValid) {
+        displayPrice *= g_usdToRate[g_displayCurrency];
+      }
+      formatPrice(displayPrice, coin.ticker, newPageBuf, 17);
+    } else {
+      // Change page
+      formatChange(g_lastChange24h, coin.ticker, newPageBuf, 17);
+    }
+
+    // Pixel-level scroll from old to new page
+    if (lastPageContent[0] != '\0') {
+      scrollUpPixelLevel(lastPageContent, newPageBuf);
+    } else {
+      // First display, no animation
+      vfdWriteStr(0, newPageBuf);
+    }
+
+    // Cache new page content for next scroll
+    snprintf(lastPageContent, 17, "%s", newPageBuf);
+
+    // Update page state
     currentPage = nextPage;
     lastPageSwitch = now;
 
-    // Draw new page
-    if (currentPage == 1) {
-      drawPricePage();
-    } else {
-      drawChangePage();
-    }
+    Serial.printf("[VFD] Page %d content: %s\n", currentPage, newPageBuf);
   }
 }
 

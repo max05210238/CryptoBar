@@ -43,9 +43,12 @@ public:
 
   // ===== VFD-specific functions =====
   void updatePageRotation();  // Handle 3-second page rotation
-  void scrollUp();            // Scroll-up animation (0.5 sec)
+  void scrollUp();            // Scroll-up animation (configurable duration)
   void applyTimeBrightness(); // Time-based brightness control
   void runNightMode();        // Night mode (3:00-6:00)
+
+  // Configuration
+  static const uint16_t SCROLL_DURATION_MS = 500;  // Adjustable scroll animation time
 
 private:
   // Low-level VFD communication
@@ -57,10 +60,16 @@ private:
   void vfdWriteStr(uint8_t pos, const char* str);
   void vfdSetBrightness(uint8_t level);  // 0-255
 
+  // Pixel-level scrolling functions
+  void scrollUpPixelLevel(const char* oldText, const char* newText);
+  void writeCustomChar(uint8_t cgramSlot, const uint8_t* pixelData);
+  void mixCharPixels(uint8_t* output, const uint8_t* oldChar, const uint8_t* newChar, uint8_t offset);
+
   // Page rotation state
   uint8_t currentPage;        // 1=price, 2=change%
   uint32_t lastPageSwitch;    // millis() of last page switch
   time_t priceUpdateTime;     // UTC time of last price update
+  char lastPageContent[17];   // Cache of last displayed page (for pixel scrolling)
 
   // Brightness control
   uint8_t currentBrightness;  // 0-255

@@ -337,20 +337,23 @@ void DisplayVfd::mixCharPixels(uint8_t* output, const uint8_t* oldChar, const ui
   }
 
   // Scroll UP: old text moves up (exits from top), new text enters from bottom
-  // VFD CGRAM format: bit 0 = top pixel, bit 6 = bottom pixel
+  // Font format: bit 0 = top pixel, bit 6 = bottom pixel
   for (uint8_t col = 0; col < 5; col++) {
     uint8_t oldPixels = oldChar[col];
     uint8_t newPixels = newChar[col];
 
-    // Shift old character UP (right shift - pixels move to lower bit positions)
-    // This makes old pixels move upward and exit from top
+    // Old character: right shift to move pixels upward (bit 1→bit 0, etc.)
+    // This makes pixels exit from top (bit 0 disappears first)
     uint8_t oldPart = oldPixels >> offset;
 
-    // Take bottom 'offset' pixels from new character
-    // Shift them to bottom position (high bit positions for bottom rows)
-    uint8_t newPart = newPixels << (7 - offset);
+    // New character: take bottom 'offset' pixels (high bits) WITHOUT shifting
+    // offset=1: take bit 6 only
+    // offset=2: take bits 6,5
+    // offset=3: take bits 6,5,4, etc.
+    uint8_t newMask = ((1 << offset) - 1) << (7 - offset);
+    uint8_t newPart = newPixels & newMask;
 
-    output[col] = (oldPart | newPart) & 0x7F;
+    output[col] = oldPart | newPart;
   }
 }
 

@@ -303,6 +303,19 @@ void DisplayVfd::drawChangePage() {
 
 // ===== Pixel-level scrolling functions =====
 
+// Reverse 7 bits for VFD CGRAM format conversion
+// Our font: bit 0 = top pixel, bit 6 = bottom pixel
+// VFD expects: bit 0 = bottom pixel, bit 6 = top pixel
+inline uint8_t reverseBits7(uint8_t b) {
+  uint8_t result = 0;
+  for (uint8_t i = 0; i < 7; i++) {
+    if (b & (1 << i)) {
+      result |= (1 << (6 - i));
+    }
+  }
+  return result;
+}
+
 // Write custom character to CGRAM slot (0-7)
 // pixelData: 5 bytes (columns), each byte = 7 pixels
 void DisplayVfd::writeCustomChar(uint8_t cgramSlot, const uint8_t* pixelData) {
@@ -312,9 +325,11 @@ void DisplayVfd::writeCustomChar(uint8_t cgramSlot, const uint8_t* pixelData) {
   digitalWrite(VFD_CS, LOW);
   vfdWriteByte(0x40 + cgramSlot);
 
-  // Write 5 columns of pixel data
+  // Write 5 columns of pixel data with bit reversal
+  // VFD CGRAM expects: bit 0 = bottom, bit 6 = top
+  // Our font format is: bit 0 = top, bit 6 = bottom
   for (uint8_t col = 0; col < 5; col++) {
-    vfdWriteByte(pixelData[col]);
+    vfdWriteByte(reverseBits7(pixelData[col]));
   }
 
   digitalWrite(VFD_CS, HIGH);

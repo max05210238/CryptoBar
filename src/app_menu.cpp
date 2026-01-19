@@ -130,7 +130,15 @@ void saveSettings() {
 void leaveMenu() {
   g_uiMode = UI_MODE_NORMAL;
   Serial.println("[Menu] Exit to main");
-  drawMainScreen(g_lastPriceUsd, g_lastChange24h, true);
+
+  // V0.99s: Use display interface for both e-ink and VFD
+  if (g_display) {
+    g_display->drawMainScreen(true);
+  } else {
+    // Fallback to e-ink legacy function
+    drawMainScreen(g_lastPriceUsd, g_lastChange24h, true);
+  }
+
   g_partialRefreshCount = 0;
   lastUpdate = millis();
 }
@@ -140,7 +148,14 @@ void enterMenu() {
   g_menuIndex    = 0;
   g_menuTopIndex = 0;
   Serial.println("[Menu] Enter");
-  drawMenuScreen(true);
+
+  // V0.99s: Use display interface for both e-ink and VFD
+  if (g_displayType == DISPLAY_VFD && g_display) {
+    g_display->drawMenuScreen();
+  } else {
+    // E-ink: use legacy UI function
+    drawMenuScreen(true);
+  }
 }
 
 void enterTimezoneSubmenu() {

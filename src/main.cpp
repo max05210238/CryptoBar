@@ -754,7 +754,12 @@ String apIp = WiFi.softAPIP().toString();
   uint32_t ms = millis();
   if (ms - g_lastUiDrawMs >= UI_DRAW_MIN_MS) {
     if (g_uiMode == UI_MODE_MENU && g_menuDirty) {
-      drawMenuScreen(false);
+      // V0.99s: Use display interface for VFD, legacy function for e-ink
+      if (g_displayType == DISPLAY_VFD && g_display) {
+        g_display->drawMenuScreen();
+      } else {
+        drawMenuScreen(false);
+      }
       g_menuDirty = false;
       g_lastUiDrawMs = ms;
     } else if (g_uiMode == UI_MODE_TZ_SUB && g_tzDirty) {

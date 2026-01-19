@@ -45,23 +45,96 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Price/change data centered in remaining space (13 chars)
   - Dynamic decimal places based on price magnitude
 
+### Post-Release Improvements
+
+#### 🔄 Unified WiFi Retry Mechanism (Commit: f63db35)
+- **Infinite retry loop with cooldown**:
+  - 5 connection attempts (12-second timeout each)
+  - 3-minute cooldown after failed batch
+  - Repeats indefinitely until connected
+  - Replaced auto-AP fallback behavior
+- **Display-specific cooldown screens**:
+  - E-ink: Countdown timer "Retrying in: M:SS" (updates every 5 seconds)
+  - VFD: Progress bar `----------------` filling left-to-right (16 steps over 180 seconds)
+  - E-ink cooldown uses partial refresh (doesn't count toward 20-refresh limit)
+- **Consistent behavior**:
+  - Boot-time WiFi failure: Retry loop
+  - Runtime WiFi disconnection: Same retry loop
+  - Manual trigger only: Factory reset (12-second press) to start AP mode
+- **User benefit**: Devices reliably reconnect after network outages without manual intervention
+
+#### 🎨 LED Color Corrections (Commit: f63db35)
+- **Fixed incorrect LED color usage**:
+  - WiFi states now use **blue LED** (was incorrectly using red)
+  - Red/green colors reserved exclusively for price trend indication
+  - Yellow reserved for API failures
+  - Purple reserved for AP mode
+
+| State | LED Color | Meaning |
+|-------|-----------|---------|
+| WiFi connecting | Blue | Attempting connection |
+| WiFi cooldown | Blue | Waiting to retry connection |
+| AP mode | Purple | Access point active |
+| API failure | Yellow | Price fetch failed |
+| Price up | Green | Positive 24h change |
+| Price down | Red | Negative 24h change |
+| No change | Gray/White | Zero 24h change |
+
+#### ⚡ WiFi Connection Timing Optimization (Commit: 22d5fb7)
+- **Problem**: VFD version took 9+ seconds to start WiFi, entered retry loop immediately
+- **Root cause**: WiFi.begin() called AFTER 9-second VFD welcome sequence
+- **Solution**: Start WiFi connection BEFORE splash display
+
+**New boot sequence**:
+```
+t=0:     Detect display type
+t=0.1:   Load WiFi credentials
+t=0.2:   WiFi.begin() ← Start immediately!
+t=0.3:   VFD init() - 6 seconds (WiFi connecting in background)
+t=6.3:   Version display - 3 seconds (WiFi still connecting)
+t=9.3:   Check WiFi → usually connected ✅
+```
+
+**Benefits**:
+- WiFi has full 9 seconds (VFD) or 2-3 seconds (e-ink) to connect during splash
+- Fast connections skip retry loop entirely
+- Seamless boot experience for most users
+- No code duplication between boot and runtime reconnection
+
+#### 🖼️ Splash Screen Timing Fixes (Commits: eaa22f2, bf8deba, 1022945)
+- **Problem**: E-ink splash screen disappeared in less than 1 second
+- **Root causes**:
+  1. Time recording point was before display instead of after
+  2. Early break logic when WiFi connected quickly during splash wait
+  3. VFD initialization moved time recording point
+- **Solution**: Restored V0.99r logic
+  1. Display splash screen FIRST
+  2. Record `splashStartMs` AFTER display completes
+  3. Removed early break logic that could skip guaranteed wait
+- **Result**: E-ink splash now displays for full 3 seconds, VFD for full 9 seconds
+
 ### Technical Implementation
 - **Shared GPIO architecture**: E-ink and VFD share CS/MOSI/SCK/RST pins
 - **BUSY pin detection**: E-ink actively drives BUSY signal, VFD leaves floating
 - **Multi-device sync**: Preserves NTP sync, epoch-aligned scheduling, MAC jitter
 - **PT6302 controller**: SPI-like interface for 16-char dot matrix VFD
-- **Files modified**: 2 files (app_state.h/cpp)
-- **Total additions**: ~800 lines of new code
+- **Files modified (initial release)**: 2 files (app_state.h/cpp)
+- **Files modified (post-release)**: 8 files (main.cpp, ui.cpp, ui.h, display_vfd.cpp, display_vfd.h, app_wifi.cpp, led_status.cpp, network.cpp)
+- **Total additions**: ~1200 lines of new code (including post-release improvements)
 
 ### Changed
 - All version strings updated to V0.99s
 - `app_state.cpp`: Added display type global variables
 - `app_state.h`: Added DisplayType/DisplayInterface forward declarations
+- `main.cpp`: WiFi.begin() moved before splash display, unified retry mechanism
+- `ui.cpp`: Added `drawWifiCooldownScreen()` for e-ink countdown display
+- `display_vfd.cpp`: Added `drawWifiCooldownProgress()` for VFD progress bar
+- `led_status.cpp`: Corrected LED color usage for WiFi states
 
 ### Notes
-- PT6302 library integration pending hardware arrival
-- Current VFD driver uses placeholder PT6302 class
-- Full integration into main.cpp pending hardware testing
+- Full VFD hardware testing completed
+- Post-release improvements based on real-world usage feedback
+- E-ink backward compatibility verified 100%
 
 ---
 
@@ -790,6 +863,6 @@ Over the past week, CryptoBar received major improvements across six key areas:
 
 ---
 
-**Last Updated**: 2025-12-25
-**Current Version**: V0.99q
-**Stable Version**: V0.99q
+**Last Updated**: 2026-01-19
+**Current Version**: V0.99s
+**Stable Version**: V0.99s

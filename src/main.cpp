@@ -363,6 +363,7 @@ void setup() {
     // Total welcome sequence: 6s (init) + 3s (version) = 9 seconds
     // splashStartMs was set before init(), so it includes all 9 seconds
   } else {
+    // E-ink: Show splash screen
     drawSplashScreen(CRYPTOBAR_VERSION);
   }
 
@@ -407,7 +408,7 @@ if (!g_hasWifiCreds) {
   return;
 }
 
-// Start WiFi connection in background (non-blocking)
+// Start WiFi connection in background immediately (while splash displays)
 Serial.println("[WiFi] Starting connection in background...");
 WiFi.mode(WIFI_STA);
 WiFi.setSleep(false);
@@ -417,60 +418,33 @@ delay(100);
 WiFi.begin(g_wifiSsid.c_str(), g_wifiPass.c_str());
 setLedBlue();
 
-// VFD: Welcome sequence already took 9 seconds, check WiFi status now
+// Ensure splash screen displays for full 3 seconds while WiFi connects in background
+uint32_t splashDuration = 3000;  // 3 seconds
 if (g_displayType == DISPLAY_VFD) {
-  Serial.println("[VFD] Welcome sequence complete (9s), checking WiFi status...");
-
-  if (WiFi.status() == WL_CONNECTED) {
-    Serial.println("[WiFi] Already connected after welcome sequence!");
-    DisplayVfd* vfdDisplay = static_cast<DisplayVfd*>(g_display);
-    if (vfdDisplay) {
-      vfdDisplay->clear();  // Clear version, ready for main screen
-    }
-  } else {
-    Serial.println("[WiFi] Not connected yet, showing connection status...");
-    DisplayVfd* vfdDisplay = static_cast<DisplayVfd*>(g_display);
-    if (vfdDisplay) {
-      vfdDisplay->showText("Connecting WiFi");
-    }
-  }
+  splashDuration = 9000;  // VFD already took 9 seconds
 }
 
-// E-ink: Ensure splash screen displays for full 3 seconds
 unsigned long elapsed = millis() - splashStartMs;
-if (g_displayType != DISPLAY_VFD && elapsed < 3000) {
-  uint32_t remaining = 3000 - elapsed;
+if (elapsed < splashDuration) {
+  uint32_t remaining = splashDuration - elapsed;
   Serial.printf("[Boot] Splash screen: waiting %lums (WiFi connecting in background)\n", (unsigned long)remaining);
 
   // Poll WiFi status while waiting
   uint32_t checkInterval = 100;
   uint32_t waited = 0;
-  bool connectedEarly = false;
 
   while (waited < remaining) {
     delay(checkInterval);
     waited += checkInterval;
 
     if (WiFi.status() == WL_CONNECTED) {
-      connectedEarly = true;
-      Serial.printf("[WiFi] Connected early (%lums into splash screen)\n", (unsigned long)elapsed + waited);
+      Serial.printf("[WiFi] Connected during splash screen (%lums into display)\n", (unsigned long)elapsed + waited);
       break;
     }
   }
-
-  // If connected during splash, go directly to main screen
-  if (connectedEarly) {
-    Serial.print("[WiFi] Connected during splash, IP: ");
-    Serial.println(WiFi.localIP());
-    g_wifiEverConnected = true;
-    g_nextRuntimeReconnectMs = 0;
-    g_runtimeReconnectBatch = 0;
-    startNormalOperation(false, splashStartMs);  // No splash delay needed
-    return;
-  }
 }
 
-// Splash screen displayed for 3 seconds, check WiFi status
+// Splash screen displayed for full duration, check WiFi status
 if (WiFi.status() == WL_CONNECTED) {
   Serial.print("[WiFi] Connected, IP: ");
   Serial.println(WiFi.localIP());

@@ -763,20 +763,42 @@ String apIp = WiFi.softAPIP().toString();
       g_menuDirty = false;
       g_lastUiDrawMs = ms;
     } else if (g_uiMode == UI_MODE_TZ_SUB && g_tzDirty) {
-      drawTimezoneMenu(false);
+      // V0.99s: Use display interface for VFD, legacy function for e-ink
+      if (g_displayType == DISPLAY_VFD && g_display) {
+        g_display->drawTimezoneList();
+      } else {
+        drawTimezoneMenu(false);
+      }
       g_tzDirty = false;
       g_lastUiDrawMs = ms;
     } else if (g_uiMode == UI_MODE_COIN_SUB && g_coinDirty) {
-      drawCoinMenu(false);
+      // V0.99s: Use display interface for VFD, legacy function for e-ink
+      if (g_displayType == DISPLAY_VFD && g_display) {
+        g_display->drawCoinList();
+      } else {
+        drawCoinMenu(false);
+      }
       g_coinDirty = false;
       g_lastUiDrawMs = ms;
     } else if (g_uiMode == UI_MODE_CURRENCY_SUB && g_currencyDirty) {
-      drawCurrencyMenu(false);
+      // V0.99s: Use display interface for VFD, legacy function for e-ink
+      if (g_displayType == DISPLAY_VFD && g_display) {
+        g_display->drawCurrencyList();
+      } else {
+        drawCurrencyMenu(false);
+      }
       g_currencyDirty = false;
       g_lastUiDrawMs = ms;
     } else if (g_uiMode == UI_MODE_UPDATE_SUB && g_updateDirty) {
-      // V0.99s: Handle update interval submenu redraw
-      drawUpdateMenu(false);
+      // V0.99s: Use display interface for VFD, legacy function for e-ink
+      if (g_displayType == DISPLAY_VFD && g_display) {
+        DisplayVfd* vfdDisplay = static_cast<DisplayVfd*>(g_display);
+        if (vfdDisplay) {
+          vfdDisplay->drawUpdateIntervalList();
+        }
+      } else {
+        drawUpdateMenu(false);
+      }
       g_updateDirty = false;
       g_lastUiDrawMs = ms;
     }

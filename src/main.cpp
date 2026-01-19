@@ -388,7 +388,7 @@ void setup() {
   if (g_displayType == DISPLAY_VFD) {
     Serial.println("[Display] VFD PT6302 detected - CryptoBar Retro mode");
     g_display = new DisplayVfd();
-    g_display->init();
+    // Note: VFD init() will be called after WiFi setup
   } else {
     Serial.println("[Display] E-ink detected - Standard CryptoBar mode");
     g_displayType = DISPLAY_EINK;
@@ -397,28 +397,9 @@ void setup() {
     display.setRotation(1);
   }
 
- // ==================== Boot welcome screen =====================
- // Show version to user first; screen stays visible while WiFi/NTP connection takes time
-
-  // CRITICAL: Display splash BEFORE recording time (V0.99r logic restored)
-  if (g_displayType == DISPLAY_VFD) {
-    // VFD shows 3-stage welcome during init: All-on (3s) + CryptoBar Retro (3s) + Version (3s)
-    // Total: 9 seconds, giving WiFi time to connect
-    DisplayVfd* vfdDisplay = static_cast<DisplayVfd*>(g_display);
-    if (vfdDisplay) {
-      const char* shortVersion = getShortVersion();
-      vfdDisplay->showText(shortVersion);
-    }
-    delay(3000);  // Display version for 3 seconds
-
-    // Total welcome sequence: 6s (init) + 3s (version) = 9 seconds
-  } else {
-    // E-ink: Show splash screen FIRST
-    drawSplashScreen(CRYPTOBAR_VERSION);
-  }
-
-  // Record time after splash is displayed on screen
-  uint32_t splashStartMs = millis();
+ // ==================== WiFi Setup (Before Display Splash) =====================
+ // V0.99s: Start WiFi connection BEFORE display splash for faster boot
+ // This gives WiFi 9 seconds (VFD) or 2-3 seconds (e-ink) to connect during splash
 
   // Encoder button pin (CLK/DT pins are configured inside encoderPcntBegin)
   pinMode(ENC_SW_PIN,  INPUT_PULLUP);
@@ -455,41 +436,60 @@ void setup() {
 // Load WiFi credentials from NVS (no more hardcoded defaults)
 loadWifiCreds();
 
+// Start WiFi connection in background BEFORE splash (if credentials exist)
+if (g_hasWifiCreds) {
+  Serial.println("[WiFi] Starting connection in background (before splash)...");
+  WiFi.mode(WIFI_STA);
+  WiFi.setSleep(false);
+  WiFi.setAutoReconnect(true);
+  WiFi.disconnect(true);
+  delay(100);
+  WiFi.begin(g_wifiSsid.c_str(), g_wifiPass.c_str());
+  setLedBlue();
+  Serial.println("[WiFi] WiFi.begin() called, will connect during splash display");
+}
+
+ // ==================== Boot welcome screen =====================
+ // Show version to user; WiFi connects in background during this time
+ // VFD: 9 seconds (6s init + 3s version) - WiFi has plenty of time to connect
+ // E-ink: 2-3 seconds - Usually enough for fast networks
+
+  if (g_displayType == DISPLAY_VFD) {
+    // VFD: Initialize display now (after WiFi.begin())
+    // This gives WiFi 9 seconds to connect during the welcome sequence
+    g_display->init();  // 6 seconds: All-on (3s) + CryptoBar Retro (3s)
+
+    // Stage 3: Show version (3 seconds)
+    DisplayVfd* vfdDisplay = static_cast<DisplayVfd*>(g_display);
+    if (vfdDisplay) {
+      const char* shortVersion = getShortVersion();
+      vfdDisplay->showText(shortVersion);
+    }
+    delay(3000);  // Display version for 3 seconds
+
+    // Total welcome sequence: 6s (init) + 3s (version) = 9 seconds
+    // WiFi has had 9 seconds to connect in background
+  } else {
+    // E-ink: Show splash screen (2-3 seconds for full refresh)
+    drawSplashScreen(CRYPTOBAR_VERSION);
+  }
+
+  // Splash screen has been displayed for full duration
+  // VFD: 9 seconds (WiFi had 9 seconds to connect)
+  // E-ink: 2-3 seconds (WiFi had 2-3 seconds to connect)
+  uint32_t splashStartMs = millis();  // Record for startNormalOperation()
+
+// Check if we have WiFi credentials; if not, enter provisioning mode
 if (!g_hasWifiCreds) {
   Serial.println("[WiFi] No credentials saved. Waiting for provisioning...");
   showWifiSetupRequired(splashStartMs);
   return;
 }
 
-// Start WiFi connection in background immediately (while splash displays)
-Serial.println("[WiFi] Starting connection in background...");
-WiFi.mode(WIFI_STA);
-WiFi.setSleep(false);
-WiFi.setAutoReconnect(true);
-WiFi.disconnect(true);
-delay(100);
-WiFi.begin(g_wifiSsid.c_str(), g_wifiPass.c_str());
-setLedBlue();
-
-// CRITICAL: Ensure splash screen displays for FULL 3 seconds (e-ink) or 9 seconds (VFD)
-// Do NOT exit early even if WiFi connects quickly - user needs to see the splash
-uint32_t splashDuration = 3000;  // 3 seconds for e-ink
-if (g_displayType == DISPLAY_VFD) {
-  splashDuration = 9000;  // VFD already took 9 seconds (all stages combined)
-}
-
-unsigned long elapsed = millis() - splashStartMs;
-if (elapsed < splashDuration) {
-  uint32_t remaining = splashDuration - elapsed;
-
-  // Wait for the full splash duration (WiFi connecting in background)
-  // Do NOT break early - splash must display for full duration
-  delay(remaining);
-}
-
-// Splash screen displayed for full duration, check WiFi status
+// Splash already displayed for full duration - check WiFi status immediately
+Serial.println("[WiFi] Splash complete, checking WiFi connection status...");
 if (WiFi.status() == WL_CONNECTED) {
-  Serial.print("[WiFi] Connected, IP: ");
+  Serial.print("[WiFi] Connected during splash, IP: ");
   Serial.println(WiFi.localIP());
   g_wifiEverConnected = true;
   g_nextRuntimeReconnectMs = 0;

@@ -10,20 +10,36 @@
 #include <time.h>
 #include <cmath>  // For floor() and log10()
 
+// External global variables (for menu display)
+extern int g_menuIndex;
+extern int g_updatePresetIndex;
+extern int g_brightnessPresetIndex;
+extern int g_vfdBrightnessPresetIndex;
+extern int g_displayCurrency;
+extern int g_timezoneIndex;
+extern int g_currentCoinIndex;
+extern const char* UPDATE_PRESET_LABELS[];
+extern const char* BRIGHTNESS_LABELS[];
+extern const uint8_t VFD_BRIGHTNESS_PRESETS[];
+extern const char* VFD_BRIGHTNESS_LABELS[];
+
 // VFD GPIO pins (shared with E-ink)
 #define VFD_CLK   EPD_SCK   // GPIO 12
 #define VFD_RST   EPD_RST   // GPIO 16
 #define VFD_CS    EPD_CS    // GPIO 10
 #define VFD_DIN   11        // GPIO 11 (MOSI)
 
-// Page rotation timing
-#define PAGE_SWITCH_INTERVAL_MS 3000  // 3 seconds per page
+// Page rotation timing (10-second cycle for NTP sync)
+// 4.5s price + 0.5s animation + 4.5s change% + 0.5s animation = 10s
+#define PAGE_SWITCH_INTERVAL_MS 5000  // 5 seconds per page (half cycle)
 
 // Brightness levels (0-255)
 #define BRIGHT_MORNING   128    // ~50% (6:00-8:00)
 #define BRIGHT_DAY       220    // ~85% (8:00-18:00)
 #define BRIGHT_EVENING   128    // ~50% (18:00-22:00)
 #define BRIGHT_NIGHT      64    // ~25% (22:00-2:00)
+#define BRIGHT_NIGHT_TEMP 128   // ~50% (temporary boost during 22:00-2:00)
+#define BRIGHT_SLEEP_TEMP  64   // ~25% (temporary boost during 2:00-6:00)
 #define BRIGHT_OFF         1    // Minimum (2:00-6:00)
 
 // Constructor
@@ -32,6 +48,8 @@ DisplayVfd::DisplayVfd() {
   lastPageSwitch = 0;
   priceUpdateTime = 0;
   currentBrightness = BRIGHT_DAY;
+  tempBrightBoostEndTime = 0;  // No temp boost initially
+  savedBrightness = BRIGHT_DAY;
   memset(lastPageContent, 0, sizeof(lastPageContent));
 }
 
@@ -496,13 +514,14 @@ void DisplayVfd::scrollUp() {
 }
 
 // Update page rotation (called in loop)
+// 10-second sync cycle: 4.5s price + 0.5s animation + 4.5s change% + 0.5s animation
 void DisplayVfd::updatePageRotation() {
   // Skip rotation if price data not available
   if (!g_lastPriceOk) {
     return;
   }
 
-  // Check if 3 seconds have elapsed since last page switch
+  // Check if 5 seconds have elapsed since last page switch (half cycle)
   uint32_t now = millis();
   if (now - lastPageSwitch >= PAGE_SWITCH_INTERVAL_MS) {
     // Switch page
@@ -545,6 +564,36 @@ void DisplayVfd::updatePageRotation() {
   }
 }
 
+// Handle encoder activity (temporary brightness boost)
+void DisplayVfd::handleEncoderActivity() {
+  struct tm local;
+  if (!getLocalTimeLocal(&local)) {
+    return;  // Time not available
+  }
+
+  uint8_t hour = local.tm_hour;
+  unsigned long now = millis();
+
+  // Check if we're in night time or sleep time
+  bool isNightTime = (hour >= 22 || hour < 2);   // 22:00-02:00
+  bool isSleepTime = (hour >= 2 && hour < 6);    // 02:00-06:00
+
+  if (isNightTime || isSleepTime) {
+    // Activate temporary brightness boost
+    uint8_t tempBright = isNightTime ? BRIGHT_NIGHT_TEMP : BRIGHT_SLEEP_TEMP;
+
+    // Save current brightness if not already in temp boost mode
+    if (tempBrightBoostEndTime == 0 || now > tempBrightBoostEndTime) {
+      savedBrightness = currentBrightness;
+    }
+
+    tempBrightBoostEndTime = now + TEMP_BRIGHT_BOOST_DURATION_MS;
+    vfdSetBrightness(tempBright);
+
+    Serial.printf("[VFD] Temp brightness boost: %d/255 for 5 min (hour=%d)\n", tempBright, hour);
+  }
+}
+
 // Apply time-based brightness control
 void DisplayVfd::applyTimeBrightness() {
   struct tm local;
@@ -553,6 +602,20 @@ void DisplayVfd::applyTimeBrightness() {
   }
 
   uint8_t hour = local.tm_hour;
+  unsigned long now = millis();
+
+  // Check if temp brightness boost is active
+  if (tempBrightBoostEndTime > 0 && now < tempBrightBoostEndTime) {
+    // Temp boost is still active, don't change brightness
+    return;
+  }
+
+  // Temp boost expired, restore normal brightness
+  if (tempBrightBoostEndTime > 0 && now >= tempBrightBoostEndTime) {
+    tempBrightBoostEndTime = 0;  // Clear temp boost flag
+    Serial.println("[VFD] Temp brightness boost expired, restoring normal brightness");
+  }
+
   uint8_t targetBright = BRIGHT_DAY;
 
   // Determine brightness based on time of day
@@ -575,7 +638,7 @@ void DisplayVfd::applyTimeBrightness() {
   }
 }
 
-// Night mode with anti-burn-in (3:00-6:00)
+// Night mode with anti-burn-in (04:00-06:00)
 void DisplayVfd::runNightMode() {
   struct tm local;
   if (!getLocalTimeLocal(&local)) {
@@ -585,50 +648,51 @@ void DisplayVfd::runNightMode() {
   uint8_t hour = local.tm_hour;
   uint8_t minute = local.tm_min;
 
-  // 3:00-3:04: Anti-burn-in full-screen refresh
-  if (hour == 3 && minute < 4) {
-    Serial.println("[VFD] Night mode: Anti-burn-in refresh");
+  // 04:00-04:04: Anti-burn-in uniform aging (4 patterns × 1 minute each)
+  if (hour == 4 && minute < 4) {
+    Serial.println("[VFD] Night mode: Anti-burn-in uniform aging");
 
     uint8_t patternIndex = minute;  // 0-3
 
     switch (patternIndex) {
       case 0:
-        // Full bright
+        // Full bright - all pixels ON
         vfdSetBrightness(255);
         vfdCommand(0xE9);  // All segments ON
-        Serial.println("[VFD] Anti-burn-in: Full bright");
+        Serial.println("[VFD] Anti-burn-in aging: Full bright (minute 0)");
         break;
 
       case 1:
-        // Full dark
+        // Full dark - all pixels OFF
         vfdClear();
-        Serial.println("[VFD] Anti-burn-in: Full dark");
+        vfdSetBrightness(255);
+        Serial.println("[VFD] Anti-burn-in aging: Full dark (minute 1)");
         break;
 
       case 2:
-        // Pattern A
+        // Checkerboard pattern
         vfdSetBrightness(255);
-        vfdWriteStr(0, "****************");
-        Serial.println("[VFD] Anti-burn-in: Pattern A");
+        vfdWriteStr(0, "* * * * * * * * ");
+        Serial.println("[VFD] Anti-burn-in aging: Checkerboard (minute 2)");
         break;
 
       case 3:
-        // Pattern B
+        // All segments pattern (8)
         vfdSetBrightness(255);
         vfdWriteStr(0, "8888888888888888");
-        Serial.println("[VFD] Anti-burn-in: Pattern B");
+        Serial.println("[VFD] Anti-burn-in aging: All segments (minute 3)");
         break;
     }
 
     return;  // Don't show normal display during anti-burn-in
   }
 
-  // 3:04-6:00: Turn off display
-  if ((hour == 3 && minute >= 4) || (hour >= 4 && hour < 6)) {
+  // 02:00-04:00 and 04:04-06:00: Turn off display
+  if ((hour >= 2 && hour < 4) || (hour == 4 && minute >= 4) || (hour == 5)) {
     if (currentBrightness != BRIGHT_OFF) {
       vfdClear();
       vfdSetBrightness(BRIGHT_OFF);
-      Serial.println("[VFD] Night mode: Display off (3:04-6:00)");
+      Serial.println("[VFD] Night mode: Display off (02:00-06:00)");
     }
     return;
   }
@@ -651,10 +715,84 @@ void DisplayVfd::drawMainScreenTimeOnly(bool forceFullRefresh) {
   // VFD Retro doesn't display time, skip
 }
 
-// Menu screens (simplified for VFD)
+// ===== Menu helper functions =====
+
+// Get menu item text string
+void DisplayVfd::getMenuItemText(VfdMenuItem item, char* output, uint8_t maxLen) {
+  switch (item) {
+    case VFD_MENU_COIN:
+      snprintf(output, maxLen, "Coin: %s", coinAt(g_currentCoinIndex).ticker);
+      break;
+    case VFD_MENU_UPDATE:
+      snprintf(output, maxLen, "Update: %s", UPDATE_PRESET_LABELS[g_updatePresetIndex]);
+      break;
+    case VFD_MENU_LED_BRIGHTNESS:
+      snprintf(output, maxLen, "LED: %s", BRIGHTNESS_LABELS[g_brightnessPresetIndex]);
+      break;
+    case VFD_MENU_VFD_BRIGHTNESS:
+      snprintf(output, maxLen, "Bright: %s", VFD_BRIGHTNESS_LABELS[g_vfdBrightnessPresetIndex]);
+      break;
+    case VFD_MENU_CURRENCY:
+      snprintf(output, maxLen, "Currency: %s", CURRENCY_INFO[g_displayCurrency].code);
+      break;
+    case VFD_MENU_TIMEZONE:
+      snprintf(output, maxLen, "Timezone: %s", TIMEZONES[g_timezoneIndex].label);
+      break;
+    case VFD_MENU_FIRMWARE:
+      snprintf(output, maxLen, "Firmware Update");
+      break;
+    case VFD_MENU_WIFI_INFO:
+      snprintf(output, maxLen, "WiFi Info");
+      break;
+    case VFD_MENU_EXIT:
+      snprintf(output, maxLen, "Exit");
+      break;
+    default:
+      snprintf(output, maxLen, "Unknown");
+      break;
+  }
+}
+
+// Draw menu item with auto-scroll if text > 14 chars
+void DisplayVfd::drawMenuItemText(VfdMenuItem item) {
+  char text[64];  // Buffer for menu item text
+  getMenuItemText(item, text, sizeof(text));
+
+  uint8_t textLen = strlen(text);
+
+  // If text fits in 16 chars, display directly
+  if (textLen <= 16) {
+    char buf[17];
+    snprintf(buf, 17, "%-16s", text);
+    vfdWriteStr(0, buf);
+    return;
+  }
+
+  // Text is too long, auto-scroll:
+  // 1. Stop 1s
+  // 2. Scroll left until end is visible
+  // 3. Stop at end 1s
+  // 4. Loop (optional, for now just show start)
+
+  // For simplicity, show first 16 chars (we can enhance scrolling later)
+  char buf[17];
+  snprintf(buf, 17, "%-16.16s", text);  // Truncate to 16 chars for now
+  vfdWriteStr(0, buf);
+
+  // TODO: Implement full auto-scroll (stop 1s, scroll left, stop 1s, loop)
+}
+
+// Menu screens (VFD-specific 9-item menu)
 void DisplayVfd::drawMenuScreen() {
-  vfdClear();
-  vfdWriteStr(0, "Menu            ");
+  // Display current menu item (VFD can only show 1 line at a time)
+  if (g_menuIndex < 0 || g_menuIndex >= VFD_MENU_COUNT) {
+    g_menuIndex = 0;
+  }
+
+  VfdMenuItem item = static_cast<VfdMenuItem>(g_menuIndex);
+  drawMenuItemText(item);
+
+  Serial.printf("[VFD] Menu: %d\n", g_menuIndex);
 }
 
 void DisplayVfd::drawCoinList() {

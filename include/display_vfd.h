@@ -5,6 +5,20 @@
 #include "display_interface.h"
 #include <Arduino.h>
 
+// VFD-specific menu items (9 items, simplified from e-ink's 13)
+enum VfdMenuItem {
+  VFD_MENU_COIN = 0,
+  VFD_MENU_UPDATE,
+  VFD_MENU_LED_BRIGHTNESS,
+  VFD_MENU_VFD_BRIGHTNESS,
+  VFD_MENU_CURRENCY,
+  VFD_MENU_TIMEZONE,
+  VFD_MENU_FIRMWARE,
+  VFD_MENU_WIFI_INFO,
+  VFD_MENU_EXIT,
+  VFD_MENU_COUNT
+};
+
 class DisplayVfd : public DisplayInterface {
 public:
   DisplayVfd();
@@ -45,12 +59,18 @@ public:
   void updatePageRotation();  // Handle 3-second page rotation
   void scrollUp();            // Scroll-up animation (configurable duration)
   void applyTimeBrightness(); // Time-based brightness control
-  void runNightMode();        // Night mode (3:00-6:00)
+  void runNightMode();        // Night mode (04:00-06:00, anti-burn-in at 04:00)
+  void handleEncoderActivity(); // Handle encoder activity (temporary brightness boost)
 
   // Configuration
   static const uint16_t SCROLL_DURATION_MS = 500;  // Scroll animation time (adjustable)
+  static const uint8_t MENU_TEXT_MAX_LEN = 14;     // Max text length before auto-scroll (16 - 2 for padding)
+  static const uint32_t TEMP_BRIGHT_BOOST_DURATION_MS = 5UL * 60UL * 1000UL;  // 5 minutes
 
 private:
+  // Menu display helpers
+  void drawMenuItemText(VfdMenuItem item);  // Draw menu item with auto-scroll if needed
+  void getMenuItemText(VfdMenuItem item, char* output, uint8_t maxLen);  // Get menu item text
   // Low-level VFD communication
   void vfdWriteByte(uint8_t data);
   void vfdCommand(uint8_t cmd);
@@ -74,6 +94,8 @@ private:
 
   // Brightness control
   uint8_t currentBrightness;  // 0-255
+  unsigned long tempBrightBoostEndTime;  // Temporary brightness boost end time (millis)
+  uint8_t savedBrightness;    // Saved brightness before temp boost
 
   // Helper functions
   void drawPricePage();       // Page 1: "BTC   90651.3437"

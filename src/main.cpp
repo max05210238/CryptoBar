@@ -705,10 +705,20 @@ String apIp = WiFi.softAPIP().toString();
   portEXIT_CRITICAL(&g_encMux);
 
   if (steps != 0) {
+    // V0.99s: VFD temporary brightness boost on encoder activity
+    if (g_displayType == DISPLAY_VFD && g_uiMode == UI_MODE_NORMAL) {
+      DisplayVfd* vfdDisplay = static_cast<DisplayVfd*>(g_display);
+      if (vfdDisplay) {
+        vfdDisplay->handleEncoderActivity();
+      }
+    }
+
     if (g_uiMode == UI_MODE_MENU) {
       g_menuIndex += steps;
-      while (g_menuIndex < 0) g_menuIndex += MENU_COUNT;
-      while (g_menuIndex >= MENU_COUNT) g_menuIndex -= MENU_COUNT;
+      // V0.99s: VFD has 9 menu items instead of 13
+      int menuCount = (g_displayType == DISPLAY_VFD) ? VFD_MENU_COUNT : MENU_COUNT;
+      while (g_menuIndex < 0) g_menuIndex += menuCount;
+      while (g_menuIndex >= menuCount) g_menuIndex -= menuCount;
       ensureMainMenuVisible();
       g_menuDirty = true;
     } else if (g_uiMode == UI_MODE_TZ_SUB) {

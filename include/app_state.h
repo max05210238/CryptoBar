@@ -49,6 +49,11 @@ extern const char* NTP_SERVER_2;
 extern const float BRIGHTNESS_PRESETS[BRIGHTNESS_PRESETS_COUNT];
 extern const char* BRIGHTNESS_LABELS[BRIGHTNESS_PRESETS_COUNT];
 
+// VFD brightness presets (V0.99s)
+#define VFD_BRIGHTNESS_PRESETS_COUNT 5
+extern const uint8_t VFD_BRIGHTNESS_PRESETS[VFD_BRIGHTNESS_PRESETS_COUNT];
+extern const char* VFD_BRIGHTNESS_LABELS[VFD_BRIGHTNESS_PRESETS_COUNT];
+
 // Update frequency presets
 // V0.99r: Update interval presets: 1min, 3min, 5min, 10min (fixed array bounds bug)
 #define UPDATE_PRESETS_COUNT 4
@@ -94,6 +99,8 @@ extern uint16_t g_partialRefreshCount;
 // LED / update / coin settings index
 extern int   g_brightnessPresetIndex;
 extern float g_ledBrightness;
+extern int   g_vfdBrightnessPresetIndex;   // V0.99s: VFD display brightness preset index
+extern uint8_t g_vfdBrightness;              // V0.99s: VFD display brightness (0-255)
 extern int g_updatePresetIndex;
 extern int g_currentCoinIndex;
 extern int g_dateFormatIndex;

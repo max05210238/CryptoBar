@@ -8,6 +8,7 @@
 struct StoredSettings {
   int updPreset = 0;
   int briPreset = 1;
+  int vfdBriPreset = 3;  // V0.99s: VFD brightness preset (default: High = 70%)
 
  // V0.97: store coin as ticker string (e.g., "XRP") for forward-compatibility.
  // Backward-compatibility: V0.97 used an int coinIndex; migration handled in settings_store.cpp.

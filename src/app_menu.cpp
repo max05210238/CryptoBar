@@ -14,6 +14,7 @@
 #include "day_avg.h"
 #include "network.h"
 #include "ui.h"
+#include "display_vfd.h"  // V0.99s: For VFD menu items
 
 // Forward declarations for functions that remain in main.cpp
 extern const CoinInfo& currentCoin();
@@ -39,6 +40,7 @@ void loadSettings() {
 
   int upd   = st.updPreset;
   int bri   = st.briPreset;
+  int vfdBri = st.vfdBriPreset;  // V0.99s: VFD brightness
   int coin  = coinIndexFromTicker(st.coinTicker.c_str());
   int tFmt  = st.timeFmt;
   int dFmt  = st.dateFmt;
@@ -49,9 +51,11 @@ void loadSettings() {
 
   int updCount   = UPDATE_PRESETS_COUNT;
   int briCount   = BRIGHTNESS_PRESETS_COUNT;
+  int vfdBriCount = VFD_BRIGHTNESS_PRESETS_COUNT;
 
   if (upd < 0 || upd >= updCount) upd = 0;
   if (bri < 0 || bri >= briCount) bri = 1;
+  if (vfdBri < 0 || vfdBri >= vfdBriCount) vfdBri = 3;  // Default: High
   if (coin < 0 || coin >= coinCount()) coin = coinIndexFromTicker(coinDefault().ticker);
   if (tFmt < 0 || tFmt > TIME_12H) tFmt = TIME_12H;
   if (dFmt < 0 || dFmt >= DATE_FORMAT_COUNT) dFmt = DATE_MM_DD_YYYY;
@@ -65,6 +69,8 @@ void loadSettings() {
   g_brightnessPresetIndex = bri;
   g_ledBrightness         = BRIGHTNESS_PRESETS[g_brightnessPresetIndex];
   ledStatusSetMasterBrightness(g_ledBrightness);
+  g_vfdBrightnessPresetIndex = vfdBri;  // V0.99s: VFD brightness
+  g_vfdBrightness         = VFD_BRIGHTNESS_PRESETS[g_vfdBrightnessPresetIndex];
   g_currentCoinIndex      = coin;
   g_timeFormat            = tFmt;
   g_dateFormatIndex       = dFmt;
@@ -94,6 +100,7 @@ void saveSettings() {
   StoredSettings st;
   st.updPreset = g_updatePresetIndex;
   st.briPreset = g_brightnessPresetIndex;
+  st.vfdBriPreset = g_vfdBrightnessPresetIndex;  // V0.99s: VFD brightness
   st.coinTicker = String(currentCoin().ticker);
   st.timeFmt   = g_timeFormat;
   st.dateFmt   = g_dateFormatIndex;
@@ -236,6 +243,104 @@ void handleUpdateIntervalSelect() {
 }
 
 void handleMenuSelect() {
+  // V0.99s: Handle VFD-specific menu items (9 items instead of 13)
+  if (g_displayType == DISPLAY_VFD) {
+    switch (g_menuIndex) {
+      case VFD_MENU_COIN: {
+        // Enter coin submenu
+        g_uiMode           = UI_MODE_COIN_SUB;
+        g_coinMenuIndex    = g_currentCoinIndex;
+        g_coinMenuTopIndex = 0;
+        g_coinDirty        = true;
+        Serial.println("[Menu] Enter COIN submenu");
+        g_display->drawCoinList();
+        break;
+      }
+
+      case VFD_MENU_UPDATE: {
+        // Enter update interval submenu
+        g_uiMode = UI_MODE_UPDATE_SUB;
+        g_updateMenuIndex = g_updatePresetIndex;
+        g_updateMenuTopIndex = 0;
+        g_updateDirty = true;
+        Serial.println("[Menu] Enter UPDATE submenu");
+        drawUpdateMenu(false);
+        break;
+      }
+
+      case VFD_MENU_LED_BRIGHTNESS: {
+        // Cycle through LED brightness presets
+        g_brightnessPresetIndex = (g_brightnessPresetIndex + 1) % BRIGHTNESS_PRESETS_COUNT;
+        g_ledBrightness = BRIGHTNESS_PRESETS[g_brightnessPresetIndex];
+        ledStatusSetMasterBrightness(g_ledBrightness);
+        Serial.printf("[Menu] LED brightness -> %s\n", BRIGHTNESS_LABELS[g_brightnessPresetIndex]);
+        saveSettings();
+        uint8_t r=0,g_val=0,b=0;
+        ledStatusGetLogicalRgb(&r, &g_val, &b);
+        fadeLedTo(r, g_val, b, 5, 10);
+        g_display->drawMenuScreen();
+        break;
+      }
+
+      case VFD_MENU_VFD_BRIGHTNESS: {
+        // Cycle through VFD brightness presets
+        g_vfdBrightnessPresetIndex = (g_vfdBrightnessPresetIndex + 1) % VFD_BRIGHTNESS_PRESETS_COUNT;
+        g_vfdBrightness = VFD_BRIGHTNESS_PRESETS[g_vfdBrightnessPresetIndex];
+        g_display->setBrightness(g_vfdBrightness);
+        Serial.printf("[Menu] VFD brightness -> %s\n", VFD_BRIGHTNESS_LABELS[g_vfdBrightnessPresetIndex]);
+        saveSettings();
+        g_display->drawMenuScreen();
+        break;
+      }
+
+      case VFD_MENU_CURRENCY: {
+        // Enter currency submenu
+        g_currencyMenuIndex = g_displayCurrency;
+        g_uiMode = UI_MODE_CURRENCY_SUB;
+        g_display->drawCurrencyList();
+        break;
+      }
+
+      case VFD_MENU_TIMEZONE: {
+        // Enter timezone submenu
+        enterTimezoneSubmenu();
+        g_display->drawTimezoneList();
+        break;
+      }
+
+      case VFD_MENU_FIRMWARE: {
+        // Two-step entry: show confirm screen, then long-press to enter maintenance AP
+        g_uiMode = UI_MODE_FW_CONFIRM;
+        Serial.println("[Menu] Firmware update (confirm)");
+        drawFirmwareUpdateConfirmScreen(CRYPTOBAR_VERSION);
+        break;
+      }
+
+      case VFD_MENU_WIFI_INFO: {
+        // Show WiFi info screen
+        bool connected = (WiFi.status() == WL_CONNECTED);
+        String mac = WiFi.macAddress();
+        String ip  = connected ? WiFi.localIP().toString() : String("");
+        int bars   = connected ? rssiToBars(WiFi.RSSI()) : 0;
+        int ch     = connected ? WiFi.channel() : 0;
+
+        g_uiMode = UI_MODE_WIFI_INFO;
+        drawWifiInfoScreen(CRYPTOBAR_VERSION, mac.c_str(), ip.c_str(), bars, ch, connected);
+        break;
+      }
+
+      case VFD_MENU_EXIT:
+        leaveMenu();
+        break;
+
+      default:
+        Serial.printf("[Menu] Unknown VFD menu index: %d\n", g_menuIndex);
+        break;
+    }
+    return;
+  }
+
+  // E-ink menu handling (original 13-item menu)
   switch (g_menuIndex) {
     case MENU_COIN: {
  // Enter coin submenu

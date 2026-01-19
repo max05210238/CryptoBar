@@ -399,8 +399,8 @@ void setup() {
 
  // ==================== Boot welcome screen =====================
  // Show version to user first; screen stays visible while WiFi/NTP connection takes time
-  uint32_t splashStartMs = millis();
 
+  // CRITICAL: Display splash BEFORE recording time (V0.99r logic restored)
   if (g_displayType == DISPLAY_VFD) {
     // VFD shows 3-stage welcome during init: All-on (3s) + CryptoBar Retro (3s) + Version (3s)
     // Total: 9 seconds, giving WiFi time to connect
@@ -416,11 +416,13 @@ void setup() {
     delay(3000);  // Display version for 3 seconds
 
     // Total welcome sequence: 6s (init) + 3s (version) = 9 seconds
-    // splashStartMs was set before init(), so it includes all 9 seconds
   } else {
-    // E-ink: Show splash screen
+    // E-ink: Show splash screen FIRST
     drawSplashScreen(CRYPTOBAR_VERSION);
   }
+
+  // Now record time AFTER splash is displayed (prevents timing drift)
+  uint32_t splashStartMs = millis();
 
   // Encoder button pin (CLK/DT pins are configured inside encoderPcntBegin)
   pinMode(ENC_SW_PIN,  INPUT_PULLUP);

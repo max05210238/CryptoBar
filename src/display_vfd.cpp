@@ -757,8 +757,8 @@ void DisplayVfd::getMenuItemText(VfdMenuItem item, char* output, uint8_t maxLen)
       snprintf(output, maxLen, "Currency: %s", CURRENCY_INFO[g_displayCurrency].code);
       break;
     case VFD_MENU_TIMEZONE:
-      // V0.99s: Show timezone name directly to avoid text overflow (consistent with submenu)
-      snprintf(output, maxLen, "%s", TIMEZONES[g_timezoneIndex].label);
+      // V0.99s: Main menu shows category name, submenu shows specific timezone
+      snprintf(output, maxLen, "Time Zone");
       break;
     case VFD_MENU_FIRMWARE:
       snprintf(output, maxLen, "Firmware Update");

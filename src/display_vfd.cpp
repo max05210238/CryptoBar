@@ -45,7 +45,6 @@ extern const char* VFD_BRIGHTNESS_LABELS[];
 // Constructor
 DisplayVfd::DisplayVfd() {
   currentPage = 1;
-  lastPageSwitch = 0;
   priceUpdateTime = 0;
   currentBrightness = BRIGHT_DAY;
   tempBrightBoostEndTime = 0;  // No temp boost initially
@@ -514,26 +513,39 @@ void DisplayVfd::scrollUp() {
 }
 
 // Update page rotation (called in loop)
-// 10-second sync cycle: 4.5s price + 0.5s animation + 4.5s change% + 0.5s animation
+// 10-second NTP-synced cycle: 4.5s price + 0.5s animation + 4.5s change% + 0.5s animation
+// All devices with accurate NTP will display synchronized content
 void DisplayVfd::updatePageRotation() {
   // Skip rotation if price data not available
   if (!g_lastPriceOk) {
     return;
   }
 
-  // Check if 5 seconds have elapsed since last page switch (half cycle)
-  uint32_t now = millis();
-  if (now - lastPageSwitch >= PAGE_SWITCH_INTERVAL_MS) {
-    // Switch page
-    uint8_t nextPage = (currentPage == 1) ? 2 : 1;
+  // Get current UTC time (absolute time, not relative millis)
+  time_t nowUtc = time(nullptr);
+  if (nowUtc < 1600000000) {
+    // Time not valid yet, skip synchronization
+    return;
+  }
 
-    Serial.printf("[VFD] Switching page %d → %d (pixel scroll)\n", currentPage, nextPage);
+  // Calculate position in 10-second cycle (0-9)
+  uint8_t cycleSecond = nowUtc % 10;
+
+  // Determine which page should be displayed based on cycle position
+  // 0-4 seconds: Price page
+  // 5-9 seconds: Change% page
+  uint8_t targetPage = (cycleSecond < 5) ? 1 : 2;
+
+  // Check if we need to switch pages
+  if (targetPage != currentPage) {
+    Serial.printf("[VFD] NTP-synced page switch: %d → %d (UTC second=%d, cycle=%d)\n",
+                  currentPage, targetPage, (int)nowUtc, cycleSecond);
 
     // Generate new page content
     char newPageBuf[17];
     const CoinInfo& coin = coinAt(g_currentCoinIndex);
 
-    if (nextPage == 1) {
+    if (targetPage == 1) {
       // Price page
       double displayPrice = g_lastPriceUsd;
       if (g_displayCurrency != (int)CURR_USD && g_fxValid) {
@@ -545,7 +557,8 @@ void DisplayVfd::updatePageRotation() {
       formatChange(g_lastChange24h, coin.ticker, newPageBuf, 17);
     }
 
-    // Horizontal left scroll from old to new page
+    // Perform horizontal scroll animation (takes ~500ms)
+    // Animation happens at cycle positions 4-5 and 9-0
     if (lastPageContent[0] != '\0') {
       scrollLeftCharLevel(lastPageContent, newPageBuf);
     } else {
@@ -557,10 +570,9 @@ void DisplayVfd::updatePageRotation() {
     snprintf(lastPageContent, 17, "%s", newPageBuf);
 
     // Update page state
-    currentPage = nextPage;
-    lastPageSwitch = now;
+    currentPage = targetPage;
 
-    Serial.printf("[VFD] Page %d content: %s\n", currentPage, newPageBuf);
+    Serial.printf("[VFD] Page %d content: %s (NTP-synced)\n", currentPage, newPageBuf);
   }
 }
 

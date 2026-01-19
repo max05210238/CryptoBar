@@ -5,6 +5,20 @@
 #include "display_interface.h"
 #include <Arduino.h>
 
+// VFD-specific menu items (9 items, simplified from e-ink's 13)
+enum VfdMenuItem {
+  VFD_MENU_COIN = 0,
+  VFD_MENU_UPDATE,
+  VFD_MENU_LED_BRIGHTNESS,
+  VFD_MENU_VFD_BRIGHTNESS,
+  VFD_MENU_CURRENCY,
+  VFD_MENU_TIMEZONE,
+  VFD_MENU_FIRMWARE,
+  VFD_MENU_WIFI_INFO,
+  VFD_MENU_EXIT,
+  VFD_MENU_COUNT
+};
+
 class DisplayVfd : public DisplayInterface {
 public:
   DisplayVfd();
@@ -49,8 +63,12 @@ public:
 
   // Configuration
   static const uint16_t SCROLL_DURATION_MS = 500;  // Scroll animation time (adjustable)
+  static const uint8_t MENU_TEXT_MAX_LEN = 14;     // Max text length before auto-scroll (16 - 2 for padding)
 
 private:
+  // Menu display helpers
+  void drawMenuItemText(VfdMenuItem item);  // Draw menu item with auto-scroll if needed
+  void getMenuItemText(VfdMenuItem item, char* output, uint8_t maxLen);  // Get menu item text
   // Low-level VFD communication
   void vfdWriteByte(uint8_t data);
   void vfdCommand(uint8_t cmd);

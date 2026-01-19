@@ -10,6 +10,19 @@
 #include <time.h>
 #include <cmath>  // For floor() and log10()
 
+// External global variables (for menu display)
+extern int g_menuIndex;
+extern int g_updatePresetIndex;
+extern int g_brightnessPresetIndex;
+extern int g_vfdBrightnessPresetIndex;
+extern int g_displayCurrency;
+extern int g_timezoneIndex;
+extern int g_currentCoinIndex;
+extern const char* UPDATE_PRESET_LABELS[];
+extern const char* BRIGHTNESS_LABELS[];
+extern const uint8_t VFD_BRIGHTNESS_PRESETS[];
+extern const char* VFD_BRIGHTNESS_LABELS[];
+
 // VFD GPIO pins (shared with E-ink)
 #define VFD_CLK   EPD_SCK   // GPIO 12
 #define VFD_RST   EPD_RST   // GPIO 16
@@ -651,10 +664,84 @@ void DisplayVfd::drawMainScreenTimeOnly(bool forceFullRefresh) {
   // VFD Retro doesn't display time, skip
 }
 
-// Menu screens (simplified for VFD)
+// ===== Menu helper functions =====
+
+// Get menu item text string
+void DisplayVfd::getMenuItemText(VfdMenuItem item, char* output, uint8_t maxLen) {
+  switch (item) {
+    case VFD_MENU_COIN:
+      snprintf(output, maxLen, "Coin: %s", coinAt(g_currentCoinIndex).ticker);
+      break;
+    case VFD_MENU_UPDATE:
+      snprintf(output, maxLen, "Update: %s", UPDATE_PRESET_LABELS[g_updatePresetIndex]);
+      break;
+    case VFD_MENU_LED_BRIGHTNESS:
+      snprintf(output, maxLen, "LED: %s", BRIGHTNESS_LABELS[g_brightnessPresetIndex]);
+      break;
+    case VFD_MENU_VFD_BRIGHTNESS:
+      snprintf(output, maxLen, "Bright: %s", VFD_BRIGHTNESS_LABELS[g_vfdBrightnessPresetIndex]);
+      break;
+    case VFD_MENU_CURRENCY:
+      snprintf(output, maxLen, "Currency: %s", CURRENCY_INFO[g_displayCurrency].code);
+      break;
+    case VFD_MENU_TIMEZONE:
+      snprintf(output, maxLen, "Timezone: %s", TIMEZONES[g_timezoneIndex].label);
+      break;
+    case VFD_MENU_FIRMWARE:
+      snprintf(output, maxLen, "Firmware Update");
+      break;
+    case VFD_MENU_WIFI_INFO:
+      snprintf(output, maxLen, "WiFi Info");
+      break;
+    case VFD_MENU_EXIT:
+      snprintf(output, maxLen, "Exit");
+      break;
+    default:
+      snprintf(output, maxLen, "Unknown");
+      break;
+  }
+}
+
+// Draw menu item with auto-scroll if text > 14 chars
+void DisplayVfd::drawMenuItemText(VfdMenuItem item) {
+  char text[64];  // Buffer for menu item text
+  getMenuItemText(item, text, sizeof(text));
+
+  uint8_t textLen = strlen(text);
+
+  // If text fits in 16 chars, display directly
+  if (textLen <= 16) {
+    char buf[17];
+    snprintf(buf, 17, "%-16s", text);
+    vfdWriteStr(0, buf);
+    return;
+  }
+
+  // Text is too long, auto-scroll:
+  // 1. Stop 1s
+  // 2. Scroll left until end is visible
+  // 3. Stop at end 1s
+  // 4. Loop (optional, for now just show start)
+
+  // For simplicity, show first 16 chars (we can enhance scrolling later)
+  char buf[17];
+  snprintf(buf, 17, "%-16.16s", text);  // Truncate to 16 chars for now
+  vfdWriteStr(0, buf);
+
+  // TODO: Implement full auto-scroll (stop 1s, scroll left, stop 1s, loop)
+}
+
+// Menu screens (VFD-specific 9-item menu)
 void DisplayVfd::drawMenuScreen() {
-  vfdClear();
-  vfdWriteStr(0, "Menu            ");
+  // Display current menu item (VFD can only show 1 line at a time)
+  if (g_menuIndex < 0 || g_menuIndex >= VFD_MENU_COUNT) {
+    g_menuIndex = 0;
+  }
+
+  VfdMenuItem item = static_cast<VfdMenuItem>(g_menuIndex);
+  drawMenuItemText(item);
+
+  Serial.printf("[VFD] Menu: %d\n", g_menuIndex);
 }
 
 void DisplayVfd::drawCoinList() {

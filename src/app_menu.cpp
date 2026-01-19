@@ -177,7 +177,11 @@ void handleTimezoneSelect() {
   Serial.printf("[Menu] Timezone -> %s (UTC%+d)\n", TIMEZONES[g_timezoneIndex].label, (int)TIMEZONES[g_timezoneIndex].utcOffsetHours);
 
   g_uiMode = UI_MODE_MENU;
-  drawMenuScreen(false);  // Partial refresh
+  if (g_displayType == DISPLAY_VFD && g_display) {
+    g_display->drawMenuScreen();
+  } else {
+    drawMenuScreen(false);  // Partial refresh
+  }
 }
 
 void handleCoinSelect() {
@@ -206,7 +210,11 @@ void handleCoinSelect() {
   }
 
   g_uiMode = UI_MODE_MENU;
-  drawMenuScreen(false);  // Partial refresh
+  if (g_displayType == DISPLAY_VFD && g_display) {
+    g_display->drawMenuScreen();
+  } else {
+    drawMenuScreen(false);  // Partial refresh
+  }
 }
 
 void handleCurrencySelect() {
@@ -231,7 +239,11 @@ void handleCurrencySelect() {
 
   // Return to main menu
   g_uiMode = UI_MODE_MENU;
-  drawMenuScreen(false);
+  if (g_displayType == DISPLAY_VFD && g_display) {
+    g_display->drawMenuScreen();
+  } else {
+    drawMenuScreen(false);
+  }
 }
 
 void handleUpdateIntervalSelect() {
@@ -254,7 +266,11 @@ void handleUpdateIntervalSelect() {
 
   // Return to main menu
   g_uiMode = UI_MODE_MENU;
-  drawMenuScreen(false);
+  if (g_displayType == DISPLAY_VFD && g_display) {
+    g_display->drawMenuScreen();
+  } else {
+    drawMenuScreen(false);
+  }
 }
 
 void handleMenuSelect() {
@@ -277,9 +293,12 @@ void handleMenuSelect() {
         g_uiMode = UI_MODE_UPDATE_SUB;
         g_updateMenuIndex = g_updatePresetIndex;
         g_updateMenuTopIndex = 0;
-        g_updateDirty = true;
+        g_updateDirty = false;  // Will display immediately below
         Serial.println("[Menu] Enter UPDATE submenu");
-        drawUpdateMenu(false);
+        DisplayVfd* vfdDisplay = static_cast<DisplayVfd*>(g_display);
+        if (vfdDisplay) {
+          vfdDisplay->drawUpdateIntervalList();
+        }
         break;
       }
 

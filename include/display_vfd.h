@@ -35,6 +35,7 @@ public:
   void drawCoinList() override;
   void drawCurrencyList() override;
   void drawTimezoneList() override;
+  void drawUpdateIntervalList();  // VFD-specific update interval submenu
 
   void drawSettingsScreen(const char* key, const char* value) override;
   void drawWifiSetupScreen(const char* ssid, const char* ip) override;

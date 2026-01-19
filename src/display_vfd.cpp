@@ -18,6 +18,10 @@ extern int g_vfdBrightnessPresetIndex;
 extern int g_displayCurrency;
 extern int g_timezoneIndex;
 extern int g_currentCoinIndex;
+extern int g_coinMenuIndex;        // Coin submenu index
+extern int g_currencyMenuIndex;    // Currency submenu index
+extern int g_tzMenuIndex;          // Timezone submenu index (display position)
+extern int g_updateMenuIndex;      // Update interval submenu index
 extern const char* UPDATE_PRESET_LABELS[];
 extern const char* BRIGHTNESS_LABELS[];
 extern const uint8_t VFD_BRIGHTNESS_PRESETS[];
@@ -808,21 +812,40 @@ void DisplayVfd::drawMenuScreen() {
 }
 
 void DisplayVfd::drawCoinList() {
-  const CoinInfo& coin = coinAt(g_currentCoinIndex);
+  // Display current coin selection from submenu index
+  const CoinInfo& coin = coinAt(g_coinMenuIndex);
   char buf[17];
   snprintf(buf, 17, "Coin: %-10s", coin.ticker);
   vfdWriteStr(0, buf);
+  Serial.printf("[VFD] Coin submenu: %s (index=%d/%d)\n", coin.ticker, g_coinMenuIndex, coinCount()-1);
 }
 
 void DisplayVfd::drawCurrencyList() {
+  // Display current currency selection from submenu index
   char buf[17];
-  snprintf(buf, 17, "Curr: %-10s", CURRENCY_INFO[g_displayCurrency].code);
+  snprintf(buf, 17, "Curr: %-10s", CURRENCY_INFO[g_currencyMenuIndex].code);
   vfdWriteStr(0, buf);
+  Serial.printf("[VFD] Currency submenu: %s (index=%d/%d)\n",
+                CURRENCY_INFO[g_currencyMenuIndex].code, g_currencyMenuIndex, (int)CURR_COUNT-1);
 }
 
 void DisplayVfd::drawTimezoneList() {
-  vfdClear();
-  vfdWriteStr(0, "Timezone        ");
+  // Display current timezone selection from submenu index (g_tzMenuIndex is display position)
+  int tzIdx = tzIndexFromDisplayPos(g_tzMenuIndex);
+  char buf[17];
+  snprintf(buf, 17, "TZ: %-12s", TIMEZONES[tzIdx].label);
+  vfdWriteStr(0, buf);
+  Serial.printf("[VFD] Timezone submenu: %s (index=%d/%d)\n",
+                TIMEZONES[tzIdx].label, g_tzMenuIndex, TIMEZONE_COUNT-1);
+}
+
+void DisplayVfd::drawUpdateIntervalList() {
+  // Display current update interval selection from submenu index
+  char buf[17];
+  snprintf(buf, 17, "Update: %-8s", UPDATE_PRESET_LABELS[g_updateMenuIndex]);
+  vfdWriteStr(0, buf);
+  Serial.printf("[VFD] Update submenu: %s (index=%d/%d)\n",
+                UPDATE_PRESET_LABELS[g_updateMenuIndex], g_updateMenuIndex, UPDATE_PRESETS_COUNT-1);
 }
 
 void DisplayVfd::drawSettingsScreen(const char* key, const char* value) {

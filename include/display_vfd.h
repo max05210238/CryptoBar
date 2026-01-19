@@ -41,6 +41,7 @@ public:
 
   void drawSettingsScreen(const char* key, const char* value) override;
   void drawWifiSetupScreen(const char* ssid, const char* ip) override;
+  void drawWifiCooldownProgress(uint32_t elapsedMs, uint32_t totalMs);  // WiFi retry cooldown progress bar
   void drawOtaScreen(const char* status) override;
   void drawErrorScreen(const char* message) override;
 

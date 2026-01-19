@@ -902,6 +902,24 @@ void DisplayVfd::drawWifiSetupScreen(const char* ssid, const char* ip) {
   Serial.println("[VFD] drawWifiSetupScreen complete");
 }
 
+void DisplayVfd::drawWifiCooldownProgress(uint32_t elapsedMs, uint32_t totalMs) {
+  // Calculate number of filled dashes (0-16)
+  // Progress bar fills from left to right over 3 minutes (180 seconds)
+  int filled = (elapsedMs * 16) / totalMs;
+  if (filled > 16) filled = 16;
+
+  // Build progress bar: filled portion = '-', unfilled = ' '
+  char buf[17];
+  for (int i = 0; i < 16; i++) {
+    buf[i] = (i < filled) ? '-' : ' ';
+  }
+  buf[16] = '\0';
+
+  vfdClear();
+  delay(10);
+  vfdWriteStr(0, buf);
+}
+
 void DisplayVfd::drawOtaScreen(const char* status) {
   char buf[17];
   snprintf(buf, 17, "OTA: %-11s", status);

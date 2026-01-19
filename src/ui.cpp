@@ -860,6 +860,56 @@ void drawWifiConnectingScreen(const char* version, const char* ssid, bool fullRe
   } while (display.nextPage());
 }
 
+void drawWifiCooldownScreen(uint32_t remainingSec, bool fullRefresh) {
+  // V0.99s: Check display type for VFD support
+  if (g_displayType == DISPLAY_VFD && g_display != nullptr) {
+    // VFD: Progress bar is handled separately
+    return;
+  }
+
+  // E-ink: Always use partial refresh (does NOT count toward g_partialRefreshCount)
+  display.setPartialWindow(0, 0, display.width(), display.height());
+
+  display.firstPage();
+  do {
+    display.fillScreen(GxEPD_WHITE);
+
+    display.setFont(&FreeSansBold12pt7b);
+    display.setTextColor(GxEPD_BLACK);
+    display.setCursor(8, 24);
+    display.print("WiFi Retry Cooldown");
+
+    display.setFont(&FreeSansBold9pt7b);
+    int y = 52;
+
+    // Format time as "Retrying in: M:SS"
+    uint32_t minutes = remainingSec / 60;
+    uint32_t seconds = remainingSec % 60;
+    char timeBuf[32];
+    snprintf(timeBuf, sizeof(timeBuf), "Retrying in: %u:%02u", minutes, seconds);
+
+    display.setCursor(8, y);
+    display.print(timeBuf);
+
+    // Bottom-right version
+    const char* version = getShortVersion();
+    if (version && version[0]) {
+      int16_t x1, y1;
+      uint16_t w, h;
+      display.getTextBounds(version, 0, 0, &x1, &y1, &w, &h);
+      const int16_t margin = 4;
+      int16_t vx = (display.width() - margin) - (x1 + (int)w);
+      int16_t vy = (display.height() - margin) - (y1 + (int)h);
+      display.setCursor(vx, vy);
+      display.print(version);
+    }
+
+  } while (display.nextPage());
+
+  // Note: This partial refresh does NOT increment g_partialRefreshCount
+  // Cooldown screens are independent system events, not price updates
+}
+
 void drawWifiConnectFailedScreen(const char* version, bool fullRefresh) {
   // V0.99s: Check display type for VFD support
   if (g_displayType == DISPLAY_VFD && g_display != nullptr) {

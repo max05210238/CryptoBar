@@ -109,6 +109,61 @@ void updateAvgLineReference(time_t nowUtc) {
 // WiFi functions moved to app_wifi.cpp (loadWifiCreds, connectWiFiSta, etc.)
 // Time/scheduler functions moved to app_time.cpp & app_scheduler.cpp
 
+// ==================== WiFi Retry Cooldown =====================
+
+// Display WiFi cooldown screen for specified duration (3 minutes = 180 seconds)
+// E-ink: Update countdown every 5 seconds (partial refresh, does NOT count toward 20-refresh limit)
+// VFD: Update progress bar every 11.25 seconds (16 steps over 180 seconds)
+void showWiFiCooldown(uint32_t cooldownSec) {
+  uint32_t totalMs = cooldownSec * 1000;
+  uint32_t startMs = millis();
+
+  setLedBlue();  // Blue LED during cooldown (waiting to retry)
+
+  if (g_displayType == DISPLAY_VFD && g_display != nullptr) {
+    // VFD: Progress bar updates every 11.25 seconds (16 steps for 180 seconds)
+    DisplayVfd* vfd = static_cast<DisplayVfd*>(g_display);
+    const uint32_t VFD_UPDATE_INTERVAL_MS = 11250;  // 180000 / 16 = 11250ms
+    uint32_t nextUpdateMs = startMs;
+
+    while (millis() - startMs < totalMs) {
+      if (millis() >= nextUpdateMs) {
+        uint32_t elapsedMs = millis() - startMs;
+        vfd->drawWifiCooldownProgress(elapsedMs, totalMs);
+        nextUpdateMs += VFD_UPDATE_INTERVAL_MS;
+      }
+
+      // Allow encoder polling (user can press button to enter AP mode manually)
+      pollEncoder();
+      delay(100);
+    }
+
+    // Final update: show full progress bar
+    vfd->drawWifiCooldownProgress(totalMs, totalMs);
+
+  } else {
+    // E-ink: Countdown updates every 5 seconds (partial refresh, independent of main counter)
+    const uint32_t EINK_UPDATE_INTERVAL_MS = 5000;  // 5 seconds
+    uint32_t nextUpdateMs = startMs;
+
+    while (millis() - startMs < totalMs) {
+      if (millis() >= nextUpdateMs) {
+        uint32_t remainingMs = totalMs - (millis() - startMs);
+        uint32_t remainingSec = (remainingMs + 999) / 1000;  // Round up
+
+        drawWifiCooldownScreen(remainingSec, false);  // Partial refresh (NOT counted)
+        nextUpdateMs += EINK_UPDATE_INTERVAL_MS;
+      }
+
+      // Allow encoder polling (user can press button to enter AP mode manually)
+      pollEncoder();
+      delay(100);
+    }
+  }
+
+  Serial.println("[WiFi] Cooldown complete, retrying connection...");
+}
+
 // ==================== WiFi Setup UI =====================
 
 void showWifiSetupRequired(unsigned long splashStartMs, bool enforceSplashDelay = true) {
@@ -455,13 +510,24 @@ if (WiFi.status() == WL_CONNECTED) {
   return;
 }
 
-// WiFi not connected after 3 seconds, show connecting screen and retry
-Serial.println("[WiFi] Not connected after splash, showing connection UI...");
-if (!connectWiFiStaWithRetries(g_wifiSsid.c_str(), g_wifiPass.c_str(),
-                              5, 12000, true)) {
-  Serial.println("[WiFi] Failed to connect with saved credentials (all attempts).");
-  showWifiSetupRequired(splashStartMs, false);  // Don't enforce splash delay
-  return;
+// WiFi not connected after splash, enter infinite retry loop
+// V0.99s: New WiFi connection strategy - never auto-start AP, keep retrying forever
+// Only user action (12-second press) can trigger factory reset -> AP mode
+Serial.println("[WiFi] Not connected after splash, entering retry loop...");
+
+while (true) {
+  // Attempt connection 5 times (12 second timeout per attempt)
+  if (connectWiFiStaWithRetries(g_wifiSsid.c_str(), g_wifiPass.c_str(), 5, 12000, true)) {
+    Serial.println("[WiFi] Connected successfully!");
+    break;  // Exit loop, proceed to normal operation
+  }
+
+  // Failed all 5 attempts, show 3-minute cooldown screen
+  Serial.println("[WiFi] Failed 5 attempts, starting 3-minute cooldown...");
+  showWiFiCooldown(180);  // 180 seconds = 3 minutes
+
+  // After cooldown, loop continues (retry 5 more attempts)
+  // User can press encoder button 12+ seconds during cooldown to trigger factory reset -> AP
 }
 
 startNormalOperation(false, splashStartMs);  // No splash delay needed
@@ -809,53 +875,41 @@ String apIp = WiFi.softAPIP().toString();
       g_lastUiDrawMs = ms;
     }
   }
- // ==================== Runtime WiFi drop handling (V0.97) ====================
- // If WiFi drops during normal use, DO NOT auto-start AP.
- // We retry STA in small batches with a backoff. AP can be started manually via long-press while offline.
+ // ==================== Runtime WiFi drop handling (V0.99s) ====================
+ // V0.99s: Unified WiFi reconnection strategy
+ // If WiFi drops during normal use, enter infinite retry loop (same as boot):
+ //   - Attempt 5 times (12 second timeout each)
+ //   - Show 3-minute cooldown screen
+ //   - Repeat forever until connected
+ // User can manually trigger factory reset (12-second press) -> AP mode
   if (WiFi.status() != WL_CONNECTED) {
- // If somehow we never had a successful connection (e.g., boot edge-case), keep the original behavior.
-    if (!g_wifiEverConnected) {
-      if (!connectWiFiStaWithRetries(g_wifiSsid.c_str(), g_wifiPass.c_str(), 5, 12000, true)) {
-        Serial.println("[WiFi] Failed to connect with saved credentials (all attempts).");
-        showWifiSetupRequired(0, false);
-        return;
+    Serial.println("[WiFi] Runtime disconnection detected, entering retry loop...");
+    setLedBlue();  // Blue LED during reconnection attempts
+
+    while (true) {
+      // Show reconnection UI
+      bool showUi = (g_uiMode == UI_MODE_NORMAL);
+      if (showUi) {
+        String label = String(g_wifiSsid) + " (reconnect)";
+        drawWifiConnectingScreen(getShortVersion(), label.c_str(), false);  // Partial refresh
       }
-    } else {
-      uint32_t nowMs = millis();
- // Only attempt a reconnect when the backoff window expires.
-      if (g_nextRuntimeReconnectMs == 0 || nowMs >= g_nextRuntimeReconnectMs) {
-        bool showUi = (g_uiMode == UI_MODE_NORMAL);
-        if (showUi) {
-          String label = String(g_wifiSsid) + " (reconnect)";
-          drawWifiConnectingScreen(getShortVersion(), label.c_str(), false);  // Partial refresh
-        }
-        Serial.printf("[WiFi] Runtime reconnect batch %u (attempts=%u, timeout=%lums)\n",
-                      (unsigned)g_runtimeReconnectBatch + 1, (unsigned)RUNTIME_RECONNECT_ATTEMPTS,
-                      (unsigned long)RUNTIME_RECONNECT_TIMEOUT_MS);
-        bool ok = connectWiFiStaWithRetries(g_wifiSsid.c_str(), g_wifiPass.c_str(),
-                                           RUNTIME_RECONNECT_ATTEMPTS, RUNTIME_RECONNECT_TIMEOUT_MS, showUi);
-        if (!ok) {
-          g_runtimeReconnectBatch++;
-          g_nextRuntimeReconnectMs = nowMs + RUNTIME_RECONNECT_BACKOFF_MS;
-          Serial.printf("[WiFi] Runtime reconnect failed. Next retry in %lus (no AP auto-start).\n",
-                      (unsigned long)(RUNTIME_RECONNECT_BACKOFF_MS / 1000UL));
-          if (showUi) {
-            setLedRed();
-            String label = String("Offline, retry in ") + String(RUNTIME_RECONNECT_BACKOFF_MS / 1000UL) + "s";
-            drawWifiConnectingScreen(getShortVersion(), label.c_str(), false);  // Partial refresh
-          }
- // Skip network work this loop, but keep LED animation alive.
-          ledAnimLoop(g_appState == APP_STATE_RUNNING, g_lastPriceOk);
-          delay(1);
-          return;
-        }
- // Success: counters are reset inside connectWiFiSta() success path
-      } else {
- // Still in backoff window — skip network work this loop.
-        ledAnimLoop(g_appState == APP_STATE_RUNNING, g_lastPriceOk);
-        delay(1);
-        return;
+
+      // Attempt connection 5 times (12 second timeout per attempt)
+      Serial.println("[WiFi] Runtime reconnect: attempting 5 tries...");
+      if (connectWiFiStaWithRetries(g_wifiSsid.c_str(), g_wifiPass.c_str(), 5, 12000, showUi)) {
+        Serial.println("[WiFi] Runtime reconnection successful!");
+        g_wifiEverConnected = true;
+        g_nextRuntimeReconnectMs = 0;
+        g_runtimeReconnectBatch = 0;
+        break;  // Exit loop, resume normal operation
       }
+
+      // Failed all 5 attempts, show 3-minute cooldown screen
+      Serial.println("[WiFi] Runtime reconnect failed 5 attempts, starting 3-minute cooldown...");
+      showWiFiCooldown(180);  // 180 seconds = 3 minutes
+
+      // After cooldown, loop continues (retry 5 more attempts)
+      // User can press encoder button 12+ seconds during cooldown to trigger factory reset -> AP
     }
   }
 

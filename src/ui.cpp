@@ -574,14 +574,29 @@ void drawSplashScreen(const char* version) {
 
  // --- Bottom-right version ---
     if (version && version[0]) {
+      // V0.99s: Extract short version (e.g., "V0.99s" from "V0.99s (VFD Display Support)")
+      char shortVersion[16];
+      const char* spacePos = strchr(version, ' ');
+      if (spacePos) {
+        // Copy only up to first space
+        size_t len = spacePos - version;
+        if (len > sizeof(shortVersion) - 1) len = sizeof(shortVersion) - 1;
+        strncpy(shortVersion, version, len);
+        shortVersion[len] = '\0';
+      } else {
+        // No space found, use full version
+        strncpy(shortVersion, version, sizeof(shortVersion) - 1);
+        shortVersion[sizeof(shortVersion) - 1] = '\0';
+      }
+
       display.setFont(&FreeSansBold9pt7b);
-      display.getTextBounds(version, 0, 0, &x1, &y1, &w, &h);
+      display.getTextBounds(shortVersion, 0, 0, &x1, &y1, &w, &h);
 
       const int16_t margin = 4;
       int16_t vx = (display.width() - margin) - (x1 + (int)w);
       int16_t vy = (display.height() - margin) - (y1 + (int)h);
       display.setCursor(vx, vy);
-      display.print(version);
+      display.print(shortVersion);
     }
 
   } while (display.nextPage());

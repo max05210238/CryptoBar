@@ -757,7 +757,8 @@ void DisplayVfd::getMenuItemText(VfdMenuItem item, char* output, uint8_t maxLen)
       snprintf(output, maxLen, "Currency: %s", CURRENCY_INFO[g_displayCurrency].code);
       break;
     case VFD_MENU_TIMEZONE:
-      snprintf(output, maxLen, "Timezone: %s", TIMEZONES[g_timezoneIndex].label);
+      // V0.99s: Show timezone name directly to avoid text overflow (consistent with submenu)
+      snprintf(output, maxLen, "%s", TIMEZONES[g_timezoneIndex].label);
       break;
     case VFD_MENU_FIRMWARE:
       snprintf(output, maxLen, "Firmware Update");
@@ -836,9 +837,10 @@ void DisplayVfd::drawCurrencyList() {
 
 void DisplayVfd::drawTimezoneList() {
   // Display current timezone selection from submenu index (g_tzMenuIndex is display position)
+  // V0.99s: Show full timezone name without "TZ:" prefix to avoid text overflow
   int tzIdx = tzIndexFromDisplayPos(g_tzMenuIndex);
   char buf[17];
-  snprintf(buf, 17, "TZ: %-12s", TIMEZONES[tzIdx].label);
+  snprintf(buf, 17, "%-16s", TIMEZONES[tzIdx].label);
   vfdWriteStr(0, buf);
   Serial.printf("[VFD] Timezone submenu: %s (index=%d/%d)\n",
                 TIMEZONES[tzIdx].label, g_tzMenuIndex, TIMEZONE_COUNT-1);

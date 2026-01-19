@@ -6,6 +6,22 @@
 // ==================== Version =====================
 const char* CRYPTOBAR_VERSION = "V0.99s (VFD Display Support)";
 
+// Get short version string (e.g., "V0.99s" from "V0.99s (VFD Display Support)")
+const char* getShortVersion() {
+  static char shortVersion[16];
+  const char* spacePos = strchr(CRYPTOBAR_VERSION, ' ');
+  if (spacePos) {
+    size_t len = spacePos - CRYPTOBAR_VERSION;
+    if (len > sizeof(shortVersion) - 1) len = sizeof(shortVersion) - 1;
+    strncpy(shortVersion, CRYPTOBAR_VERSION, len);
+    shortVersion[len] = '\0';
+  } else {
+    strncpy(shortVersion, CRYPTOBAR_VERSION, sizeof(shortVersion) - 1);
+    shortVersion[sizeof(shortVersion) - 1] = '\0';
+  }
+  return shortVersion;
+}
+
 // ==================== Display Type Detection =====================
 #include "display_interface.h"
 

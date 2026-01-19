@@ -191,24 +191,20 @@ void DisplayVfd::init() {
   Serial.println("[VFD] Step 3: Sending initialization commands...");
   vfdInit();
 
-  // Step 4: Test with ALL-ON mode
-  Serial.println("[VFD] Step 4: Testing ALL-ON mode...");
+  // Step 4: Welcome sequence - Stage 1: ALL-ON (3 seconds)
+  Serial.println("[VFD] Step 4: Welcome Stage 1 - All segments ON (3s)...");
   vfdCommand(0xE9);  // All segments ON
-  delay(2000);
-  Serial.println("[VFD] If VFD is working, all segments should be lit now!");
+  delay(3000);
 
-  // Step 5: Clear display
-  Serial.println("[VFD] Step 5: Clearing display...");
+  // Step 5: Welcome sequence - Stage 2: CryptoBar Retro (3 seconds)
+  Serial.println("[VFD] Step 5: Welcome Stage 2 - CryptoBar Retro (3s)...");
   vfdClear();
   delay(100);
-
-  // Step 6: Show boot message
-  Serial.println("[VFD] Step 6: Showing boot message...");
   vfdWriteStr(0, "CryptoBar Retro");
-  delay(2000);
+  delay(3000);
 
-  // Step 7: Clear for ready state
-  Serial.println("[VFD] Step 7: Ready!");
+  // Step 6: Clear for version display (will be shown in main.cpp)
+  Serial.println("[VFD] Step 6: Ready for version display...");
   vfdClear();
   delay(100);
 
@@ -939,4 +935,12 @@ void DisplayVfd::wake() {
 
 void DisplayVfd::setBrightness(uint8_t level) {
   vfdSetBrightness(level);
+}
+
+void DisplayVfd::showText(const char* text) {
+  // Simple helper to display arbitrary text on VFD
+  // Used for boot sequence, debug messages, etc.
+  char buf[17];
+  snprintf(buf, 17, "%-16s", text ? text : "");
+  vfdWriteStr(0, buf);
 }

@@ -65,7 +65,7 @@ void handleLongPress() {
   if (g_uiMode == UI_MODE_FW_CONFIRM) {
  // More robust: reboot into maintenance mode using an NVS boot flag.
  // (Avoids switching WiFi modes while other work may be in progress.)
-    drawFirmwareUpdateApScreen(CRYPTOBAR_VERSION, "Rebooting to Update AP...", "");
+    drawFirmwareUpdateApScreen(getShortVersion(), "Rebooting to Update AP...", "");
     Serial.println("[MAINT] Request (reboot into update AP)");
     maintBootRequest();
     delay(80);

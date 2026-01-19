@@ -44,6 +44,9 @@ public:
   void drawOtaScreen(const char* status) override;
   void drawErrorScreen(const char* message) override;
 
+  // VFD-specific helper: show arbitrary text (for boot sequence, debug, etc.)
+  void showText(const char* text);
+
   void clear() override;
   void sleep() override;
   void wake() override;

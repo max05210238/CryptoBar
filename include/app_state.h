@@ -11,6 +11,10 @@
 // ==================== Version =====================
 extern const char* CRYPTOBAR_VERSION;
 
+// Get short version string (e.g., "V0.99s" from "V0.99s (VFD Display Support)")
+// Returns pointer to static buffer, valid until next call
+const char* getShortVersion();
+
 // ==================== Constants =====================
 
 // Screen layout

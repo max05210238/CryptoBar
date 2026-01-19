@@ -399,7 +399,9 @@ void setup() {
 
  // ==================== Boot welcome screen =====================
  // Show version to user first; screen stays visible while WiFi/NTP connection takes time
-  uint32_t splashStartMs = millis();
+
+  // CRITICAL: Display splash BEFORE recording time (V0.99r logic restored)
+  uint32_t splashDisplayStartMs = millis();  // Record before display to measure render time
 
   if (g_displayType == DISPLAY_VFD) {
     // VFD shows 3-stage welcome during init: All-on (3s) + CryptoBar Retro (3s) + Version (3s)
@@ -416,11 +418,17 @@ void setup() {
     delay(3000);  // Display version for 3 seconds
 
     // Total welcome sequence: 6s (init) + 3s (version) = 9 seconds
-    // splashStartMs was set before init(), so it includes all 9 seconds
   } else {
-    // E-ink: Show splash screen
+    // E-ink: Show splash screen FIRST
+    Serial.println("[Boot] E-ink: drawing splash screen...");
     drawSplashScreen(CRYPTOBAR_VERSION);
+    uint32_t renderTime = millis() - splashDisplayStartMs;
+    Serial.printf("[Boot] Splash render time: %lums\n", (unsigned long)renderTime);
   }
+
+  // Record time after splash is displayed on screen
+  uint32_t splashStartMs = millis();
+  Serial.printf("[Boot] Splash start time recorded: %lums from boot\n", (unsigned long)splashStartMs);
 
   // Encoder button pin (CLK/DT pins are configured inside encoderPcntBegin)
   pinMode(ENC_SW_PIN,  INPUT_PULLUP);
@@ -480,7 +488,10 @@ if (g_displayType == DISPLAY_VFD) {
   splashDuration = 9000;  // VFD already took 9 seconds (all stages combined)
 }
 
+Serial.printf("[Boot] Time check point: %lums from boot\n", (unsigned long)millis());
 unsigned long elapsed = millis() - splashStartMs;
+Serial.printf("[Boot] Splash elapsed time: %lums (target: %lums)\n", (unsigned long)elapsed, (unsigned long)splashDuration);
+
 if (elapsed < splashDuration) {
   uint32_t remaining = splashDuration - elapsed;
   Serial.printf("[Boot] Splash screen: enforcing full display time (%lums remaining)\n", (unsigned long)remaining);
@@ -489,7 +500,9 @@ if (elapsed < splashDuration) {
   // Do NOT break early - splash must display for full duration
   delay(remaining);
 
-  Serial.println("[Boot] Splash screen: full duration completed");
+  Serial.printf("[Boot] Splash screen: full duration completed at %lums\n", (unsigned long)millis());
+} else {
+  Serial.printf("[Boot] Splash already displayed for %lums (no additional wait needed)\n", (unsigned long)elapsed);
 }
 
 // Splash screen displayed for full duration, check WiFi status

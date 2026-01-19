@@ -473,30 +473,23 @@ delay(100);
 WiFi.begin(g_wifiSsid.c_str(), g_wifiPass.c_str());
 setLedBlue();
 
-// Ensure splash screen displays for full 3 seconds while WiFi connects in background
-uint32_t splashDuration = 3000;  // 3 seconds
+// CRITICAL: Ensure splash screen displays for FULL 3 seconds (e-ink) or 9 seconds (VFD)
+// Do NOT exit early even if WiFi connects quickly - user needs to see the splash
+uint32_t splashDuration = 3000;  // 3 seconds for e-ink
 if (g_displayType == DISPLAY_VFD) {
-  splashDuration = 9000;  // VFD already took 9 seconds
+  splashDuration = 9000;  // VFD already took 9 seconds (all stages combined)
 }
 
 unsigned long elapsed = millis() - splashStartMs;
 if (elapsed < splashDuration) {
   uint32_t remaining = splashDuration - elapsed;
-  Serial.printf("[Boot] Splash screen: waiting %lums (WiFi connecting in background)\n", (unsigned long)remaining);
+  Serial.printf("[Boot] Splash screen: enforcing full display time (%lums remaining)\n", (unsigned long)remaining);
 
-  // Poll WiFi status while waiting
-  uint32_t checkInterval = 100;
-  uint32_t waited = 0;
+  // Wait for the full splash duration (WiFi connecting in background)
+  // Do NOT break early - splash must display for full duration
+  delay(remaining);
 
-  while (waited < remaining) {
-    delay(checkInterval);
-    waited += checkInterval;
-
-    if (WiFi.status() == WL_CONNECTED) {
-      Serial.printf("[WiFi] Connected during splash screen (%lums into display)\n", (unsigned long)elapsed + waited);
-      break;
-    }
-  }
+  Serial.println("[Boot] Splash screen: full duration completed");
 }
 
 // Splash screen displayed for full duration, check WiFi status

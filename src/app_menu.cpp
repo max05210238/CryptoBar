@@ -346,7 +346,10 @@ void handleMenuSelect() {
         // Two-step entry: show confirm screen, then long-press to enter maintenance AP
         g_uiMode = UI_MODE_FW_CONFIRM;
         Serial.println("[Menu] Firmware update (confirm)");
-        drawFirmwareUpdateConfirmScreen(CRYPTOBAR_VERSION);
+        DisplayVfd* vfdDisplay = static_cast<DisplayVfd*>(g_display);
+        if (vfdDisplay) {
+          vfdDisplay->drawFirmwareUpdateConfirmScreen(CRYPTOBAR_VERSION);
+        }
         break;
       }
 
@@ -359,7 +362,10 @@ void handleMenuSelect() {
         int ch     = connected ? WiFi.channel() : 0;
 
         g_uiMode = UI_MODE_WIFI_INFO;
-        drawWifiInfoScreen(CRYPTOBAR_VERSION, mac.c_str(), ip.c_str(), bars, ch, connected);
+        DisplayVfd* vfdDisplay = static_cast<DisplayVfd*>(g_display);
+        if (vfdDisplay) {
+          vfdDisplay->drawWifiInfoScreen(CRYPTOBAR_VERSION, mac.c_str(), ip.c_str(), bars, ch, connected);
+        }
         break;
       }
 

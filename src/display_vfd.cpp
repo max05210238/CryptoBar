@@ -848,6 +848,31 @@ void DisplayVfd::drawUpdateIntervalList() {
                 UPDATE_PRESET_LABELS[g_updateMenuIndex], g_updateMenuIndex, UPDATE_PRESETS_COUNT-1);
 }
 
+void DisplayVfd::drawFirmwareUpdateConfirmScreen(const char* version) {
+  // VFD firmware update confirmation screen (16 characters)
+  // Format: "Hold:FW Update "
+  char buf[17];
+  snprintf(buf, 17, "Hold:FW Update  ");
+  vfdWriteStr(0, buf);
+  Serial.printf("[VFD] Firmware update confirm screen (version=%s)\n", version ? version : "unknown");
+}
+
+void DisplayVfd::drawWifiInfoScreen(const char* version, const char* mac, const char* staIp,
+                                     int signalBars, int channel, bool connected) {
+  // VFD WiFi info screen (16 characters)
+  // If connected: show IP address, otherwise show "No Connect"
+  char buf[17];
+  if (connected && staIp && staIp[0]) {
+    // Show IP address (may truncate if too long)
+    snprintf(buf, 17, "IP:%-13s", staIp);
+  } else {
+    snprintf(buf, 17, "WiFi:No Connect ");
+  }
+  vfdWriteStr(0, buf);
+  Serial.printf("[VFD] WiFi info: %s (bars=%d ch=%d MAC=%s)\n",
+                connected ? staIp : "disconnected", signalBars, channel, mac ? mac : "-");
+}
+
 void DisplayVfd::drawSettingsScreen(const char* key, const char* value) {
   char buf[17];
   snprintf(buf, 17, "%-6s:%-9s", key, value);

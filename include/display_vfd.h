@@ -36,6 +36,8 @@ public:
   void drawCurrencyList() override;
   void drawTimezoneList() override;
   void drawUpdateIntervalList();  // VFD-specific update interval submenu
+  void drawFirmwareUpdateConfirmScreen(const char* version);  // VFD-specific firmware update confirmation
+  void drawWifiInfoScreen(const char* version, const char* mac, const char* staIp, int signalBars, int channel, bool connected);  // VFD-specific WiFi info
 
   void drawSettingsScreen(const char* key, const char* value) override;
   void drawWifiSetupScreen(const char* ssid, const char* ip) override;

@@ -86,11 +86,10 @@ private:
   void writeCustomChar(uint8_t cgramSlot, const uint8_t* pixelData);
   void mixCharPixels(uint8_t* output, const uint8_t* oldChar, const uint8_t* newChar, uint8_t offset);
 
-  // Page rotation state
+  // Page rotation state (NTP-synced)
   uint8_t currentPage;        // 1=price, 2=change%
-  uint32_t lastPageSwitch;    // millis() of last page switch
   time_t priceUpdateTime;     // UTC time of last price update
-  char lastPageContent[17];   // Cache of last displayed page (for pixel scrolling)
+  char lastPageContent[17];   // Cache of last displayed page (for scroll animation)
 
   // Brightness control
   uint8_t currentBrightness;  // 0-255

@@ -29,14 +29,17 @@ extern const char* VFD_BRIGHTNESS_LABELS[];
 #define VFD_CS    EPD_CS    // GPIO 10
 #define VFD_DIN   11        // GPIO 11 (MOSI)
 
-// Page rotation timing
-#define PAGE_SWITCH_INTERVAL_MS 3000  // 3 seconds per page
+// Page rotation timing (10-second cycle for NTP sync)
+// 4.5s price + 0.5s animation + 4.5s change% + 0.5s animation = 10s
+#define PAGE_SWITCH_INTERVAL_MS 5000  // 5 seconds per page (half cycle)
 
 // Brightness levels (0-255)
 #define BRIGHT_MORNING   128    // ~50% (6:00-8:00)
 #define BRIGHT_DAY       220    // ~85% (8:00-18:00)
 #define BRIGHT_EVENING   128    // ~50% (18:00-22:00)
 #define BRIGHT_NIGHT      64    // ~25% (22:00-2:00)
+#define BRIGHT_NIGHT_TEMP 128   // ~50% (temporary boost during 22:00-2:00)
+#define BRIGHT_SLEEP_TEMP  64   // ~25% (temporary boost during 2:00-6:00)
 #define BRIGHT_OFF         1    // Minimum (2:00-6:00)
 
 // Constructor
@@ -45,6 +48,8 @@ DisplayVfd::DisplayVfd() {
   lastPageSwitch = 0;
   priceUpdateTime = 0;
   currentBrightness = BRIGHT_DAY;
+  tempBrightBoostEndTime = 0;  // No temp boost initially
+  savedBrightness = BRIGHT_DAY;
   memset(lastPageContent, 0, sizeof(lastPageContent));
 }
 
@@ -509,13 +514,14 @@ void DisplayVfd::scrollUp() {
 }
 
 // Update page rotation (called in loop)
+// 10-second sync cycle: 4.5s price + 0.5s animation + 4.5s change% + 0.5s animation
 void DisplayVfd::updatePageRotation() {
   // Skip rotation if price data not available
   if (!g_lastPriceOk) {
     return;
   }
 
-  // Check if 3 seconds have elapsed since last page switch
+  // Check if 5 seconds have elapsed since last page switch (half cycle)
   uint32_t now = millis();
   if (now - lastPageSwitch >= PAGE_SWITCH_INTERVAL_MS) {
     // Switch page
@@ -558,6 +564,36 @@ void DisplayVfd::updatePageRotation() {
   }
 }
 
+// Handle encoder activity (temporary brightness boost)
+void DisplayVfd::handleEncoderActivity() {
+  struct tm local;
+  if (!getLocalTimeLocal(&local)) {
+    return;  // Time not available
+  }
+
+  uint8_t hour = local.tm_hour;
+  unsigned long now = millis();
+
+  // Check if we're in night time or sleep time
+  bool isNightTime = (hour >= 22 || hour < 2);   // 22:00-02:00
+  bool isSleepTime = (hour >= 2 && hour < 6);    // 02:00-06:00
+
+  if (isNightTime || isSleepTime) {
+    // Activate temporary brightness boost
+    uint8_t tempBright = isNightTime ? BRIGHT_NIGHT_TEMP : BRIGHT_SLEEP_TEMP;
+
+    // Save current brightness if not already in temp boost mode
+    if (tempBrightBoostEndTime == 0 || now > tempBrightBoostEndTime) {
+      savedBrightness = currentBrightness;
+    }
+
+    tempBrightBoostEndTime = now + TEMP_BRIGHT_BOOST_DURATION_MS;
+    vfdSetBrightness(tempBright);
+
+    Serial.printf("[VFD] Temp brightness boost: %d/255 for 5 min (hour=%d)\n", tempBright, hour);
+  }
+}
+
 // Apply time-based brightness control
 void DisplayVfd::applyTimeBrightness() {
   struct tm local;
@@ -566,6 +602,20 @@ void DisplayVfd::applyTimeBrightness() {
   }
 
   uint8_t hour = local.tm_hour;
+  unsigned long now = millis();
+
+  // Check if temp brightness boost is active
+  if (tempBrightBoostEndTime > 0 && now < tempBrightBoostEndTime) {
+    // Temp boost is still active, don't change brightness
+    return;
+  }
+
+  // Temp boost expired, restore normal brightness
+  if (tempBrightBoostEndTime > 0 && now >= tempBrightBoostEndTime) {
+    tempBrightBoostEndTime = 0;  // Clear temp boost flag
+    Serial.println("[VFD] Temp brightness boost expired, restoring normal brightness");
+  }
+
   uint8_t targetBright = BRIGHT_DAY;
 
   // Determine brightness based on time of day
@@ -588,7 +638,7 @@ void DisplayVfd::applyTimeBrightness() {
   }
 }
 
-// Night mode with anti-burn-in (3:00-6:00)
+// Night mode with anti-burn-in (04:00-06:00)
 void DisplayVfd::runNightMode() {
   struct tm local;
   if (!getLocalTimeLocal(&local)) {
@@ -598,50 +648,51 @@ void DisplayVfd::runNightMode() {
   uint8_t hour = local.tm_hour;
   uint8_t minute = local.tm_min;
 
-  // 3:00-3:04: Anti-burn-in full-screen refresh
-  if (hour == 3 && minute < 4) {
-    Serial.println("[VFD] Night mode: Anti-burn-in refresh");
+  // 04:00-04:04: Anti-burn-in uniform aging (4 patterns × 1 minute each)
+  if (hour == 4 && minute < 4) {
+    Serial.println("[VFD] Night mode: Anti-burn-in uniform aging");
 
     uint8_t patternIndex = minute;  // 0-3
 
     switch (patternIndex) {
       case 0:
-        // Full bright
+        // Full bright - all pixels ON
         vfdSetBrightness(255);
         vfdCommand(0xE9);  // All segments ON
-        Serial.println("[VFD] Anti-burn-in: Full bright");
+        Serial.println("[VFD] Anti-burn-in aging: Full bright (minute 0)");
         break;
 
       case 1:
-        // Full dark
+        // Full dark - all pixels OFF
         vfdClear();
-        Serial.println("[VFD] Anti-burn-in: Full dark");
+        vfdSetBrightness(255);
+        Serial.println("[VFD] Anti-burn-in aging: Full dark (minute 1)");
         break;
 
       case 2:
-        // Pattern A
+        // Checkerboard pattern
         vfdSetBrightness(255);
-        vfdWriteStr(0, "****************");
-        Serial.println("[VFD] Anti-burn-in: Pattern A");
+        vfdWriteStr(0, "* * * * * * * * ");
+        Serial.println("[VFD] Anti-burn-in aging: Checkerboard (minute 2)");
         break;
 
       case 3:
-        // Pattern B
+        // All segments pattern (8)
         vfdSetBrightness(255);
         vfdWriteStr(0, "8888888888888888");
-        Serial.println("[VFD] Anti-burn-in: Pattern B");
+        Serial.println("[VFD] Anti-burn-in aging: All segments (minute 3)");
         break;
     }
 
     return;  // Don't show normal display during anti-burn-in
   }
 
-  // 3:04-6:00: Turn off display
-  if ((hour == 3 && minute >= 4) || (hour >= 4 && hour < 6)) {
+  // 02:00-04:00 and 04:04-06:00: Turn off display
+  if ((hour >= 2 && hour < 4) || (hour == 4 && minute >= 4) || (hour == 5)) {
     if (currentBrightness != BRIGHT_OFF) {
       vfdClear();
       vfdSetBrightness(BRIGHT_OFF);
-      Serial.println("[VFD] Night mode: Display off (3:04-6:00)");
+      Serial.println("[VFD] Night mode: Display off (02:00-06:00)");
     }
     return;
   }

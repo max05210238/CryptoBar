@@ -59,11 +59,13 @@ public:
   void updatePageRotation();  // Handle 3-second page rotation
   void scrollUp();            // Scroll-up animation (configurable duration)
   void applyTimeBrightness(); // Time-based brightness control
-  void runNightMode();        // Night mode (3:00-6:00)
+  void runNightMode();        // Night mode (04:00-06:00, anti-burn-in at 04:00)
+  void handleEncoderActivity(); // Handle encoder activity (temporary brightness boost)
 
   // Configuration
   static const uint16_t SCROLL_DURATION_MS = 500;  // Scroll animation time (adjustable)
   static const uint8_t MENU_TEXT_MAX_LEN = 14;     // Max text length before auto-scroll (16 - 2 for padding)
+  static const uint32_t TEMP_BRIGHT_BOOST_DURATION_MS = 5UL * 60UL * 1000UL;  // 5 minutes
 
 private:
   // Menu display helpers
@@ -92,6 +94,8 @@ private:
 
   // Brightness control
   uint8_t currentBrightness;  // 0-255
+  unsigned long tempBrightBoostEndTime;  // Temporary brightness boost end time (millis)
+  uint8_t savedBrightness;    // Saved brightness before temp boost
 
   // Helper functions
   void drawPricePage();       // Page 1: "BTC   90651.3437"

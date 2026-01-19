@@ -705,6 +705,14 @@ String apIp = WiFi.softAPIP().toString();
   portEXIT_CRITICAL(&g_encMux);
 
   if (steps != 0) {
+    // V0.99s: VFD temporary brightness boost on encoder activity
+    if (g_displayType == DISPLAY_VFD && g_uiMode == UI_MODE_NORMAL) {
+      DisplayVfd* vfdDisplay = static_cast<DisplayVfd*>(g_display);
+      if (vfdDisplay) {
+        vfdDisplay->handleEncoderActivity();
+      }
+    }
+
     if (g_uiMode == UI_MODE_MENU) {
       g_menuIndex += steps;
       // V0.99s: VFD has 9 menu items instead of 13

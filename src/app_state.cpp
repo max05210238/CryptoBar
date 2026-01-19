@@ -27,8 +27,9 @@ const char* BRIGHTNESS_LABELS[]  = { "Low", "Med", "High" };
 
 // VFD brightness presets (V0.99s)
 // Values: 0-255 (PT6302 VFD controller range)
-const uint8_t VFD_BRIGHTNESS_PRESETS[] = { 1, 64, 128, 179, 255 };
-const char* VFD_BRIGHTNESS_LABELS[]    = { "Off", "Low", "Med", "High", "Max" };
+// 0 = Auto (time-based brightness control)
+const uint8_t VFD_BRIGHTNESS_PRESETS[] = { 0, 64, 128, 179, 255 };
+const char* VFD_BRIGHTNESS_LABELS[]    = { "Auto", "Low", "Med", "High", "Max" };
 
 // Update frequency presets
 // V0.99s: 1min, 3min, 5min, 10min (4 presets, fixed array bounds bug)

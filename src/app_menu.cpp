@@ -320,7 +320,12 @@ void handleMenuSelect() {
         // Cycle through VFD brightness presets
         g_vfdBrightnessPresetIndex = (g_vfdBrightnessPresetIndex + 1) % VFD_BRIGHTNESS_PRESETS_COUNT;
         g_vfdBrightness = VFD_BRIGHTNESS_PRESETS[g_vfdBrightnessPresetIndex];
-        g_display->setBrightness(g_vfdBrightness);
+
+        // If Auto mode (0), let applyTimeBrightness() handle it; otherwise set fixed brightness
+        if (g_vfdBrightness != 0) {
+          g_display->setBrightness(g_vfdBrightness);
+        }
+
         Serial.printf("[Menu] VFD brightness -> %s\n", VFD_BRIGHTNESS_LABELS[g_vfdBrightnessPresetIndex]);
         saveSettings();
         g_display->drawMenuScreen();

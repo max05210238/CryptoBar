@@ -610,8 +610,13 @@ void DisplayVfd::handleEncoderActivity() {
   }
 }
 
-// Apply time-based brightness control
+// Apply time-based brightness control (only in Auto mode)
 void DisplayVfd::applyTimeBrightness() {
+  // Only apply time-based brightness if in Auto mode (g_vfdBrightness == 0)
+  if (g_vfdBrightness != 0) {
+    return;  // Fixed brightness mode, skip time-based control
+  }
+
   struct tm local;
   if (!getLocalTimeLocal(&local)) {
     return;  // Time not available

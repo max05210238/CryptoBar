@@ -576,7 +576,7 @@ void loop() {
       // Trigger display refresh if in normal mode
       if (g_uiMode == UI_MODE_NORMAL || g_uiMode == UI_MODE_MENU) {
         if (g_displayType == DISPLAY_VFD && g_display) {
-          g_display->drawMainScreen(g_lastPriceUsd, g_lastChange24h);
+          g_display->drawMainScreen(false);  // VFD reads globals directly
         } else if (g_uiMode == UI_MODE_NORMAL) {
           drawMainScreen(g_lastPriceUsd, g_lastChange24h, false);
         }

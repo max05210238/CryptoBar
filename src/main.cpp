@@ -236,6 +236,7 @@ static void startNormalOperation(bool enforceSplashDelay, uint32_t splashStartMs
   WiFi.mode(WIFI_STA);
  // : disable WiFi power-save to reduce disconnects.
   WiFi.setSleep(false);
+  WiFi.setTxPower(WIFI_POWER_19_5dBm);  // V0.99t: Max TX power for better range
   WiFi.setAutoReconnect(true);
 
   g_uiMode = UI_MODE_NORMAL;
@@ -707,6 +708,7 @@ void loop() {
       WiFi.mode(WIFI_AP_STA);
  // : disable WiFi power-save to keep STA stable during provisioning.
       WiFi.setSleep(false);
+      WiFi.setTxPower(WIFI_POWER_19_5dBm);  // V0.99t: Max TX power for better range
       WiFi.setAutoReconnect(true);
       WiFi.disconnect(false);  // disconnect STA only (keep radio on)
       delay(50);

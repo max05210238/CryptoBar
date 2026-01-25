@@ -92,6 +92,7 @@ bool connectWiFiSta(const char* ssid, const char* pass, uint32_t timeoutMs) {
   WiFi.mode(WIFI_STA);
   // Disable WiFi power-save to reduce connection instability
   WiFi.setSleep(false);
+  WiFi.setTxPower(WIFI_POWER_19_5dBm);  // V0.99t: Max TX power for better range
   WiFi.setAutoReconnect(true);
   initFetchJitterIfNeeded();
   WiFi.disconnect(true);

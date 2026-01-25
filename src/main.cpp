@@ -447,6 +447,7 @@ if (g_hasWifiCreds) {
   WiFi.setAutoReconnect(true);
   WiFi.disconnect(true);
   delay(100);
+  setWifiHostname();  // V0.99t: Set hostname before connecting
   WiFi.begin(g_wifiSsid.c_str(), g_wifiPass.c_str());
   setLedBlue();
   Serial.println("[WiFi] WiFi.begin() called, will connect during splash display");
@@ -709,6 +710,7 @@ void loop() {
       WiFi.setAutoReconnect(true);
       WiFi.disconnect(false);  // disconnect STA only (keep radio on)
       delay(50);
+      setWifiHostname();  // V0.99t: Set hostname before connecting
       WiFi.begin(g_wifiSsid.c_str(), g_wifiPass.c_str());
       setLedBlue();
       drawWifiConnectingScreen(getShortVersion(), g_wifiSsid.c_str(), false);  // Partial refresh

@@ -1,4 +1,4 @@
-// CryptoBar V0.98 (Refactored: Step 2)
+// CryptoBar V0.99t (Non-blocking Network)
 // app_wifi.cpp - WiFi connection and credential management
 #include "app_wifi.h"
 #include "app_state.h"
@@ -6,6 +6,25 @@
 #include "led_status.h"
 #include "ui.h"
 #include <WiFi.h>
+#include <esp_mac.h>
+
+// ==================== WiFi Hostname =====================
+
+// Generate hostname like "CryptoBar_8E8C" using last 4 hex digits of MAC
+static String generateHostname() {
+  uint8_t mac[6];
+  esp_read_mac(mac, ESP_MAC_WIFI_STA);
+  char suffix[5];
+  snprintf(suffix, sizeof(suffix), "%02X%02X", mac[4], mac[5]);
+  return String("CryptoBar_") + suffix;
+}
+
+// Set WiFi hostname (call before WiFi.begin())
+void setWifiHostname() {
+  static String hostname = generateHostname();
+  WiFi.setHostname(hostname.c_str());
+  Serial.printf("[WiFi] Hostname: %s\n", hostname.c_str());
+}
 
 // ==================== WiFi Credentials Management =====================
 
@@ -79,6 +98,7 @@ bool connectWiFiSta(const char* ssid, const char* pass, uint32_t timeoutMs) {
   delay(100);
 
   Serial.printf("[WiFi] Connecting to %s\n", ssid);
+  setWifiHostname();  // V0.99t: Set hostname before connecting
   WiFi.begin(ssid, (pass ? pass : ""));
   setLedBlue();
 

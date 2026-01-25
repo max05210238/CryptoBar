@@ -1,10 +1,11 @@
-// CryptoBar Retro V0.99s - VFD Display Implementation
+// CryptoBar Retro V0.99t - VFD Display Implementation
 // IGL VFD STUDIO 16-character display
 #include "display_vfd.h"
 #include "app_state.h"
 #include "app_time.h"
 #include "coins.h"
 #include "config.h"
+#include "network_task.h"  // V0.99t: For loading state check
 #include "vfd_font_5x7.h"
 #include <stdio.h>
 #include <time.h>
@@ -293,6 +294,22 @@ void DisplayVfd::drawPricePage() {
   char buf[17];
   const CoinInfo& coin = coinAt(g_currentCoinIndex);
 
+  // V0.99t: Show Loading state when fetching price
+  if (g_coinLoadingInProgress) {
+    snprintf(buf, 17, "%-4s Loading...", coin.ticker);
+    vfdWriteStr(0, buf);
+    Serial.printf("[VFD] Page 1: %s\n", buf);
+    return;
+  }
+
+  // V0.99t: Show "---" when price is unavailable
+  if (!g_lastPriceOk) {
+    snprintf(buf, 17, "%-4s    ---.--", coin.ticker);
+    vfdWriteStr(0, buf);
+    Serial.printf("[VFD] Page 1: %s\n", buf);
+    return;
+  }
+
   // Apply display currency conversion
   double displayPrice = g_lastPriceUsd;
   if (g_displayCurrency != (int)CURR_USD && g_fxValid) {
@@ -310,6 +327,22 @@ void DisplayVfd::drawPricePage() {
 void DisplayVfd::drawChangePage() {
   char buf[17];
   const CoinInfo& coin = coinAt(g_currentCoinIndex);
+
+  // V0.99t: Show Loading state when fetching price
+  if (g_coinLoadingInProgress) {
+    snprintf(buf, 17, "%-4s Loading...", coin.ticker);
+    vfdWriteStr(0, buf);
+    Serial.printf("[VFD] Page 2: %s\n", buf);
+    return;
+  }
+
+  // V0.99t: Show "---" when price is unavailable
+  if (!g_lastPriceOk) {
+    snprintf(buf, 17, "%-4s   ---.--%%", coin.ticker);
+    vfdWriteStr(0, buf);
+    Serial.printf("[VFD] Page 2: %s\n", buf);
+    return;
+  }
 
   formatChange(g_lastChange24h, coin.ticker, buf, 17);
 

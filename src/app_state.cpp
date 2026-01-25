@@ -1,10 +1,10 @@
-// CryptoBar V0.99s (VFD Display Support)
+// CryptoBar V0.99t (Non-blocking Network)
 // app_state.cpp - Global application state definitions
 #include "app_state.h"
 #include "day_avg.h"  // for DAYAVG_ROLLING constant
 
 // ==================== Version =====================
-const char* CRYPTOBAR_VERSION = "V0.99s (VFD Display Support)";
+const char* CRYPTOBAR_VERSION = "V0.99t (Non-blocking Network)";
 
 // Get short version string (e.g., "V0.99s" from "V0.99s (VFD Display Support)")
 const char* getShortVersion() {

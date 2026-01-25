@@ -156,6 +156,9 @@ uint32_t networkTaskRequestFxRates() {
 }
 
 bool networkTaskHasResult() {
+  // V0.99t fix: Guard against uninitialized mutex (WiFi provisioning mode)
+  if (g_netMutex == nullptr) return false;
+
   bool pending = false;
   if (xSemaphoreTake(g_netMutex, pdMS_TO_TICKS(10)) == pdTRUE) {
     pending = g_netResultPending;
@@ -168,6 +171,9 @@ NetworkResult networkTaskGetResult() {
   NetworkResult result;
   memset(&result, 0, sizeof(result));
 
+  // V0.99t fix: Guard against uninitialized mutex
+  if (g_netMutex == nullptr) return result;
+
   if (xSemaphoreTake(g_netMutex, pdMS_TO_TICKS(100)) == pdTRUE) {
     result = g_netResult;
     xSemaphoreGive(g_netMutex);
@@ -177,6 +183,9 @@ NetworkResult networkTaskGetResult() {
 }
 
 void networkTaskConsumeResult() {
+  // V0.99t fix: Guard against uninitialized mutex
+  if (g_netMutex == nullptr) return;
+
   if (xSemaphoreTake(g_netMutex, pdMS_TO_TICKS(100)) == pdTRUE) {
     g_netResultPending = false;
     g_netTaskState = NET_STATE_IDLE;

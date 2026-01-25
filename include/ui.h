@@ -46,6 +46,7 @@ void drawWifiPreparingApScreen(const char* version, bool fullRefresh = false);
 void drawWifiPortalScreen(const char* version, const char* apSsid, const char* apIp, bool fullRefresh = false);
 void drawWifiConnectingScreen(const char* version, const char* ssid, bool fullRefresh = false);
 void drawWifiConnectFailedScreen(const char* version, bool fullRefresh = false);
+void drawWifiCooldownScreen(uint32_t remainingSec, bool fullRefresh = false);
 void drawWifiInfoScreen(const char* version, const char* mac, const char* staIp, int signalBars, int channel, bool connected);
 
 // Firmware update / maintenance mode screens
@@ -75,6 +76,6 @@ void ensureCoinMenuVisible();
 void drawCurrencyMenu(bool fullRefresh);
 void ensureCurrencyMenuVisible();
 
-// Update interval selection submenu (V0.99r)
+// Update interval selection submenu (V0.99s)
 void drawUpdateMenu(bool fullRefresh);
 void ensureUpdateMenuVisible();

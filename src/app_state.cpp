@@ -1,10 +1,32 @@
-// CryptoBar V0.99q (UI/UX Improvements: Time Refresh & Settings Fix)
+// CryptoBar V0.99s (VFD Display Support)
 // app_state.cpp - Global application state definitions
 #include "app_state.h"
 #include "day_avg.h"  // for DAYAVG_ROLLING constant
 
 // ==================== Version =====================
-const char* CRYPTOBAR_VERSION = "V0.99r";
+const char* CRYPTOBAR_VERSION = "V0.99s (VFD Display Support)";
+
+// Get short version string (e.g., "V0.99s" from "V0.99s (VFD Display Support)")
+const char* getShortVersion() {
+  static char shortVersion[16];
+  const char* spacePos = strchr(CRYPTOBAR_VERSION, ' ');
+  if (spacePos) {
+    size_t len = spacePos - CRYPTOBAR_VERSION;
+    if (len > sizeof(shortVersion) - 1) len = sizeof(shortVersion) - 1;
+    strncpy(shortVersion, CRYPTOBAR_VERSION, len);
+    shortVersion[len] = '\0';
+  } else {
+    strncpy(shortVersion, CRYPTOBAR_VERSION, sizeof(shortVersion) - 1);
+    shortVersion[sizeof(shortVersion) - 1] = '\0';
+  }
+  return shortVersion;
+}
+
+// ==================== Display Type Detection =====================
+#include "display_interface.h"
+
+DisplayType g_displayType = DISPLAY_UNKNOWN;
+DisplayInterface* g_display = nullptr;
 
 // ==================== Constants =====================
 
@@ -19,8 +41,14 @@ const char* NTP_SERVER_2 = "time.nist.gov";
 const float BRIGHTNESS_PRESETS[] = { 0.2f, 0.5f, 1.0f };
 const char* BRIGHTNESS_LABELS[]  = { "Low", "Med", "High" };
 
+// VFD brightness presets (V0.99s)
+// Values: 0-255 (PT6302 VFD controller range)
+// 0 = Auto (time-based brightness control)
+const uint8_t VFD_BRIGHTNESS_PRESETS[] = { 0, 64, 128, 179, 255 };
+const char* VFD_BRIGHTNESS_LABELS[]    = { "Auto", "Low", "Med", "High", "Max" };
+
 // Update frequency presets
-// V0.99r: 1min, 3min, 5min, 10min (4 presets, fixed array bounds bug)
+// V0.99s: 1min, 3min, 5min, 10min (4 presets, fixed array bounds bug)
 // Recommended: 3min for 1-3 devices, 5min for 4+ devices on same network
 const uint32_t UPDATE_PRESETS_MS[] = {
   60UL * 1000UL,   // 1min
@@ -82,6 +110,8 @@ uint16_t g_partialRefreshCount = 0;
 // LED / update / coin settings index
 int   g_brightnessPresetIndex = 1;
 float g_ledBrightness         = BRIGHTNESS_PRESETS[1];
+int    g_vfdBrightnessPresetIndex = 3;  // V0.99s: Default to "High" (70%)
+uint8_t g_vfdBrightness         = VFD_BRIGHTNESS_PRESETS[3];  // 179
 int g_updatePresetIndex  = 0;
 int g_currentCoinIndex   = 0;
 int g_dateFormatIndex    = DATE_MM_DD_YYYY;

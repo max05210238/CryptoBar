@@ -1,4 +1,4 @@
-// CryptoBar V0.99r (Settings Bug Fix & UX Improvements)
+// CryptoBar V0.99s (VFD Display Support)
 // ui_update.cpp - Update interval selection submenu
 
 #include <Arduino.h>

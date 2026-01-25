@@ -11,6 +11,10 @@
 // ==================== Version =====================
 extern const char* CRYPTOBAR_VERSION;
 
+// Get short version string (e.g., "V0.99s" from "V0.99s (VFD Display Support)")
+// Returns pointer to static buffer, valid until next call
+const char* getShortVersion();
+
 // ==================== Constants =====================
 
 // Screen layout
@@ -49,6 +53,11 @@ extern const char* NTP_SERVER_2;
 extern const float BRIGHTNESS_PRESETS[BRIGHTNESS_PRESETS_COUNT];
 extern const char* BRIGHTNESS_LABELS[BRIGHTNESS_PRESETS_COUNT];
 
+// VFD brightness presets (V0.99s)
+#define VFD_BRIGHTNESS_PRESETS_COUNT 5
+extern const uint8_t VFD_BRIGHTNESS_PRESETS[VFD_BRIGHTNESS_PRESETS_COUNT];
+extern const char* VFD_BRIGHTNESS_LABELS[VFD_BRIGHTNESS_PRESETS_COUNT];
+
 // Update frequency presets
 // V0.99r: Update interval presets: 1min, 3min, 5min, 10min (fixed array bounds bug)
 #define UPDATE_PRESETS_COUNT 4
@@ -77,6 +86,11 @@ extern double& g_usdToTwd;
 
 // ==================== Global Variables =====================
 
+// V0.99s: Display type detection (E-ink or VFD)
+#include "display_interface.h"           // For DisplayType enum
+extern DisplayType g_displayType;        // Detected display type (EINK or VFD)
+extern DisplayInterface* g_display;      // Display driver instance
+
 // V0.99m: API source tracking (dynamic display of actual API used)
 extern const char* g_currentPriceApi;    // Current real-time price API (e.g., "Paprika", "Kraken")
 extern const char* g_currentHistoryApi;  // Current historical data API (e.g., "CoinGecko", "Binance")
@@ -89,6 +103,8 @@ extern uint16_t g_partialRefreshCount;
 // LED / update / coin settings index
 extern int   g_brightnessPresetIndex;
 extern float g_ledBrightness;
+extern int   g_vfdBrightnessPresetIndex;   // V0.99s: VFD display brightness preset index
+extern uint8_t g_vfdBrightness;              // V0.99s: VFD display brightness (0-255)
 extern int g_updatePresetIndex;
 extern int g_currentCoinIndex;
 extern int g_dateFormatIndex;

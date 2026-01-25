@@ -7,6 +7,137 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [V0.99s] - 2026-01-14
+
+### ✨ Major Feature: VFD Display Support
+- **CryptoBar Retro: 16-character PT6302 VFD display support**:
+  - Automatic hardware detection (E-ink vs VFD) via BUSY pin behavior
+  - One unified firmware for both E-ink and VFD displays
+  - Dual-page rotation: Price ↔ 24h Change (3-second interval)
+  - Smooth upward scroll animation between pages
+  - UTC-synchronized page switching across multiple devices
+
+### Added - Display Abstraction Layer
+- New abstract `DisplayInterface` base class for display polymorphism
+- `DisplayType` enum: `DISPLAY_UNKNOWN`, `DISPLAY_EINK`, `DISPLAY_VFD`
+- Hardware auto-detection: `detectDisplayType()`, `detectEinkByBusy()`
+- Complete VFD driver implementation: `DisplayVfd` class
+- Global display state: `g_displayType`, `g_display` pointer
+- 5 new files: `display_interface.h`, `display_detector.h/cpp`, `display_vfd.h/cpp`
+
+### VFD-Specific Features
+- **Dual-page rotation**:
+  - Page 1: Coin ticker + centered price (e.g., "BTC   90651.3437")
+  - Page 2: Coin ticker + 24h change% (e.g., "BTC  24H +0.29%")
+  - 3-second page interval with 0.5-second scroll animation
+- **Time-based brightness control**:
+  - Morning (6:00-8:00): 50% brightness
+  - Day (8:00-18:00): 70% brightness
+  - Evening (18:00-22:00): 50% brightness
+  - Night (22:00-2:00): 30% brightness
+  - Off (2:00-6:00): Display off
+- **Anti-burn-in protection**:
+  - 3:00-3:04 AM: Full-screen patterns (bright/dark/checkerboard A/B)
+  - 3:04-6:00 AM: Display off
+  - Extends VFD lifespan 3-5x (10,000 → 30,000-50,000 hours)
+- **Smart text formatting**:
+  - Coin name left-aligned (3 chars)
+  - Price/change data centered in remaining space (13 chars)
+  - Dynamic decimal places based on price magnitude
+
+### Post-Release Improvements
+
+#### 🔄 Unified WiFi Retry Mechanism (Commit: f63db35)
+- **Infinite retry loop with cooldown**:
+  - 5 connection attempts (12-second timeout each)
+  - 3-minute cooldown after failed batch
+  - Repeats indefinitely until connected
+  - Replaced auto-AP fallback behavior
+- **Display-specific cooldown screens**:
+  - E-ink: Countdown timer "Retrying in: M:SS" (updates every 5 seconds)
+  - VFD: Progress bar `----------------` filling left-to-right (16 steps over 180 seconds)
+  - E-ink cooldown uses partial refresh (doesn't count toward 20-refresh limit)
+- **Consistent behavior**:
+  - Boot-time WiFi failure: Retry loop
+  - Runtime WiFi disconnection: Same retry loop
+  - Manual trigger only: Factory reset (12-second press) to start AP mode
+- **User benefit**: Devices reliably reconnect after network outages without manual intervention
+
+#### 🎨 LED Color Corrections (Commit: f63db35)
+- **Fixed incorrect LED color usage**:
+  - WiFi states now use **blue LED** (was incorrectly using red)
+  - Red/green colors reserved exclusively for price trend indication
+  - Yellow reserved for API failures
+  - Purple reserved for AP mode
+
+| State | LED Color | Meaning |
+|-------|-----------|---------|
+| WiFi connecting | Blue | Attempting connection |
+| WiFi cooldown | Blue | Waiting to retry connection |
+| AP mode | Purple | Access point active |
+| API failure | Yellow | Price fetch failed |
+| Price up | Green | Positive 24h change |
+| Price down | Red | Negative 24h change |
+| No change | Gray/White | Zero 24h change |
+
+#### ⚡ WiFi Connection Timing Optimization (Commit: 22d5fb7)
+- **Problem**: VFD version took 9+ seconds to start WiFi, entered retry loop immediately
+- **Root cause**: WiFi.begin() called AFTER 9-second VFD welcome sequence
+- **Solution**: Start WiFi connection BEFORE splash display
+
+**New boot sequence**:
+```
+t=0:     Detect display type
+t=0.1:   Load WiFi credentials
+t=0.2:   WiFi.begin() ← Start immediately!
+t=0.3:   VFD init() - 6 seconds (WiFi connecting in background)
+t=6.3:   Version display - 3 seconds (WiFi still connecting)
+t=9.3:   Check WiFi → usually connected ✅
+```
+
+**Benefits**:
+- WiFi has full 9 seconds (VFD) or 2-3 seconds (e-ink) to connect during splash
+- Fast connections skip retry loop entirely
+- Seamless boot experience for most users
+- No code duplication between boot and runtime reconnection
+
+#### 🖼️ Splash Screen Timing Fixes (Commits: eaa22f2, bf8deba, 1022945)
+- **Problem**: E-ink splash screen disappeared in less than 1 second
+- **Root causes**:
+  1. Time recording point was before display instead of after
+  2. Early break logic when WiFi connected quickly during splash wait
+  3. VFD initialization moved time recording point
+- **Solution**: Restored V0.99r logic
+  1. Display splash screen FIRST
+  2. Record `splashStartMs` AFTER display completes
+  3. Removed early break logic that could skip guaranteed wait
+- **Result**: E-ink splash now displays for full 3 seconds, VFD for full 9 seconds
+
+### Technical Implementation
+- **Shared GPIO architecture**: E-ink and VFD share CS/MOSI/SCK/RST pins
+- **BUSY pin detection**: E-ink actively drives BUSY signal, VFD leaves floating
+- **Multi-device sync**: Preserves NTP sync, epoch-aligned scheduling, MAC jitter
+- **PT6302 controller**: SPI-like interface for 16-char dot matrix VFD
+- **Files modified (initial release)**: 2 files (app_state.h/cpp)
+- **Files modified (post-release)**: 8 files (main.cpp, ui.cpp, ui.h, display_vfd.cpp, display_vfd.h, app_wifi.cpp, led_status.cpp, network.cpp)
+- **Total additions**: ~1200 lines of new code (including post-release improvements)
+
+### Changed
+- All version strings updated to V0.99s
+- `app_state.cpp`: Added display type global variables
+- `app_state.h`: Added DisplayType/DisplayInterface forward declarations
+- `main.cpp`: WiFi.begin() moved before splash display, unified retry mechanism
+- `ui.cpp`: Added `drawWifiCooldownScreen()` for e-ink countdown display
+- `display_vfd.cpp`: Added `drawWifiCooldownProgress()` for VFD progress bar
+- `led_status.cpp`: Corrected LED color usage for WiFi states
+
+### Notes
+- Full VFD hardware testing completed
+- Post-release improvements based on real-world usage feedback
+- E-ink backward compatibility verified 100%
+
+---
+
 ## [V0.99r] - 2025-12-28
 
 ### 🔴 CRITICAL BUG FIX
@@ -732,6 +863,6 @@ Over the past week, CryptoBar received major improvements across six key areas:
 
 ---
 
-**Last Updated**: 2025-12-25
-**Current Version**: V0.99q
-**Stable Version**: V0.99q
+**Last Updated**: 2026-01-19
+**Current Version**: V0.99s
+**Stable Version**: V0.99s

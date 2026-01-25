@@ -329,8 +329,8 @@ Before starting the update process:
 
 #### Option A: GitHub Releases (Recommended)
 1. Visit: https://github.com/max05210238/CryptoBar/releases
-2. Find the latest release (e.g., "V0.99r")
-3. Download: `firmware.bin` or `cryptobar-v0.99r.bin`
+2. Find the latest release (e.g., "V0.99s")
+3. Download: `firmware.bin` or `cryptobar-v0.99s.bin`
 4. **Verify file size:** Should be ~800KB-1.2MB (ESP32-S3 firmware)
 
 #### Option B: Build from Source (Advanced)
@@ -593,7 +593,7 @@ There are **two ways** to enter OTA maintenance mode. Choose the method that wor
 
 2. **Boot sequence (on display):**
    ```
-   [1] CryptoBar V0.99r  ← New version!
+   [1] CryptoBar V0.99s  ← New version!
    [2] WiFi Connecting...
    [3] Syncing time...
    [4] Fetching prices...

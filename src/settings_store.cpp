@@ -28,6 +28,7 @@ bool settingsStoreLoad(StoredSettings& out) {
 
   out.updPreset = prefs.getInt("updPreset", out.updPreset);
   out.briPreset = prefs.getInt("briPreset", out.briPreset);
+  out.vfdBriPreset = prefs.getInt("vfdBriPreset", out.vfdBriPreset);  // V0.99s: VFD brightness
 
  // Coin selection:
  // - If key "coin" exists: use it (ticker string)
@@ -77,6 +78,7 @@ bool settingsStoreSave(const StoredSettings& in) {
   bool ok = true;
   ok &= prefs.putInt("updPreset", in.updPreset) > 0;
   ok &= prefs.putInt("briPreset", in.briPreset) > 0;
+  ok &= prefs.putInt("vfdBriPreset", in.vfdBriPreset) > 0;  // V0.99s: VFD brightness
 
  // Store new key
   ok &= prefs.putString("coin", in.coinTicker) > 0;

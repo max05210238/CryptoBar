@@ -2,7 +2,7 @@
 
 Quick reference for navigating the settings menu and submenus.
 
-**Last Updated:** V0.99r (2025-12-28)
+**Last Updated:** V0.99s (2026-01-14)
 
 ---
 

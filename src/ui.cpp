@@ -574,14 +574,29 @@ void drawSplashScreen(const char* version) {
 
  // --- Bottom-right version ---
     if (version && version[0]) {
+      // V0.99s: Extract short version (e.g., "V0.99s" from "V0.99s (VFD Display Support)")
+      char shortVersion[16];
+      const char* spacePos = strchr(version, ' ');
+      if (spacePos) {
+        // Copy only up to first space
+        size_t len = spacePos - version;
+        if (len > sizeof(shortVersion) - 1) len = sizeof(shortVersion) - 1;
+        strncpy(shortVersion, version, len);
+        shortVersion[len] = '\0';
+      } else {
+        // No space found, use full version
+        strncpy(shortVersion, version, sizeof(shortVersion) - 1);
+        shortVersion[sizeof(shortVersion) - 1] = '\0';
+      }
+
       display.setFont(&FreeSansBold9pt7b);
-      display.getTextBounds(version, 0, 0, &x1, &y1, &w, &h);
+      display.getTextBounds(shortVersion, 0, 0, &x1, &y1, &w, &h);
 
       const int16_t margin = 4;
       int16_t vx = (display.width() - margin) - (x1 + (int)w);
       int16_t vy = (display.height() - margin) - (y1 + (int)h);
       display.setCursor(vx, vy);
-      display.print(version);
+      display.print(shortVersion);
     }
 
   } while (display.nextPage());
@@ -591,6 +606,14 @@ void drawSplashScreen(const char* version) {
 // WiFi provisioning / status screens
 // Preparing AP screen (AP startup can take ~30s on some boards/firmware)
 void drawWifiPreparingApScreen(const char* version, bool fullRefresh) {
+  // V0.99s: Check display type for VFD support
+  if (g_displayType == DISPLAY_VFD && g_display != nullptr) {
+    // VFD: Simple preparing message
+    g_display->drawWifiSetupScreen("Preparing...", nullptr);
+    return;
+  }
+
+  // E-ink: Full UI
   if (fullRefresh) {
     display.setFullWindow();
   } else {
@@ -628,6 +651,14 @@ void drawWifiPreparingApScreen(const char* version, bool fullRefresh) {
 
 // WiFi AP portal instructions screen
 void drawWifiPortalScreen(const char* version, const char* apSsid, const char* apIp, bool fullRefresh) {
+  // V0.99s: Check display type for VFD support
+  if (g_displayType == DISPLAY_VFD && g_display != nullptr) {
+    // VFD: Show setup info
+    g_display->drawWifiSetupScreen(apSsid, apIp);
+    return;
+  }
+
+  // E-ink: Full UI with graphics
   if (fullRefresh) {
     display.setFullWindow();
   } else {
@@ -779,6 +810,14 @@ void drawFirmwareUpdateApScreen(const char* version, const char* apSsid, const c
 }
 
 void drawWifiConnectingScreen(const char* version, const char* ssid, bool fullRefresh) {
+  // V0.99s: Check display type for VFD support
+  if (g_displayType == DISPLAY_VFD && g_display != nullptr) {
+    // VFD: Simple text display
+    g_display->drawWifiSetupScreen(ssid, "Connecting...");
+    return;
+  }
+
+  // E-ink: Full UI with graphics
   if (fullRefresh) {
     display.setFullWindow();
   } else {
@@ -821,7 +860,65 @@ void drawWifiConnectingScreen(const char* version, const char* ssid, bool fullRe
   } while (display.nextPage());
 }
 
+void drawWifiCooldownScreen(uint32_t remainingSec, bool fullRefresh) {
+  // V0.99s: Check display type for VFD support
+  if (g_displayType == DISPLAY_VFD && g_display != nullptr) {
+    // VFD: Progress bar is handled separately
+    return;
+  }
+
+  // E-ink: Always use partial refresh (does NOT count toward g_partialRefreshCount)
+  display.setPartialWindow(0, 0, display.width(), display.height());
+
+  display.firstPage();
+  do {
+    display.fillScreen(GxEPD_WHITE);
+
+    display.setFont(&FreeSansBold12pt7b);
+    display.setTextColor(GxEPD_BLACK);
+    display.setCursor(8, 24);
+    display.print("WiFi Retry Cooldown");
+
+    display.setFont(&FreeSansBold9pt7b);
+    int y = 52;
+
+    // Format time as "Retrying in: M:SS"
+    uint32_t minutes = remainingSec / 60;
+    uint32_t seconds = remainingSec % 60;
+    char timeBuf[32];
+    snprintf(timeBuf, sizeof(timeBuf), "Retrying in: %u:%02u", minutes, seconds);
+
+    display.setCursor(8, y);
+    display.print(timeBuf);
+
+    // Bottom-right version
+    const char* version = getShortVersion();
+    if (version && version[0]) {
+      int16_t x1, y1;
+      uint16_t w, h;
+      display.getTextBounds(version, 0, 0, &x1, &y1, &w, &h);
+      const int16_t margin = 4;
+      int16_t vx = (display.width() - margin) - (x1 + (int)w);
+      int16_t vy = (display.height() - margin) - (y1 + (int)h);
+      display.setCursor(vx, vy);
+      display.print(version);
+    }
+
+  } while (display.nextPage());
+
+  // Note: This partial refresh does NOT increment g_partialRefreshCount
+  // Cooldown screens are independent system events, not price updates
+}
+
 void drawWifiConnectFailedScreen(const char* version, bool fullRefresh) {
+  // V0.99s: Check display type for VFD support
+  if (g_displayType == DISPLAY_VFD && g_display != nullptr) {
+    // VFD: Simple error display
+    g_display->drawErrorScreen("WiFi Failed");
+    return;
+  }
+
+  // E-ink: Full UI with graphics
   if (fullRefresh) {
     display.setFullWindow();
   } else {
@@ -932,6 +1029,15 @@ void drawWifiInfoScreen(const char* version, const char* mac, const char* staIp,
 
 // Main screen (full / partial refresh)
 void drawMainScreen(double priceUsd, double change24h, bool fullRefresh) {
+  // V0.99s: Check display type for VFD support
+  if (g_displayType == DISPLAY_VFD && g_display != nullptr) {
+    // VFD handles its own page rotation and updates internally
+    // This is called after price updates, so just trigger VFD update
+    g_display->drawMainScreen(fullRefresh);
+    return;
+  }
+
+  // E-ink: Full UI with graphics
   if (fullRefresh) {
     display.setFullWindow();
   } else {
@@ -957,6 +1063,12 @@ void drawMainScreen(double priceUsd, double change24h, bool fullRefresh) {
 // GxEPD2 will only refresh pixels that differ from the previous state
 // This avoids artifacts around the price area and ensures clean time updates
 void drawMainScreenTimeOnly(bool fullRefresh) {
+  // V0.99s: VFD doesn't show time, skip
+  if (g_displayType == DISPLAY_VFD) {
+    return;
+  }
+
+  // E-ink: Time update
   if (fullRefresh) {
     display.setFullWindow();
   } else {

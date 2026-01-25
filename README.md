@@ -19,7 +19,11 @@
 
 ## 📖 Overview
 
-CryptoBar is an ESP32-S3-based cryptocurrency display that started as a personal challenge to build a better, cheaper alternative to expensive commercial solutions like Tickrmeter. Frustrated with overpriced devices packed with features most users never need, CryptoBar delivers what you actually want: real-time crypto prices, a clean e-ink display, and intuitive rotary encoder navigation—all without smartphone app dependency.
+CryptoBar is an ESP32-S3-based cryptocurrency display that started as a personal challenge to build a better, cheaper alternative to expensive commercial solutions like Tickrmeter. Frustrated with overpriced devices packed with features most users never need, CryptoBar delivers what you actually want: real-time crypto prices, clean display, and intuitive rotary encoder navigation—all without smartphone app dependency.
+
+**Two Display Options:**
+- **E-ink Edition** (Standard): Low-power 2.9" e-ink display with charts and graphs
+- **VFD Edition** (Retro): 16-character vacuum fluorescent display with nostalgic glow
 
 Now open-sourced for the maker community, CryptoBar offers complete hardware and software customization at a fraction of the cost of commercial alternatives.
 
@@ -37,7 +41,9 @@ Now open-sourced for the maker community, CryptoBar offers complete hardware and
 ## ✨ Features
 
 ### Display & Interface
-- 📊 **2.9" E-ink Display** - Low power, high contrast, readable in any lighting
+- 📊 **Dual Display Support** - Choose your style:
+  - **E-ink**: 2.9" display with charts, low power, always readable
+  - **VFD**: 16-char retro display with auto brightness and anti-burn-in
 - 🎛️ **Rotary Encoder Navigation** - Intuitive menu control with push-button
 - 🎨 **RGB LED Status Indicator** - Price trends with party mode for +20% gains
 - ⏰ **Timezone-Aware Clock** - Auto-detection with 27 timezone options (UTC-12 to UTC+14)
@@ -270,14 +276,23 @@ CryptoBar uses a robust 4-layer fallback system for maximum reliability:
 
 ---
 
-## 📊 Recent Improvements (V0.97 → V0.99q)
+## 📊 Recent Improvements (V0.97 → V0.99s)
 
-### V0.99q (2025-12-25) - Latest
-- ✅ **WiFi Portal Settings Fix**: All advanced settings now properly applied
-- ✅ **Independent Time Refresh**: Clock updates every minute (desk clock mode)
-- ✅ **Timezone Menu Consistency**: UTC-sorted ordering in web portal
+### V0.99s (2026-01-19) - Latest
+- 🎯 **VFD Display Support**: Retro 16-character VFD displays (PT6302 controller)
+- 📺 **Dual Display Architecture**: Automatic detection of e-ink or VFD displays
+- 🔄 **NTP-Synced Page Rotation**: Multi-device synchronized updates (10-second cycles)
+- 🌙 **Auto Brightness**: Time-based VFD brightness with anti-burn-in protection
+- 🔄 **Unified WiFi Retry**: Infinite retry loop with cooldown screens
+- ⚡ **WiFi Timing Optimization**: Background connection during splash screen
+- ✅ **100% E-ink Compatible**: All e-ink functionality preserved unchanged
 
-### Recent Highlights
+### V0.99q-r (2025-12-25 to 2025-12-28)
+- ✅ **Critical Bug Fix (V0.99r)**: Array bounds bug causing restart on 10-minute interval
+- ✅ **WiFi Portal Settings Fix (V0.99q)**: All advanced settings now properly applied
+- ✅ **Independent Time Refresh (V0.99q)**: Clock updates every minute (desk clock mode)
+
+### Earlier Highlights
 - **V0.99p**: High-precision price display (14-16 decimals from CoinGecko)
 - **V0.99o**: MAC-based API jitter for distributed load
 - **V0.99n**: CoinGecko as primary API (better quality)
@@ -288,7 +303,7 @@ CryptoBar uses a robust 4-layer fallback system for maximum reliability:
 - **V0.99f**: Multi-currency support (9 currencies)
 - **V0.99a**: Encoder optimization (critical GPIO fix for ESP32-S3)
 
-See [CHANGELOG.md](CHANGELOG.md) for complete version history.
+See [CHANGELOG.md](CHANGELOG.md) for complete version history and [V0.99s VFD Display Support](docs/release-notes/V0.99s_VFD_DISPLAY_SUPPORT.md) for detailed VFD documentation.
 
 ---
 

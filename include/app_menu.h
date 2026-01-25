@@ -37,7 +37,7 @@ void handleCoinSelect();
 // Handle currency selection and apply changes (V0.99f)
 void handleCurrencySelect();
 
-// Handle update interval selection and apply changes (V0.99r)
+// Handle update interval selection and apply changes (V0.99s)
 void handleUpdateIntervalSelect();
 
 #endif // APP_MENU_H

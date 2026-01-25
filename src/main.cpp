@@ -1,4 +1,4 @@
-// CryptoBar V0.99r (Settings Bug Fix & UX Improvements)
+// CryptoBar V0.99s (VFD Display Support)
 #include <Arduino.h>
 #include <WiFi.h>
 #include <HTTPClient.h>
@@ -34,6 +34,11 @@
 #include "day_avg.h"
 #include "network.h"
 #include "ui.h"
+
+// V0.99s: VFD display support
+#include "display_interface.h"
+#include "display_detector.h"
+#include "display_vfd.h"
 
 #include <string.h> // for strcmp
 
@@ -104,6 +109,61 @@ void updateAvgLineReference(time_t nowUtc) {
 // WiFi functions moved to app_wifi.cpp (loadWifiCreds, connectWiFiSta, etc.)
 // Time/scheduler functions moved to app_time.cpp & app_scheduler.cpp
 
+// ==================== WiFi Retry Cooldown =====================
+
+// Display WiFi cooldown screen for specified duration (3 minutes = 180 seconds)
+// E-ink: Update countdown every 5 seconds (partial refresh, does NOT count toward 20-refresh limit)
+// VFD: Update progress bar every 11.25 seconds (16 steps over 180 seconds)
+void showWiFiCooldown(uint32_t cooldownSec) {
+  uint32_t totalMs = cooldownSec * 1000;
+  uint32_t startMs = millis();
+
+  setLedBlue();  // Blue LED during cooldown (waiting to retry)
+
+  if (g_displayType == DISPLAY_VFD && g_display != nullptr) {
+    // VFD: Progress bar updates every 11.25 seconds (16 steps for 180 seconds)
+    DisplayVfd* vfd = static_cast<DisplayVfd*>(g_display);
+    const uint32_t VFD_UPDATE_INTERVAL_MS = 11250;  // 180000 / 16 = 11250ms
+    uint32_t nextUpdateMs = startMs;
+
+    while (millis() - startMs < totalMs) {
+      if (millis() >= nextUpdateMs) {
+        uint32_t elapsedMs = millis() - startMs;
+        vfd->drawWifiCooldownProgress(elapsedMs, totalMs);
+        nextUpdateMs += VFD_UPDATE_INTERVAL_MS;
+      }
+
+      // Allow encoder polling (user can press button to enter AP mode manually)
+      pollEncoder();
+      delay(100);
+    }
+
+    // Final update: show full progress bar
+    vfd->drawWifiCooldownProgress(totalMs, totalMs);
+
+  } else {
+    // E-ink: Countdown updates every 5 seconds (partial refresh, independent of main counter)
+    const uint32_t EINK_UPDATE_INTERVAL_MS = 5000;  // 5 seconds
+    uint32_t nextUpdateMs = startMs;
+
+    while (millis() - startMs < totalMs) {
+      if (millis() >= nextUpdateMs) {
+        uint32_t remainingMs = totalMs - (millis() - startMs);
+        uint32_t remainingSec = (remainingMs + 999) / 1000;  // Round up
+
+        drawWifiCooldownScreen(remainingSec, false);  // Partial refresh (NOT counted)
+        nextUpdateMs += EINK_UPDATE_INTERVAL_MS;
+      }
+
+      // Allow encoder polling (user can press button to enter AP mode manually)
+      pollEncoder();
+      delay(100);
+    }
+  }
+
+  Serial.println("[WiFi] Cooldown complete, retrying connection...");
+}
+
 // ==================== WiFi Setup UI =====================
 
 void showWifiSetupRequired(unsigned long splashStartMs, bool enforceSplashDelay = true) {
@@ -115,7 +175,7 @@ void showWifiSetupRequired(unsigned long splashStartMs, bool enforceSplashDelay 
 
  // Show "Preparing AP" screen for full 10 seconds before showing portal instructions
  // This gives user time to read the message, even if portal starts quickly
-  drawWifiPreparingApScreen(CRYPTOBAR_VERSION, false);  // Partial refresh from splash screen
+  drawWifiPreparingApScreen(getShortVersion(), false);  // Partial refresh from splash screen
 
   // Display "Preparing AP" for at least 3 seconds before starting portal setup
   uint32_t prepDisplayStart = millis();
@@ -162,7 +222,7 @@ void showWifiSetupRequired(unsigned long splashStartMs, bool enforceSplashDelay 
   String apIp = "192.168.4.1";
 
   setLedPurple();
-  drawWifiPortalScreen(CRYPTOBAR_VERSION, wifiPortalApSsid().c_str(), apIp.c_str(), false);  // Partial refresh
+  drawWifiPortalScreen(getShortVersion(), wifiPortalApSsid().c_str(), apIp.c_str(), false);  // Partial refresh
 
   g_appState = APP_STATE_NEED_WIFI;
 }
@@ -269,7 +329,7 @@ static void enterMaintenanceMode(bool fromBoot, bool drawScreen = true) {
 
   // Only draw screen if requested (allows caller to control timing)
   if (drawScreen) {
-    drawFirmwareUpdateApScreen(CRYPTOBAR_VERSION, maintModeApSsid().c_str(), maintModeApIp().c_str());
+    drawFirmwareUpdateApScreen(getShortVersion(), maintModeApSsid().c_str(), maintModeApIp().c_str());
   }
 }
 
@@ -319,14 +379,27 @@ void setup() {
  // and sync phase across devices (when NTP time becomes valid).
   ledAnimStartTask(30, 0);
 
+  // V0.99s: Hardware display detection (E-ink vs VFD)
+  Serial.println("[Display] Detecting display type...");
   SPI.begin(EPD_SCK, -1, EPD_MOSI);
-  display.init(115200);
-  display.setRotation(1);
 
- // ==================== Boot welcome screen =====================
- // Show version to user first; screen stays visible while WiFi/NTP connection takes time
-  drawSplashScreen(CRYPTOBAR_VERSION);
-  uint32_t splashStartMs = millis();
+  g_displayType = detectDisplayType();
+
+  if (g_displayType == DISPLAY_VFD) {
+    Serial.println("[Display] VFD PT6302 detected - CryptoBar Retro mode");
+    g_display = new DisplayVfd();
+    // Note: VFD init() will be called after WiFi setup
+  } else {
+    Serial.println("[Display] E-ink detected - Standard CryptoBar mode");
+    g_displayType = DISPLAY_EINK;
+    // Use existing E-ink display object
+    display.init(115200);
+    display.setRotation(1);
+  }
+
+ // ==================== WiFi Setup (Before Display Splash) =====================
+ // V0.99s: Start WiFi connection BEFORE display splash for faster boot
+ // This gives WiFi 9 seconds (VFD) or 2-3 seconds (e-ink) to connect during splash
 
   // Encoder button pin (CLK/DT pins are configured inside encoderPcntBegin)
   pinMode(ENC_SW_PIN,  INPUT_PULLUP);
@@ -339,7 +412,7 @@ void setup() {
   if (maintBootConsumeRequested()) {
     Serial.println("[MAINT] Boot request detected");
     // Show "Starting Update AP..." message with enough display time
-    drawFirmwareUpdateApScreen(CRYPTOBAR_VERSION, "Starting Update AP...", "", false);
+    drawFirmwareUpdateApScreen(getShortVersion(), "Starting Update AP...", "", false);
     uint32_t maintPrepStart = millis();
     const uint32_t MAINT_PREP_DISPLAY_MS = 3000;
 
@@ -356,67 +429,67 @@ void setup() {
     }
 
     // Now draw the final maintenance AP instructions screen
-    drawFirmwareUpdateApScreen(CRYPTOBAR_VERSION, maintModeApSsid().c_str(), maintModeApIp().c_str(), false);
+    drawFirmwareUpdateApScreen(getShortVersion(), maintModeApSsid().c_str(), maintModeApIp().c_str(), false);
     return;
   }
 
 // Load WiFi credentials from NVS (no more hardcoded defaults)
 loadWifiCreds();
 
+// Start WiFi connection in background BEFORE splash (if credentials exist)
+if (g_hasWifiCreds) {
+  Serial.println("[WiFi] Starting connection in background (before splash)...");
+  WiFi.mode(WIFI_STA);
+  WiFi.setSleep(false);
+  WiFi.setAutoReconnect(true);
+  WiFi.disconnect(true);
+  delay(100);
+  WiFi.begin(g_wifiSsid.c_str(), g_wifiPass.c_str());
+  setLedBlue();
+  Serial.println("[WiFi] WiFi.begin() called, will connect during splash display");
+}
+
+ // ==================== Boot welcome screen =====================
+ // Show version to user; WiFi connects in background during this time
+ // VFD: 9 seconds (6s init + 3s version) - WiFi has plenty of time to connect
+ // E-ink: 2-3 seconds - Usually enough for fast networks
+
+  if (g_displayType == DISPLAY_VFD) {
+    // VFD: Initialize display now (after WiFi.begin())
+    // This gives WiFi 9 seconds to connect during the welcome sequence
+    g_display->init();  // 6 seconds: All-on (3s) + CryptoBar Retro (3s)
+
+    // Stage 3: Show version (3 seconds)
+    DisplayVfd* vfdDisplay = static_cast<DisplayVfd*>(g_display);
+    if (vfdDisplay) {
+      const char* shortVersion = getShortVersion();
+      vfdDisplay->showText(shortVersion);
+    }
+    delay(3000);  // Display version for 3 seconds
+
+    // Total welcome sequence: 6s (init) + 3s (version) = 9 seconds
+    // WiFi has had 9 seconds to connect in background
+  } else {
+    // E-ink: Show splash screen (2-3 seconds for full refresh)
+    drawSplashScreen(CRYPTOBAR_VERSION);
+  }
+
+  // Splash screen has been displayed for full duration
+  // VFD: 9 seconds (WiFi had 9 seconds to connect)
+  // E-ink: 2-3 seconds (WiFi had 2-3 seconds to connect)
+  uint32_t splashStartMs = millis();  // Record for startNormalOperation()
+
+// Check if we have WiFi credentials; if not, enter provisioning mode
 if (!g_hasWifiCreds) {
   Serial.println("[WiFi] No credentials saved. Waiting for provisioning...");
   showWifiSetupRequired(splashStartMs);
   return;
 }
 
-// Start WiFi connection in background (non-blocking)
-// Allow splash screen to display for full 3 seconds while WiFi connects
-Serial.println("[WiFi] Starting connection in background...");
-WiFi.mode(WIFI_STA);
-WiFi.setSleep(false);
-WiFi.setAutoReconnect(true);
-WiFi.disconnect(true);
-delay(100);
-WiFi.begin(g_wifiSsid.c_str(), g_wifiPass.c_str());
-setLedBlue();
-
-// Ensure splash screen displays for full 3 seconds
-unsigned long elapsed = millis() - splashStartMs;
-if (elapsed < 3000) {
-  uint32_t remaining = 3000 - elapsed;
-  Serial.printf("[Boot] Splash screen: waiting %lums (WiFi connecting in background)\n", (unsigned long)remaining);
-
-  // Poll WiFi status while waiting
-  uint32_t checkInterval = 100;
-  uint32_t waited = 0;
-  bool connectedEarly = false;
-
-  while (waited < remaining) {
-    delay(checkInterval);
-    waited += checkInterval;
-
-    if (WiFi.status() == WL_CONNECTED) {
-      connectedEarly = true;
-      Serial.printf("[WiFi] Connected early (%lums into splash screen)\n", (unsigned long)elapsed + waited);
-      break;
-    }
-  }
-
-  // If connected during splash, go directly to main screen
-  if (connectedEarly) {
-    Serial.print("[WiFi] Connected during splash, IP: ");
-    Serial.println(WiFi.localIP());
-    g_wifiEverConnected = true;
-    g_nextRuntimeReconnectMs = 0;
-    g_runtimeReconnectBatch = 0;
-    startNormalOperation(false, splashStartMs);  // No splash delay needed
-    return;
-  }
-}
-
-// Splash screen displayed for 3 seconds, check WiFi status
+// Splash already displayed for full duration - check WiFi status immediately
+Serial.println("[WiFi] Splash complete, checking WiFi connection status...");
 if (WiFi.status() == WL_CONNECTED) {
-  Serial.print("[WiFi] Connected, IP: ");
+  Serial.print("[WiFi] Connected during splash, IP: ");
   Serial.println(WiFi.localIP());
   g_wifiEverConnected = true;
   g_nextRuntimeReconnectMs = 0;
@@ -425,13 +498,24 @@ if (WiFi.status() == WL_CONNECTED) {
   return;
 }
 
-// WiFi not connected after 3 seconds, show connecting screen and retry
-Serial.println("[WiFi] Not connected after splash, showing connection UI...");
-if (!connectWiFiStaWithRetries(g_wifiSsid.c_str(), g_wifiPass.c_str(),
-                              5, 12000, true)) {
-  Serial.println("[WiFi] Failed to connect with saved credentials (all attempts).");
-  showWifiSetupRequired(splashStartMs, false);  // Don't enforce splash delay
-  return;
+// WiFi not connected after splash, enter infinite retry loop
+// V0.99s: New WiFi connection strategy - never auto-start AP, keep retrying forever
+// Only user action (12-second press) can trigger factory reset -> AP mode
+Serial.println("[WiFi] Not connected after splash, entering retry loop...");
+
+while (true) {
+  // Attempt connection 5 times (12 second timeout per attempt)
+  if (connectWiFiStaWithRetries(g_wifiSsid.c_str(), g_wifiPass.c_str(), 5, 12000, true)) {
+    Serial.println("[WiFi] Connected successfully!");
+    break;  // Exit loop, proceed to normal operation
+  }
+
+  // Failed all 5 attempts, show 3-minute cooldown screen
+  Serial.println("[WiFi] Failed 5 attempts, starting 3-minute cooldown...");
+  showWiFiCooldown(180);  // 180 seconds = 3 minutes
+
+  // After cooldown, loop continues (retry 5 more attempts)
+  // User can press encoder button 12+ seconds during cooldown to trigger factory reset -> AP
 }
 
 startNormalOperation(false, splashStartMs);  // No splash delay needed
@@ -584,7 +668,7 @@ void loop() {
       delay(50);
       WiFi.begin(g_wifiSsid.c_str(), g_wifiPass.c_str());
       setLedBlue();
-      drawWifiConnectingScreen(CRYPTOBAR_VERSION, g_wifiSsid.c_str(), false);  // Partial refresh
+      drawWifiConnectingScreen(getShortVersion(), g_wifiSsid.c_str(), false);  // Partial refresh
     }
 
     delay(5);
@@ -611,7 +695,7 @@ void loop() {
     if ((millis() - g_staConnectStartMs) > STA_CONNECT_TIMEOUT_MS) {
       Serial.println("[WiFi] Connect FAILED (timeout) - restarting portal");
       setLedRed();
-      drawWifiConnectFailedScreen(CRYPTOBAR_VERSION, false);  // Partial refresh
+      drawWifiConnectFailedScreen(getShortVersion(), false);  // Partial refresh
 
       WiFi.disconnect(false);
       delay(800);
@@ -621,7 +705,7 @@ void loop() {
       delay(150);
 
       // Show "Preparing AP" screen and ensure it displays for at least 3 seconds
-      drawWifiPreparingApScreen(CRYPTOBAR_VERSION, false);  // Partial refresh
+      drawWifiPreparingApScreen(getShortVersion(), false);  // Partial refresh
       uint32_t prepStart = millis();
       const uint32_t PREP_DISPLAY_MS = 3000;
 
@@ -664,7 +748,7 @@ void loop() {
 
 String apIp = WiFi.softAPIP().toString();
       setLedPurple();
-      drawWifiPortalScreen(CRYPTOBAR_VERSION, wifiPortalApSsid().c_str(), apIp.c_str(), false);  // Partial refresh
+      drawWifiPortalScreen(getShortVersion(), wifiPortalApSsid().c_str(), apIp.c_str(), false);  // Partial refresh
       g_appState = APP_STATE_NEED_WIFI;
       return;
     }
@@ -681,10 +765,20 @@ String apIp = WiFi.softAPIP().toString();
   portEXIT_CRITICAL(&g_encMux);
 
   if (steps != 0) {
+    // V0.99s: VFD temporary brightness boost on encoder activity
+    if (g_displayType == DISPLAY_VFD && g_uiMode == UI_MODE_NORMAL) {
+      DisplayVfd* vfdDisplay = static_cast<DisplayVfd*>(g_display);
+      if (vfdDisplay) {
+        vfdDisplay->handleEncoderActivity();
+      }
+    }
+
     if (g_uiMode == UI_MODE_MENU) {
       g_menuIndex += steps;
-      while (g_menuIndex < 0) g_menuIndex += MENU_COUNT;
-      while (g_menuIndex >= MENU_COUNT) g_menuIndex -= MENU_COUNT;
+      // V0.99s: VFD has 9 menu items instead of 13
+      int menuCount = (g_displayType == DISPLAY_VFD) ? VFD_MENU_COUNT : MENU_COUNT;
+      while (g_menuIndex < 0) g_menuIndex += menuCount;
+      while (g_menuIndex >= menuCount) g_menuIndex -= menuCount;
       ensureMainMenuVisible();
       g_menuDirty = true;
     } else if (g_uiMode == UI_MODE_TZ_SUB) {
@@ -707,7 +801,7 @@ String apIp = WiFi.softAPIP().toString();
       ensureCurrencyMenuVisible();
       g_currencyDirty = true;
     } else if (g_uiMode == UI_MODE_UPDATE_SUB) {
-      // V0.99r: Handle update interval submenu navigation
+      // V0.99s: Handle update interval submenu navigation
       g_updateMenuIndex += steps;
       while (g_updateMenuIndex < 0) g_updateMenuIndex += UPDATE_PRESETS_COUNT;
       while (g_updateMenuIndex >= UPDATE_PRESETS_COUNT) g_updateMenuIndex -= UPDATE_PRESETS_COUNT;
@@ -720,75 +814,90 @@ String apIp = WiFi.softAPIP().toString();
   uint32_t ms = millis();
   if (ms - g_lastUiDrawMs >= UI_DRAW_MIN_MS) {
     if (g_uiMode == UI_MODE_MENU && g_menuDirty) {
-      drawMenuScreen(false);
+      // V0.99s: Use display interface for VFD, legacy function for e-ink
+      if (g_displayType == DISPLAY_VFD && g_display) {
+        g_display->drawMenuScreen();
+      } else {
+        drawMenuScreen(false);
+      }
       g_menuDirty = false;
       g_lastUiDrawMs = ms;
     } else if (g_uiMode == UI_MODE_TZ_SUB && g_tzDirty) {
-      drawTimezoneMenu(false);
+      // V0.99s: Use display interface for VFD, legacy function for e-ink
+      if (g_displayType == DISPLAY_VFD && g_display) {
+        g_display->drawTimezoneList();
+      } else {
+        drawTimezoneMenu(false);
+      }
       g_tzDirty = false;
       g_lastUiDrawMs = ms;
     } else if (g_uiMode == UI_MODE_COIN_SUB && g_coinDirty) {
-      drawCoinMenu(false);
+      // V0.99s: Use display interface for VFD, legacy function for e-ink
+      if (g_displayType == DISPLAY_VFD && g_display) {
+        g_display->drawCoinList();
+      } else {
+        drawCoinMenu(false);
+      }
       g_coinDirty = false;
       g_lastUiDrawMs = ms;
     } else if (g_uiMode == UI_MODE_CURRENCY_SUB && g_currencyDirty) {
-      drawCurrencyMenu(false);
+      // V0.99s: Use display interface for VFD, legacy function for e-ink
+      if (g_displayType == DISPLAY_VFD && g_display) {
+        g_display->drawCurrencyList();
+      } else {
+        drawCurrencyMenu(false);
+      }
       g_currencyDirty = false;
       g_lastUiDrawMs = ms;
     } else if (g_uiMode == UI_MODE_UPDATE_SUB && g_updateDirty) {
-      // V0.99r: Handle update interval submenu redraw
-      drawUpdateMenu(false);
+      // V0.99s: Use display interface for VFD, legacy function for e-ink
+      if (g_displayType == DISPLAY_VFD && g_display) {
+        DisplayVfd* vfdDisplay = static_cast<DisplayVfd*>(g_display);
+        if (vfdDisplay) {
+          vfdDisplay->drawUpdateIntervalList();
+        }
+      } else {
+        drawUpdateMenu(false);
+      }
       g_updateDirty = false;
       g_lastUiDrawMs = ms;
     }
   }
- // ==================== Runtime WiFi drop handling (V0.97) ====================
- // If WiFi drops during normal use, DO NOT auto-start AP.
- // We retry STA in small batches with a backoff. AP can be started manually via long-press while offline.
+ // ==================== Runtime WiFi drop handling (V0.99s) ====================
+ // V0.99s: Unified WiFi reconnection strategy
+ // If WiFi drops during normal use, enter infinite retry loop (same as boot):
+ //   - Attempt 5 times (12 second timeout each)
+ //   - Show 3-minute cooldown screen
+ //   - Repeat forever until connected
+ // User can manually trigger factory reset (12-second press) -> AP mode
   if (WiFi.status() != WL_CONNECTED) {
- // If somehow we never had a successful connection (e.g., boot edge-case), keep the original behavior.
-    if (!g_wifiEverConnected) {
-      if (!connectWiFiStaWithRetries(g_wifiSsid.c_str(), g_wifiPass.c_str(), 5, 12000, true)) {
-        Serial.println("[WiFi] Failed to connect with saved credentials (all attempts).");
-        showWifiSetupRequired(0, false);
-        return;
+    Serial.println("[WiFi] Runtime disconnection detected, entering retry loop...");
+    setLedBlue();  // Blue LED during reconnection attempts
+
+    while (true) {
+      // Show reconnection UI
+      bool showUi = (g_uiMode == UI_MODE_NORMAL);
+      if (showUi) {
+        String label = String(g_wifiSsid) + " (reconnect)";
+        drawWifiConnectingScreen(getShortVersion(), label.c_str(), false);  // Partial refresh
       }
-    } else {
-      uint32_t nowMs = millis();
- // Only attempt a reconnect when the backoff window expires.
-      if (g_nextRuntimeReconnectMs == 0 || nowMs >= g_nextRuntimeReconnectMs) {
-        bool showUi = (g_uiMode == UI_MODE_NORMAL);
-        if (showUi) {
-          String label = String(g_wifiSsid) + " (reconnect)";
-          drawWifiConnectingScreen(CRYPTOBAR_VERSION, label.c_str(), false);  // Partial refresh
-        }
-        Serial.printf("[WiFi] Runtime reconnect batch %u (attempts=%u, timeout=%lums)\n",
-                      (unsigned)g_runtimeReconnectBatch + 1, (unsigned)RUNTIME_RECONNECT_ATTEMPTS,
-                      (unsigned long)RUNTIME_RECONNECT_TIMEOUT_MS);
-        bool ok = connectWiFiStaWithRetries(g_wifiSsid.c_str(), g_wifiPass.c_str(),
-                                           RUNTIME_RECONNECT_ATTEMPTS, RUNTIME_RECONNECT_TIMEOUT_MS, showUi);
-        if (!ok) {
-          g_runtimeReconnectBatch++;
-          g_nextRuntimeReconnectMs = nowMs + RUNTIME_RECONNECT_BACKOFF_MS;
-          Serial.printf("[WiFi] Runtime reconnect failed. Next retry in %lus (no AP auto-start).\n",
-                      (unsigned long)(RUNTIME_RECONNECT_BACKOFF_MS / 1000UL));
-          if (showUi) {
-            setLedRed();
-            String label = String("Offline, retry in ") + String(RUNTIME_RECONNECT_BACKOFF_MS / 1000UL) + "s";
-            drawWifiConnectingScreen(CRYPTOBAR_VERSION, label.c_str(), false);  // Partial refresh
-          }
- // Skip network work this loop, but keep LED animation alive.
-          ledAnimLoop(g_appState == APP_STATE_RUNNING, g_lastPriceOk);
-          delay(1);
-          return;
-        }
- // Success: counters are reset inside connectWiFiSta() success path
-      } else {
- // Still in backoff window — skip network work this loop.
-        ledAnimLoop(g_appState == APP_STATE_RUNNING, g_lastPriceOk);
-        delay(1);
-        return;
+
+      // Attempt connection 5 times (12 second timeout per attempt)
+      Serial.println("[WiFi] Runtime reconnect: attempting 5 tries...");
+      if (connectWiFiStaWithRetries(g_wifiSsid.c_str(), g_wifiPass.c_str(), 5, 12000, showUi)) {
+        Serial.println("[WiFi] Runtime reconnection successful!");
+        g_wifiEverConnected = true;
+        g_nextRuntimeReconnectMs = 0;
+        g_runtimeReconnectBatch = 0;
+        break;  // Exit loop, resume normal operation
       }
+
+      // Failed all 5 attempts, show 3-minute cooldown screen
+      Serial.println("[WiFi] Runtime reconnect failed 5 attempts, starting 3-minute cooldown...");
+      showWiFiCooldown(180);  // 180 seconds = 3 minutes
+
+      // After cooldown, loop continues (retry 5 more attempts)
+      // User can press encoder button 12+ seconds during cooldown to trigger factory reset -> AP
     }
   }
 
@@ -1037,6 +1146,14 @@ if (doUpdate) {
  // Backoff to avoid spamming the serial log; retry soon.
         g_nextNtpResyncUtc = now2 + 30;
       }
+    }
+  }
+
+  // V0.99s: VFD-specific updates (page rotation, brightness, night mode)
+  if (g_displayType == DISPLAY_VFD && g_display != nullptr) {
+    if (g_uiMode == UI_MODE_NORMAL && g_appState == APP_STATE_RUNNING) {
+      // VFD page rotation and brightness control
+      g_display->drawMainScreen(false);
     }
   }
 

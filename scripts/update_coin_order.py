@@ -25,6 +25,9 @@ import os
 import sys
 import time
 
+# Global variable to store project directory (set by PlatformIO hook or standalone detection)
+_project_dir = None
+
 # Supported coins with their API identifiers
 # Format: (ticker, display, paprikaId, geckoId, coincapId, krakenPair, binanceSymbol)
 SUPPORTED_COINS = [
@@ -44,7 +47,7 @@ SUPPORTED_COINS = [
     ("AVAX", "AVAX", "avax-avalanche",       "avalanche-2",       "avalanche",         None,        "AVAXUSDT"),
     ("HBAR", "HBAR", "hbar-hedera-hashgraph","hedera-hashgraph",  "hedera-hashgraph",  None,        "HBARUSDT"),
     ("SHIB", "SHIB", "shib-shiba-inu",       "shiba-inu",         "shiba-inu",         None,        "SHIBUSDT"),
-    ("TON",  "TON",  "ton-toncoin",          "toncoin",           "toncoin",           None,        "TONUSDT"),
+    ("TON",  "TON",  "ton-toncoin",          "the-open-network",  "toncoin",           None,        "TONUSDT"),
     ("UNI",  "UNI",  "uni-uniswap",          "uniswap",           "uniswap",           None,        "UNIUSDT"),
     ("DOT",  "DOT",  "dot-polkadot",         "polkadot",          "polkadot",          None,        "DOTUSDT"),
     ("KAS",  "KAS",  "kas-kaspa",            "kaspa",             "kaspa",             None,        "KASUSDT"),
@@ -58,6 +61,10 @@ COINCAP_API_URL = "https://api.coincap.io/v2/assets"
 
 def get_project_dir():
     """Get the project root directory."""
+    global _project_dir
+    if _project_dir:
+        return _project_dir
+    # Fallback for standalone execution
     script_dir = os.path.dirname(os.path.abspath(__file__))
     return os.path.dirname(script_dir)
 
@@ -297,8 +304,12 @@ def update_coins():
 # PlatformIO pre-build hook
 try:
     Import("env")
-    # We're running inside PlatformIO
+    # We're running inside PlatformIO - set project directory from env
+    _project_dir = env['PROJECT_DIR']
+
     def before_build(source, target, env):
+        global _project_dir
+        _project_dir = env['PROJECT_DIR']
         update_coins()
 
     env.AddPreAction("buildprog", before_build)

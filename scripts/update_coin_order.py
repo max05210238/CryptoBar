@@ -3,8 +3,13 @@
 update_coin_order.py - Fetch latest market cap rankings and update coins.cpp
 
 This script is run automatically before each build (via PlatformIO extra_scripts).
-It fetches the current market cap rankings from CoinGecko API and reorders
+It fetches the current market cap rankings from multiple API sources and reorders
 the coin list in src/coins.cpp accordingly.
+
+API Sources (tried in order):
+1. CoinGecko - Primary source
+2. CoinPaprika - Backup source
+3. CoinCap - Second backup source
 
 Usage:
   - Automatic: PlatformIO runs this before build (via extra_scripts = pre:scripts/update_coin_order.py)
@@ -21,36 +26,38 @@ import sys
 import time
 
 # Supported coins with their API identifiers
-# Format: (ticker, display, paprikaId, geckoId, krakenPair, binanceSymbol)
+# Format: (ticker, display, paprikaId, geckoId, coincapId, krakenPair, binanceSymbol)
 SUPPORTED_COINS = [
-    ("BTC",  "BTC",  "btc-bitcoin",          "bitcoin",           "XXBTZUSD",  "BTCUSDT"),
-    ("ETH",  "ETH",  "eth-ethereum",         "ethereum",          "XETHZUSD",  "ETHUSDT"),
-    ("BNB",  "BNB",  "bnb-binance-coin",     "binancecoin",       None,        "BNBUSDT"),
-    ("XRP",  "XRP",  "xrp-xrp",              "ripple",            "XXRPZUSD",  "XRPUSDT"),
-    ("SOL",  "SOL",  "sol-solana",           "solana",            None,        "SOLUSDT"),
-    ("TRX",  "TRX",  "trx-tron",             "tron",              None,        "TRXUSDT"),
-    ("DOGE", "DOGE", "doge-dogecoin",        "dogecoin",          None,        "DOGEUSDT"),
-    ("ADA",  "ADA",  "ada-cardano",          "cardano",           None,        "ADAUSDT"),
-    ("BCH",  "BCH",  "bch-bitcoin-cash",     "bitcoin-cash",      None,        "BCHUSDT"),
-    ("LINK", "LINK", "link-chainlink",       "chainlink",         None,        "LINKUSDT"),
-    ("XMR",  "XMR",  "xmr-monero",           "monero",            None,        "XMRUSDT"),
-    ("XLM",  "XLM",  "xlm-stellar",          "stellar",           None,        "XLMUSDT"),
-    ("LTC",  "LTC",  "ltc-litecoin",         "litecoin",          None,        "LTCUSDT"),
-    ("AVAX", "AVAX", "avax-avalanche",       "avalanche-2",       None,        "AVAXUSDT"),
-    ("HBAR", "HBAR", "hbar-hedera-hashgraph","hedera-hashgraph",  None,        "HBARUSDT"),
-    ("SHIB", "SHIB", "shib-shiba-inu",       "shiba-inu",         None,        "SHIBUSDT"),
-    ("TON",  "TON",  "ton-toncoin",          "toncoin",           None,        "TONUSDT"),
-    ("UNI",  "UNI",  "uni-uniswap",          "uniswap",           None,        "UNIUSDT"),
-    ("DOT",  "DOT",  "dot-polkadot",         "polkadot",          None,        "DOTUSDT"),
-    ("KAS",  "KAS",  "kas-kaspa",            "kaspa",             None,        "KASUSDT"),
-    ("FLR",  "FLR",  "flr-flare-network",    "flare",             None,        None),
+    ("BTC",  "BTC",  "btc-bitcoin",          "bitcoin",           "bitcoin",           "XXBTZUSD",  "BTCUSDT"),
+    ("ETH",  "ETH",  "eth-ethereum",         "ethereum",          "ethereum",          "XETHZUSD",  "ETHUSDT"),
+    ("BNB",  "BNB",  "bnb-binance-coin",     "binancecoin",       "binance-coin",      None,        "BNBUSDT"),
+    ("XRP",  "XRP",  "xrp-xrp",              "ripple",            "xrp",               "XXRPZUSD",  "XRPUSDT"),
+    ("SOL",  "SOL",  "sol-solana",           "solana",            "solana",            None,        "SOLUSDT"),
+    ("TRX",  "TRX",  "trx-tron",             "tron",              "tron",              None,        "TRXUSDT"),
+    ("DOGE", "DOGE", "doge-dogecoin",        "dogecoin",          "dogecoin",          None,        "DOGEUSDT"),
+    ("ADA",  "ADA",  "ada-cardano",          "cardano",           "cardano",           None,        "ADAUSDT"),
+    ("BCH",  "BCH",  "bch-bitcoin-cash",     "bitcoin-cash",      "bitcoin-cash",      None,        "BCHUSDT"),
+    ("LINK", "LINK", "link-chainlink",       "chainlink",         "chainlink",         None,        "LINKUSDT"),
+    ("XMR",  "XMR",  "xmr-monero",           "monero",            "monero",            None,        "XMRUSDT"),
+    ("XLM",  "XLM",  "xlm-stellar",          "stellar",           "stellar",           None,        "XLMUSDT"),
+    ("LTC",  "LTC",  "ltc-litecoin",         "litecoin",          "litecoin",          None,        "LTCUSDT"),
+    ("AVAX", "AVAX", "avax-avalanche",       "avalanche-2",       "avalanche",         None,        "AVAXUSDT"),
+    ("HBAR", "HBAR", "hbar-hedera-hashgraph","hedera-hashgraph",  "hedera-hashgraph",  None,        "HBARUSDT"),
+    ("SHIB", "SHIB", "shib-shiba-inu",       "shiba-inu",         "shiba-inu",         None,        "SHIBUSDT"),
+    ("TON",  "TON",  "ton-toncoin",          "toncoin",           "toncoin",           None,        "TONUSDT"),
+    ("UNI",  "UNI",  "uni-uniswap",          "uniswap",           "uniswap",           None,        "UNIUSDT"),
+    ("DOT",  "DOT",  "dot-polkadot",         "polkadot",          "polkadot",          None,        "DOTUSDT"),
+    ("KAS",  "KAS",  "kas-kaspa",            "kaspa",             "kaspa",             None,        "KASUSDT"),
+    ("FLR",  "FLR",  "flr-flare-network",    "flare",             "flare",             None,        None),
 ]
 
+# API endpoints
 COINGECKO_API_URL = "https://api.coingecko.com/api/v3/coins/markets"
+COINPAPRIKA_API_URL = "https://api.coinpaprika.com/v1/tickers"
+COINCAP_API_URL = "https://api.coincap.io/v2/assets"
 
 def get_project_dir():
     """Get the project root directory."""
-    # When run from PlatformIO, we need to find the project root
     script_dir = os.path.dirname(os.path.abspath(__file__))
     return os.path.dirname(script_dir)
 
@@ -58,15 +65,8 @@ def get_coins_cpp_path():
     """Get the path to coins.cpp."""
     return os.path.join(get_project_dir(), "src", "coins.cpp")
 
-def fetch_market_ranks():
+def fetch_from_coingecko(requests):
     """Fetch market cap rankings from CoinGecko API."""
-    try:
-        import requests
-    except ImportError:
-        print("[CoinOrder] Warning: 'requests' library not installed. Skipping coin order update.")
-        print("[CoinOrder] To enable automatic coin ordering, run: pip install requests")
-        return None
-
     gecko_ids = [coin[3] for coin in SUPPORTED_COINS]
 
     params = {
@@ -83,46 +83,129 @@ def fetch_market_ranks():
         "User-Agent": "CryptoBar/1.0",
     }
 
+    print("[CoinOrder] Trying CoinGecko API...")
+    response = requests.get(COINGECKO_API_URL, params=params, headers=headers, timeout=30)
+    response.raise_for_status()
+    data = response.json()
+
+    # Build a map of geckoId -> market_cap_rank
+    rank_map = {}
+    for coin in data:
+        gecko_id = coin.get("id")
+        rank = coin.get("market_cap_rank")
+        if gecko_id and rank:
+            rank_map[gecko_id] = rank
+
+    print(f"[CoinOrder] CoinGecko: Retrieved rankings for {len(rank_map)} coins")
+    return rank_map, "gecko"
+
+def fetch_from_coinpaprika(requests):
+    """Fetch market cap rankings from CoinPaprika API."""
+    paprika_ids = [coin[2] for coin in SUPPORTED_COINS]
+
+    headers = {
+        "Accept": "application/json",
+        "User-Agent": "CryptoBar/1.0",
+    }
+
+    print("[CoinOrder] Trying CoinPaprika API...")
+    response = requests.get(COINPAPRIKA_API_URL, headers=headers, timeout=30)
+    response.raise_for_status()
+    data = response.json()
+
+    # Build a map of paprikaId -> rank
+    rank_map = {}
+    for coin in data:
+        paprika_id = coin.get("id")
+        rank = coin.get("rank")
+        if paprika_id and rank and paprika_id in paprika_ids:
+            rank_map[paprika_id] = rank
+
+    print(f"[CoinOrder] CoinPaprika: Retrieved rankings for {len(rank_map)} coins")
+    return rank_map, "paprika"
+
+def fetch_from_coincap(requests):
+    """Fetch market cap rankings from CoinCap API."""
+    coincap_ids = [coin[4] for coin in SUPPORTED_COINS]
+
+    headers = {
+        "Accept": "application/json",
+        "User-Agent": "CryptoBar/1.0",
+    }
+
+    print("[CoinOrder] Trying CoinCap API...")
+    response = requests.get(COINCAP_API_URL, params={"limit": 250}, headers=headers, timeout=30)
+    response.raise_for_status()
+    data = response.json().get("data", [])
+
+    # Build a map of coincapId -> rank
+    rank_map = {}
+    for coin in data:
+        coincap_id = coin.get("id")
+        rank = coin.get("rank")
+        if coincap_id and rank and coincap_id in coincap_ids:
+            rank_map[coincap_id] = int(rank)
+
+    print(f"[CoinOrder] CoinCap: Retrieved rankings for {len(rank_map)} coins")
+    return rank_map, "coincap"
+
+def fetch_market_ranks():
+    """Fetch market cap rankings, trying multiple APIs."""
     try:
-        print("[CoinOrder] Fetching market rankings from CoinGecko...")
-        response = requests.get(COINGECKO_API_URL, params=params, headers=headers, timeout=30)
-        response.raise_for_status()
-        data = response.json()
+        import requests
+    except ImportError:
+        print("[CoinOrder] Warning: 'requests' library not installed. Skipping coin order update.")
+        print("[CoinOrder] To enable automatic coin ordering, run: pip install requests")
+        return None, None
 
-        # Build a map of geckoId -> market_cap_rank
-        rank_map = {}
-        for coin in data:
-            gecko_id = coin.get("id")
-            rank = coin.get("market_cap_rank")
-            if gecko_id and rank:
-                rank_map[gecko_id] = rank
+    # Try each API in order
+    apis = [
+        ("CoinGecko", fetch_from_coingecko),
+        ("CoinPaprika", fetch_from_coinpaprika),
+        ("CoinCap", fetch_from_coincap),
+    ]
 
-        print(f"[CoinOrder] Retrieved rankings for {len(rank_map)} coins")
-        return rank_map
+    for api_name, fetch_func in apis:
+        try:
+            rank_map, source = fetch_func(requests)
+            if rank_map and len(rank_map) >= 10:  # Require at least 10 coins
+                return rank_map, source
+            else:
+                print(f"[CoinOrder] {api_name}: Insufficient data, trying next...")
+        except Exception as e:
+            print(f"[CoinOrder] {api_name} failed: {e}")
+            continue
 
-    except Exception as e:
-        print(f"[CoinOrder] Warning: Failed to fetch rankings: {e}")
-        print("[CoinOrder] Using default order (alphabetical by ticker)")
-        return None
+    print("[CoinOrder] All APIs failed. Using last known order.")
+    return None, None
 
-def sort_coins_by_rank(rank_map):
+def sort_coins_by_rank(rank_map, source):
     """Sort SUPPORTED_COINS by market cap rank."""
     if rank_map is None:
-        # Fallback: sort alphabetically by ticker
-        return sorted(SUPPORTED_COINS, key=lambda c: c[0])
+        # Fallback: keep original order (which should be market cap order from last successful fetch)
+        print("[CoinOrder] Using existing order (no API available)")
+        return SUPPORTED_COINS
+
+    # Determine which index in SUPPORTED_COINS tuple to use for lookup
+    # Format: (ticker, display, paprikaId, geckoId, coincapId, krakenPair, binanceSymbol)
+    source_index = {
+        "gecko": 3,     # geckoId
+        "paprika": 2,   # paprikaId
+        "coincap": 4,   # coincapId
+    }.get(source, 3)
 
     def get_rank(coin):
-        gecko_id = coin[3]
+        api_id = coin[source_index]
         # If not found in rank_map, put at end (use large number)
-        return rank_map.get(gecko_id, 99999)
+        return rank_map.get(api_id, 99999)
 
     sorted_coins = sorted(SUPPORTED_COINS, key=get_rank)
 
     # Print the new order
-    print("[CoinOrder] New order by market cap:")
+    print(f"[CoinOrder] New order by market cap (source: {source}):")
     for i, coin in enumerate(sorted_coins, 1):
-        gecko_id = coin[3]
-        rank = rank_map.get(gecko_id, "N/A")
+        api_id = coin[source_index]
+        rank = rank_map.get(api_id, "N/A")
         print(f"  {i:2}. {coin[0]:<5} (rank #{rank})")
 
     return sorted_coins
@@ -135,13 +218,14 @@ def generate_coins_cpp(sorted_coins):
     lines.append('')
     lines.append('// NOTE: Stablecoins (USDT/USDC/RLUSD) intentionally omitted.')
     lines.append('// NOTE: Order is automatically updated by scripts/update_coin_order.py')
-    lines.append('//       based on CoinGecko market cap rankings at build time.')
+    lines.append('//       based on market cap rankings at build time.')
     lines.append('')
     lines.append('static const CoinInfo kCoins[] = {')
     lines.append(' // ticker, display, paprikaId, geckoId, krakenPair, binanceSymbol')
 
     for coin in sorted_coins:
-        ticker, display, paprika_id, gecko_id, kraken_pair, binance_symbol = coin
+        # Format: (ticker, display, paprikaId, geckoId, coincapId, krakenPair, binanceSymbol)
+        ticker, display, paprika_id, gecko_id, coincap_id, kraken_pair, binance_symbol = coin
 
         # Format each field
         kraken_str = f'"{kraken_pair}"' if kraken_pair else "nullptr"
@@ -192,11 +276,11 @@ def update_coins():
     """Main function to update coins.cpp."""
     print("[CoinOrder] Starting coin order update...")
 
-    # Fetch market rankings
-    rank_map = fetch_market_ranks()
+    # Fetch market rankings (tries multiple APIs)
+    rank_map, source = fetch_market_ranks()
 
     # Sort coins by rank
-    sorted_coins = sort_coins_by_rank(rank_map)
+    sorted_coins = sort_coins_by_rank(rank_map, source)
 
     # Generate new coins.cpp
     new_content = generate_coins_cpp(sorted_coins)
@@ -211,7 +295,6 @@ def update_coins():
     print(f"[CoinOrder] Successfully updated coins.cpp with {len(sorted_coins)} coins")
 
 # PlatformIO pre-build hook
-# This is called automatically when PlatformIO loads this script
 try:
     Import("env")
     # We're running inside PlatformIO

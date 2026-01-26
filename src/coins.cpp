@@ -3,31 +3,31 @@
 
 // NOTE: Stablecoins (USDT/USDC/RLUSD) intentionally omitted.
 // NOTE: Order is automatically updated by scripts/update_coin_order.py
-//       based on CoinGecko market cap rankings at build time.
+//       based on market cap rankings at build time.
 
 static const CoinInfo kCoins[] = {
  // ticker, display, paprikaId, geckoId, krakenPair, binanceSymbol
-  { "ADA", "ADA", "ada-cardano", "cardano", nullptr, "ADAUSDT" },
-  { "AVAX", "AVAX", "avax-avalanche", "avalanche-2", nullptr, "AVAXUSDT" },
-  { "BCH", "BCH", "bch-bitcoin-cash", "bitcoin-cash", nullptr, "BCHUSDT" },
-  { "BNB", "BNB", "bnb-binance-coin", "binancecoin", nullptr, "BNBUSDT" },
   { "BTC", "BTC", "btc-bitcoin", "bitcoin", "XXBTZUSD", "BTCUSDT" },
-  { "DOGE", "DOGE", "doge-dogecoin", "dogecoin", nullptr, "DOGEUSDT" },
-  { "DOT", "DOT", "dot-polkadot", "polkadot", nullptr, "DOTUSDT" },
   { "ETH", "ETH", "eth-ethereum", "ethereum", "XETHZUSD", "ETHUSDT" },
-  { "FLR", "FLR", "flr-flare-network", "flare", nullptr, nullptr },
-  { "HBAR", "HBAR", "hbar-hedera-hashgraph", "hedera-hashgraph", nullptr, "HBARUSDT" },
-  { "KAS", "KAS", "kas-kaspa", "kaspa", nullptr, "KASUSDT" },
-  { "LINK", "LINK", "link-chainlink", "chainlink", nullptr, "LINKUSDT" },
-  { "LTC", "LTC", "ltc-litecoin", "litecoin", nullptr, "LTCUSDT" },
-  { "SHIB", "SHIB", "shib-shiba-inu", "shiba-inu", nullptr, "SHIBUSDT" },
-  { "SOL", "SOL", "sol-solana", "solana", nullptr, "SOLUSDT" },
-  { "TON", "TON", "ton-toncoin", "toncoin", nullptr, "TONUSDT" },
-  { "TRX", "TRX", "trx-tron", "tron", nullptr, "TRXUSDT" },
-  { "UNI", "UNI", "uni-uniswap", "uniswap", nullptr, "UNIUSDT" },
-  { "XLM", "XLM", "xlm-stellar", "stellar", nullptr, "XLMUSDT" },
-  { "XMR", "XMR", "xmr-monero", "monero", nullptr, "XMRUSDT" },
+  { "BNB", "BNB", "bnb-binance-coin", "binancecoin", nullptr, "BNBUSDT" },
   { "XRP", "XRP", "xrp-xrp", "ripple", "XXRPZUSD", "XRPUSDT" },
+  { "SOL", "SOL", "sol-solana", "solana", nullptr, "SOLUSDT" },
+  { "TRX", "TRX", "trx-tron", "tron", nullptr, "TRXUSDT" },
+  { "DOGE", "DOGE", "doge-dogecoin", "dogecoin", nullptr, "DOGEUSDT" },
+  { "ADA", "ADA", "ada-cardano", "cardano", nullptr, "ADAUSDT" },
+  { "BCH", "BCH", "bch-bitcoin-cash", "bitcoin-cash", nullptr, "BCHUSDT" },
+  { "LINK", "LINK", "link-chainlink", "chainlink", nullptr, "LINKUSDT" },
+  { "XMR", "XMR", "xmr-monero", "monero", nullptr, "XMRUSDT" },
+  { "XLM", "XLM", "xlm-stellar", "stellar", nullptr, "XLMUSDT" },
+  { "LTC", "LTC", "ltc-litecoin", "litecoin", nullptr, "LTCUSDT" },
+  { "AVAX", "AVAX", "avax-avalanche", "avalanche-2", nullptr, "AVAXUSDT" },
+  { "HBAR", "HBAR", "hbar-hedera-hashgraph", "hedera-hashgraph", nullptr, "HBARUSDT" },
+  { "SHIB", "SHIB", "shib-shiba-inu", "shiba-inu", nullptr, "SHIBUSDT" },
+  { "TON", "TON", "ton-toncoin", "toncoin", nullptr, "TONUSDT" },
+  { "UNI", "UNI", "uni-uniswap", "uniswap", nullptr, "UNIUSDT" },
+  { "DOT", "DOT", "dot-polkadot", "polkadot", nullptr, "DOTUSDT" },
+  { "KAS", "KAS", "kas-kaspa", "kaspa", nullptr, "KASUSDT" },
+  { "FLR", "FLR", "flr-flare-network", "flare", nullptr, nullptr },
 };
 
 int coinCount() {

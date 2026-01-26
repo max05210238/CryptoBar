@@ -157,7 +157,7 @@ def fetch_from_coincap(requests):
     return rank_map, "coincap"
 
 def fetch_market_ranks():
-    """Fetch market cap rankings, trying multiple APIs."""
+    """Fetch market cap rankings, merging data from multiple APIs to fill gaps."""
     try:
         import requests
     except ImportError:
@@ -165,26 +165,73 @@ def fetch_market_ranks():
         print("[CoinOrder] To enable automatic coin ordering, run: pip install requests")
         return None, None
 
-    # Try each API in order
-    apis = [
-        ("CoinGecko", fetch_from_coingecko),
-        ("CoinPaprika", fetch_from_coinpaprika),
-        ("CoinCap", fetch_from_coincap),
-    ]
+    # Build a unified rank map keyed by ticker
+    # This allows merging data from different APIs
+    unified_ranks = {}  # ticker -> rank
 
-    for api_name, fetch_func in apis:
+    # Helper to get missing tickers
+    def get_missing_tickers():
+        all_tickers = {coin[0] for coin in SUPPORTED_COINS}
+        return all_tickers - set(unified_ranks.keys())
+
+    # Try CoinGecko first (primary source)
+    try:
+        gecko_map, _ = fetch_from_coingecko(requests)
+        # Map geckoId -> ticker for lookup
+        gecko_to_ticker = {coin[3]: coin[0] for coin in SUPPORTED_COINS}
+        for gecko_id, rank in gecko_map.items():
+            ticker = gecko_to_ticker.get(gecko_id)
+            if ticker:
+                unified_ranks[ticker] = rank
+        print(f"[CoinOrder] After CoinGecko: {len(unified_ranks)}/{len(SUPPORTED_COINS)} coins have ranks")
+    except Exception as e:
+        print(f"[CoinOrder] CoinGecko failed: {e}")
+
+    # Check for missing coins and try CoinPaprika
+    missing = get_missing_tickers()
+    if missing:
+        print(f"[CoinOrder] Missing coins: {', '.join(sorted(missing))} - trying CoinPaprika...")
         try:
-            rank_map, source = fetch_func(requests)
-            if rank_map and len(rank_map) >= 10:  # Require at least 10 coins
-                return rank_map, source
-            else:
-                print(f"[CoinOrder] {api_name}: Insufficient data, trying next...")
+            paprika_map, _ = fetch_from_coinpaprika(requests)
+            # Map paprikaId -> ticker for lookup
+            paprika_to_ticker = {coin[2]: coin[0] for coin in SUPPORTED_COINS}
+            for paprika_id, rank in paprika_map.items():
+                ticker = paprika_to_ticker.get(paprika_id)
+                if ticker and ticker in missing:
+                    unified_ranks[ticker] = rank
+                    print(f"[CoinOrder]   Found {ticker} via CoinPaprika (rank #{rank})")
         except Exception as e:
-            print(f"[CoinOrder] {api_name} failed: {e}")
-            continue
+            print(f"[CoinOrder] CoinPaprika failed: {e}")
 
-    print("[CoinOrder] All APIs failed. Using last known order.")
-    return None, None
+    # Check for still missing coins and try CoinCap
+    missing = get_missing_tickers()
+    if missing:
+        print(f"[CoinOrder] Still missing: {', '.join(sorted(missing))} - trying CoinCap...")
+        try:
+            coincap_map, _ = fetch_from_coincap(requests)
+            # Map coincapId -> ticker for lookup
+            coincap_to_ticker = {coin[4]: coin[0] for coin in SUPPORTED_COINS}
+            for coincap_id, rank in coincap_map.items():
+                ticker = coincap_to_ticker.get(coincap_id)
+                if ticker and ticker in missing:
+                    unified_ranks[ticker] = rank
+                    print(f"[CoinOrder]   Found {ticker} via CoinCap (rank #{rank})")
+        except Exception as e:
+            print(f"[CoinOrder] CoinCap failed: {e}")
+
+    # Final check
+    missing = get_missing_tickers()
+    if missing:
+        print(f"[CoinOrder] Warning: No rank data for: {', '.join(sorted(missing))} (will be placed at end)")
+
+    if len(unified_ranks) >= 10:
+        return unified_ranks, "unified"
+    elif len(unified_ranks) > 0:
+        print(f"[CoinOrder] Warning: Only {len(unified_ranks)} coins have ranks, but proceeding anyway")
+        return unified_ranks, "unified"
+    else:
+        print("[CoinOrder] All APIs failed. Using last known order.")
+        return None, None
 
 def sort_coins_by_rank(rank_map, source):
     """Sort SUPPORTED_COINS by market cap rank."""
@@ -193,26 +240,35 @@ def sort_coins_by_rank(rank_map, source):
         print("[CoinOrder] Using existing order (no API available)")
         return SUPPORTED_COINS
 
-    # Determine which index in SUPPORTED_COINS tuple to use for lookup
-    # Format: (ticker, display, paprikaId, geckoId, coincapId, krakenPair, binanceSymbol)
-    source_index = {
-        "gecko": 3,     # geckoId
-        "paprika": 2,   # paprikaId
-        "coincap": 4,   # coincapId
-    }.get(source, 3)
-
-    def get_rank(coin):
-        api_id = coin[source_index]
-        # If not found in rank_map, put at end (use large number)
-        return rank_map.get(api_id, 99999)
+    # For unified source, rank_map is keyed by ticker
+    # For single-source fallback, determine the appropriate index
+    if source == "unified":
+        def get_rank(coin):
+            ticker = coin[0]
+            return rank_map.get(ticker, 99999)
+        def get_display_rank(coin):
+            ticker = coin[0]
+            return rank_map.get(ticker, "N/A")
+    else:
+        # Legacy single-source mode (fallback)
+        source_index = {
+            "gecko": 3,     # geckoId
+            "paprika": 2,   # paprikaId
+            "coincap": 4,   # coincapId
+        }.get(source, 3)
+        def get_rank(coin):
+            api_id = coin[source_index]
+            return rank_map.get(api_id, 99999)
+        def get_display_rank(coin):
+            api_id = coin[source_index]
+            return rank_map.get(api_id, "N/A")
 
     sorted_coins = sorted(SUPPORTED_COINS, key=get_rank)
 
     # Print the new order
-    print(f"[CoinOrder] New order by market cap (source: {source}):")
+    print(f"[CoinOrder] Final order by market cap:")
     for i, coin in enumerate(sorted_coins, 1):
-        api_id = coin[source_index]
-        rank = rank_map.get(api_id, "N/A")
+        rank = get_display_rank(coin)
         print(f"  {i:2}. {coin[0]:<5} (rank #{rank})")
 
     return sorted_coins

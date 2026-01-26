@@ -49,7 +49,7 @@ Now open-sourced for the maker community, CryptoBar offers complete hardware and
 - ⏰ **Timezone-Aware Clock** - Auto-detection with 27 timezone options (UTC-12 to UTC+14)
 
 ### Cryptocurrency Support
-- 🪙 **20 Cryptocurrencies**: BTC, ETH, BNB, XRP, SOL, TRX, DOGE, ADA, BCH, LINK, XMR, XLM, LTC, AVAX, HBAR, SHIB, TON, UNI, DOT, KAS (sorted by market cap)
+- 🪙 **21 Cryptocurrencies**: BTC, ETH, BNB, XRP, SOL, TRX, DOGE, ADA, BCH, LINK, XMR, XLM, LTC, AVAX, HBAR, SHIB, TON, UNI, DOT, KAS, FLR (sorted by market cap)
 - 💱 **9 Display Currencies**: USD, TWD, EUR, GBP, CAD, JPY, KRW, SGD, AUD
 - 📈 **24-Hour Price Charts** - Visual price history on e-ink display
 - 📊 **24h Change Percentage** - Real-time gain/loss tracking
@@ -167,10 +167,10 @@ Now open-sourced for the maker community, CryptoBar offers complete hardware and
 
 ## ⚙️ Configuration
 
-### Supported Cryptocurrencies (20)
-BTC, ETH, BNB, XRP, SOL, TRX, DOGE, ADA, BCH, LINK, XMR, XLM, LTC, AVAX, HBAR, SHIB, TON, UNI, DOT, KAS
+### Supported Cryptocurrencies (21)
+BTC, ETH, BNB, XRP, SOL, TRX, DOGE, ADA, BCH, LINK, XMR, XLM, LTC, AVAX, HBAR, SHIB, TON, UNI, DOT, KAS, FLR
 
-**Sorted by market cap rank.** Stablecoins (USDT/USDC) intentionally excluded.
+**Automatically sorted by market cap at build time.** Stablecoins (USDT/USDC) intentionally excluded.
 
 ### Display Currencies (9)
 USD, TWD, EUR, GBP, CAD, JPY, KRW, SGD, AUD
@@ -266,6 +266,38 @@ CryptoBar uses a robust 4-layer fallback system for maximum reliability:
 ### Exchange Rate Data
 - **Primary:** open.er-api.com (1,500 requests/month)
 - **Fallback:** fxratesapi.com (unlimited)
+
+### Per-Coin API Support
+
+| Coin | Real-time Price | Historical Chart | CoinGecko | CoinPaprika | Kraken | Binance |
+|:----:|:---------------:|:----------------:|:---------:|:-----------:|:------:|:-------:|
+| BTC  | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| ETH  | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| XRP  | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| BNB  | ✅ | ✅ | ✅ | ✅ | ❌ | ✅ |
+| SOL  | ✅ | ✅ | ✅ | ✅ | ❌ | ✅ |
+| TRX  | ✅ | ✅ | ✅ | ✅ | ❌ | ✅ |
+| DOGE | ✅ | ✅ | ✅ | ✅ | ❌ | ✅ |
+| ADA  | ✅ | ✅ | ✅ | ✅ | ❌ | ✅ |
+| BCH  | ✅ | ✅ | ✅ | ✅ | ❌ | ✅ |
+| LINK | ✅ | ✅ | ✅ | ✅ | ❌ | ✅ |
+| XMR  | ✅ | ✅ | ✅ | ✅ | ❌ | ✅ |
+| XLM  | ✅ | ✅ | ✅ | ✅ | ❌ | ✅ |
+| LTC  | ✅ | ✅ | ✅ | ✅ | ❌ | ✅ |
+| AVAX | ✅ | ✅ | ✅ | ✅ | ❌ | ✅ |
+| HBAR | ✅ | ✅ | ✅ | ✅ | ❌ | ✅ |
+| SHIB | ✅ | ✅ | ✅ | ✅ | ❌ | ✅ |
+| TON  | ✅ | ✅ | ✅ | ✅ | ❌ | ✅ |
+| UNI  | ✅ | ✅ | ✅ | ✅ | ❌ | ✅ |
+| DOT  | ✅ | ✅ | ✅ | ✅ | ❌ | ✅ |
+| KAS  | ✅ | ✅ | ✅ | ✅ | ❌ | ✅ |
+| FLR  | ✅ | ⚠️ | ✅ | ✅ | ❌ | ❌ |
+
+**Notes:**
+- ✅ = Supported | ❌ = Not available | ⚠️ = Limited (CoinGecko only)
+- **FLR Historical Chart**: Only available via CoinGecko. If CoinGecko is unavailable, chart will not display.
+- **Kraken Support**: Only BTC, ETH, XRP have Kraken trading pairs.
+- All coins support real-time price via CoinGecko and CoinPaprika fallback.
 
 **Rate Limit Management:**
 - MAC-based request jitter (0-10 seconds)

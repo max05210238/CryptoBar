@@ -262,10 +262,6 @@ static String buildCoinOptionsHtml() {
       opts += " selected";
     }
     opts += ">";
- // Show rank + ticker for easier searching.
-    opts += "#";
-    opts += String(c.marketRank);
-    opts += " ";
     opts += c.ticker;
     opts += "</option>";
   }

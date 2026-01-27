@@ -8,6 +8,7 @@
 
 #include <WiFi.h>
 #include <WebServer.h>
+#include <DNSServer.h>
 #include <string.h>
 
 #ifndef WIFI_SCAN_RUNNING
@@ -18,6 +19,8 @@
 #endif
 
 static WebServer s_server(80);
+static DNSServer s_dnsServer;
+static const byte DNS_PORT = 53;
 
 static String s_apSsid;
 static bool   s_running   = false;
@@ -524,6 +527,11 @@ void wifiPortalStart(const char* apSsid) {
   WiFi.softAPConfig(ip, gw, sn);
   WiFi.softAP(s_apSsid.c_str());
 
+  // Start DNS server to redirect all DNS queries to our IP (Captive Portal)
+  s_dnsServer.setErrorReplyCode(DNSReplyCode::NoError);
+  s_dnsServer.start(DNS_PORT, "*", ip);
+  Serial.println("[WiFi] DNS server started (Captive Portal)");
+
   s_server.on("/", HTTP_GET, handleRoot);
   s_server.on("/favicon.ico", HTTP_GET, handleFavicon);
  // Captive portal probe URLs (Android/iOS/macOS/Windows)
@@ -552,6 +560,7 @@ void wifiPortalStart() {
 
 void wifiPortalStop() {
   if (!s_running) return;
+  s_dnsServer.stop();
   s_server.stop();
   WiFi.softAPdisconnect(true);
   s_running = false;
@@ -559,7 +568,10 @@ void wifiPortalStop() {
 }
 
 void wifiPortalLoop() {
-  if (s_running) s_server.handleClient();
+  if (s_running) {
+    s_dnsServer.processNextRequest();
+    s_server.handleClient();
+  }
 }
 
 bool wifiPortalIsRunning() { return s_running; }

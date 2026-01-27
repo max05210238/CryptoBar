@@ -1,8 +1,12 @@
-// CryptoBar V0.98 (Refactored: Step 2)
+// CryptoBar V0.99t (Non-blocking Network)
 // app_wifi.h - WiFi connection and credential management
 #pragma once
 
 #include <Arduino.h>
+
+// Set WiFi hostname (call before WiFi.begin())
+// Generates "CryptoBar_XXXX" using last 4 hex digits of MAC
+void setWifiHostname();
 
 // Load WiFi credentials from NVS
 void loadWifiCreds();

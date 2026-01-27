@@ -49,7 +49,7 @@ Now open-sourced for the maker community, CryptoBar offers complete hardware and
 - ⏰ **Timezone-Aware Clock** - Auto-detection with 27 timezone options (UTC-12 to UTC+14)
 
 ### Cryptocurrency Support
-- 🪙 **20 Cryptocurrencies**: BTC, ETH, BNB, XRP, SOL, TRX, DOGE, ADA, BCH, LINK, XMR, XLM, LTC, AVAX, HBAR, SHIB, TON, UNI, DOT, KAS (sorted by market cap)
+- 🪙 **21 Cryptocurrencies**: BTC, ETH, BNB, XRP, SOL, TRX, DOGE, ADA, BCH, LINK, XMR, XLM, LTC, AVAX, HBAR, SHIB, TON, UNI, DOT, KAS, FLR (sorted by market cap)
 - 💱 **9 Display Currencies**: USD, TWD, EUR, GBP, CAD, JPY, KRW, SGD, AUD
 - 📈 **24-Hour Price Charts** - Visual price history on e-ink display
 - 📊 **24h Change Percentage** - Real-time gain/loss tracking
@@ -167,10 +167,10 @@ Now open-sourced for the maker community, CryptoBar offers complete hardware and
 
 ## ⚙️ Configuration
 
-### Supported Cryptocurrencies (20)
-BTC, ETH, BNB, XRP, SOL, TRX, DOGE, ADA, BCH, LINK, XMR, XLM, LTC, AVAX, HBAR, SHIB, TON, UNI, DOT, KAS
+### Supported Cryptocurrencies (21)
+BTC, ETH, BNB, XRP, SOL, TRX, DOGE, ADA, BCH, LINK, XMR, XLM, LTC, AVAX, HBAR, SHIB, TON, UNI, DOT, KAS, FLR
 
-**Sorted by market cap rank.** Stablecoins (USDT/USDC) intentionally excluded.
+**Automatically sorted by market cap at build time.** Stablecoins (USDT/USDC) intentionally excluded.
 
 ### Display Currencies (9)
 USD, TWD, EUR, GBP, CAD, JPY, KRW, SGD, AUD
@@ -267,6 +267,38 @@ CryptoBar uses a robust 4-layer fallback system for maximum reliability:
 - **Primary:** open.er-api.com (1,500 requests/month)
 - **Fallback:** fxratesapi.com (unlimited)
 
+### Per-Coin API Support
+
+| Coin | Real-time Price | Historical Chart | CoinGecko | CoinPaprika | Kraken | Binance |
+|:----:|:---------------:|:----------------:|:---------:|:-----------:|:------:|:-------:|
+| BTC  | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| ETH  | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| XRP  | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| BNB  | ✅ | ✅ | ✅ | ✅ | ❌ | ✅ |
+| SOL  | ✅ | ✅ | ✅ | ✅ | ❌ | ✅ |
+| TRX  | ✅ | ✅ | ✅ | ✅ | ❌ | ✅ |
+| DOGE | ✅ | ✅ | ✅ | ✅ | ❌ | ✅ |
+| ADA  | ✅ | ✅ | ✅ | ✅ | ❌ | ✅ |
+| BCH  | ✅ | ✅ | ✅ | ✅ | ❌ | ✅ |
+| LINK | ✅ | ✅ | ✅ | ✅ | ❌ | ✅ |
+| XMR  | ✅ | ✅ | ✅ | ✅ | ❌ | ✅ |
+| XLM  | ✅ | ✅ | ✅ | ✅ | ❌ | ✅ |
+| LTC  | ✅ | ✅ | ✅ | ✅ | ❌ | ✅ |
+| AVAX | ✅ | ✅ | ✅ | ✅ | ❌ | ✅ |
+| HBAR | ✅ | ✅ | ✅ | ✅ | ❌ | ✅ |
+| SHIB | ✅ | ✅ | ✅ | ✅ | ❌ | ✅ |
+| TON  | ✅ | ✅ | ✅ | ✅ | ❌ | ✅ |
+| UNI  | ✅ | ✅ | ✅ | ✅ | ❌ | ✅ |
+| DOT  | ✅ | ✅ | ✅ | ✅ | ❌ | ✅ |
+| KAS  | ✅ | ✅ | ✅ | ✅ | ❌ | ✅ |
+| FLR  | ✅ | ⚠️ | ✅ | ✅ | ❌ | ❌ |
+
+**Notes:**
+- ✅ = Supported | ❌ = Not available | ⚠️ = Limited (CoinGecko only)
+- **FLR Historical Chart**: Only available via CoinGecko. If CoinGecko is unavailable, chart will not display.
+- **Kraken Support**: Only BTC, ETH, XRP have Kraken trading pairs.
+- All coins support real-time price via CoinGecko and CoinPaprika fallback.
+
 **Rate Limit Management:**
 - MAC-based request jitter (0-10 seconds)
 - Recommended 3-minute update interval for multi-device deployments
@@ -276,34 +308,36 @@ CryptoBar uses a robust 4-layer fallback system for maximum reliability:
 
 ---
 
-## 📊 Recent Improvements (V0.97 → V0.99s)
+## 📊 Recent Improvements (V0.97 → V0.99t)
 
-### V0.99s (2026-01-19) - Latest
+### V0.99t (2026-01-27) - Latest
+- ⚡ **Non-blocking Network**: Menu operations no longer freeze during coin switching
+- 📱 **Captive Portal Auto-popup**: WiFi setup page opens automatically on iOS/Android
+- 🪙 **Flare (FLR) Support**: 21 cryptocurrencies now supported
+- 📊 **Auto Coin Ordering**: Build-time market cap sorting via Python script
+- 📶 **WiFi Hostname**: Device appears as "CryptoBar_XXXX" on router
+- 🔧 **Multi-API Fallback**: CoinGecko → CoinPaprika → CoinCap for coin rankings
+
+### V0.99s (2026-01-19)
 - 🎯 **VFD Display Support**: Retro 16-character VFD displays (PT6302 controller)
 - 📺 **Dual Display Architecture**: Automatic detection of e-ink or VFD displays
 - 🔄 **NTP-Synced Page Rotation**: Multi-device synchronized updates (10-second cycles)
 - 🌙 **Auto Brightness**: Time-based VFD brightness with anti-burn-in protection
 - 🔄 **Unified WiFi Retry**: Infinite retry loop with cooldown screens
 - ⚡ **WiFi Timing Optimization**: Background connection during splash screen
-- ✅ **100% E-ink Compatible**: All e-ink functionality preserved unchanged
-
-### V0.99q-r (2025-12-25 to 2025-12-28)
-- ✅ **Critical Bug Fix (V0.99r)**: Array bounds bug causing restart on 10-minute interval
-- ✅ **WiFi Portal Settings Fix (V0.99q)**: All advanced settings now properly applied
-- ✅ **Independent Time Refresh (V0.99q)**: Clock updates every minute (desk clock mode)
 
 ### Earlier Highlights
-- **V0.99p**: High-precision price display (14-16 decimals from CoinGecko)
-- **V0.99o**: MAC-based API jitter for distributed load
+- **V0.99r**: Critical array bounds bug fix (10-minute interval crash)
+- **V0.99q**: WiFi portal settings fix, independent time refresh
+- **V0.99p**: High-precision price display (14-16 decimals)
 - **V0.99n**: CoinGecko as primary API (better quality)
 - **V0.99l**: Display refresh optimization (95% less flicker)
 - **V0.99k**: Aggregated market data (200+ exchanges)
-- **V0.99h**: LED party mode for +20% gains
-- **V0.99g**: Binance API integration (38% faster, 75% fewer failures)
+- **V0.99g**: Binance API integration (38% faster)
 - **V0.99f**: Multi-currency support (9 currencies)
-- **V0.99a**: Encoder optimization (critical GPIO fix for ESP32-S3)
+- **V0.99a**: Encoder optimization (critical GPIO fix)
 
-See [CHANGELOG.md](CHANGELOG.md) for complete version history and [V0.99s VFD Display Support](docs/release-notes/V0.99s_VFD_DISPLAY_SUPPORT.md) for detailed VFD documentation.
+See [CHANGELOG.md](CHANGELOG.md) for complete version history.
 
 ---
 

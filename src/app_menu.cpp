@@ -1,4 +1,4 @@
-// CryptoBar V0.98 (Refactored: Step 5)
+// CryptoBar V0.99t (Non-blocking Network)
 // app_menu.cpp - Menu navigation and settings management
 
 #include <Arduino.h>
@@ -13,6 +13,7 @@
 #include "coins.h"
 #include "day_avg.h"
 #include "network.h"
+#include "network_task.h"  // V0.99t: Non-blocking network operations
 #include "ui.h"
 #include "display_vfd.h"  // V0.99s: For VFD menu items
 
@@ -190,25 +191,18 @@ void handleCoinSelect() {
   Serial.printf("[Menu] Coin -> %s (index=%d)\n",
                 currentCoin().ticker, g_currentCoinIndex);
 
- // Reset chart / cycle and re-bootstrap history
+  // V0.99t: Reset chart / cycle state (non-blocking)
   g_chartSampleCount = 0;
   g_cycleInit        = false;
+  g_lastPriceOk      = false;  // Trigger "Loading..." display
   updateEtCycle();
-  bootstrapHistoryFromKrakenOHLC();
 
- // Force an immediate price refresh on coin change (best-effort)
-  double price  = 0.0;
-  double change = 0.0;
-  if (fetchPrice(price, change)) {
-    g_lastPriceUsd  = price;
-    g_lastChange24h = change;
-    g_lastPriceOk   = true;
-    updateLedForPrice(g_lastChange24h, g_lastPriceOk);
-  } else {
-    g_lastPriceOk = false;
-    updateLedForPrice(0.0, false);
-  }
+  // V0.99t: Queue async network requests (non-blocking)
+  // Network task will fetch history and price in background
+  networkTaskRequestHistory(g_currentCoinIndex);
+  networkTaskRequestPrice(g_currentCoinIndex);
 
+  // Return to menu immediately (no waiting for network)
   g_uiMode = UI_MODE_MENU;
   if (g_displayType == DISPLAY_VFD && g_display) {
     g_display->drawMenuScreen();

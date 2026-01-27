@@ -32,9 +32,6 @@ void ensureCoinMenuVisible() {
 
 static void printCoinItem(int i) {
   const CoinInfo& c = coinAt(i);
-  display.print("#");
-  display.print((int)c.marketRank);
-  display.print(" ");
   display.print(c.ticker);
 }
 

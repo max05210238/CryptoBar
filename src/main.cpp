@@ -1,4 +1,4 @@
-// CryptoBar V0.99s (VFD Display Support)
+// CryptoBar V0.99t (Non-blocking Network)
 #include <Arduino.h>
 #include <WiFi.h>
 #include <HTTPClient.h>
@@ -33,6 +33,7 @@
 #include "chart.h"
 #include "day_avg.h"
 #include "network.h"
+#include "network_task.h"  // V0.99t: Non-blocking network operations
 #include "ui.h"
 
 // V0.99s: VFD display support
@@ -235,6 +236,7 @@ static void startNormalOperation(bool enforceSplashDelay, uint32_t splashStartMs
   WiFi.mode(WIFI_STA);
  // : disable WiFi power-save to reduce disconnects.
   WiFi.setSleep(false);
+  WiFi.setTxPower(WIFI_POWER_19_5dBm);  // V0.99t: Max TX power for better range
   WiFi.setAutoReconnect(true);
 
   g_uiMode = UI_MODE_NORMAL;
@@ -246,6 +248,8 @@ static void startNormalOperation(bool enforceSplashDelay, uint32_t splashStartMs
 
   setupTime();
 
+  // V0.99t: Initialize non-blocking network task (for menu coin switching)
+  networkTaskInit();
 
  // V0.99f: Fetch FX rates for all currencies (except USD) after WiFi+NTP ready
   if (g_displayCurrency != (int)CURR_USD && WiFi.status() == WL_CONNECTED) {
@@ -444,6 +448,7 @@ if (g_hasWifiCreds) {
   WiFi.setAutoReconnect(true);
   WiFi.disconnect(true);
   delay(100);
+  setWifiHostname();  // V0.99t: Set hostname before connecting
   WiFi.begin(g_wifiSsid.c_str(), g_wifiPass.c_str());
   setLedBlue();
   Serial.println("[WiFi] WiFi.begin() called, will connect during splash display");
@@ -540,6 +545,46 @@ void loop() {
 
  // button
   pollEncoder();
+
+  // ===== V0.99t: Process background network task results =====
+  if (networkTaskHasResult()) {
+    NetworkResult res = networkTaskGetResult();
+    networkTaskConsumeResult();
+
+    if (res.type == NET_RESULT_PRICE) {
+      if (res.ok) {
+        g_lastPriceUsd  = res.price;
+        g_lastChange24h = res.change24h;
+        g_lastPriceOk   = true;
+
+        // Update rolling average
+        time_t nowUtc = time(nullptr);
+        if (nowUtc > 100000) {
+          dayAvgRollingAdd(nowUtc, res.price);
+        }
+        updateAvgLineReference(nowUtc);
+        addChartSampleForNow(res.price);
+
+        Serial.printf("[NetTask] Price result applied: %.2f (%.2f%%)\n",
+                      res.price, res.change24h);
+      } else {
+        // Fetch failed - keep g_lastPriceOk = false for "---" display
+        Serial.println("[NetTask] Price fetch failed");
+      }
+
+      // Update LED regardless of success/failure
+      updateLedForPrice(g_lastChange24h, g_lastPriceOk);
+
+      // Trigger display refresh if in normal mode
+      if (g_uiMode == UI_MODE_NORMAL || g_uiMode == UI_MODE_MENU) {
+        if (g_displayType == DISPLAY_VFD && g_display) {
+          g_display->drawMainScreen(false);  // VFD reads globals directly
+        } else if (g_uiMode == UI_MODE_NORMAL) {
+          drawMainScreen(g_lastPriceUsd, g_lastChange24h, false);
+        }
+      }
+    }
+  }
 
  // ===== Maintenance mode (firmware update AP) =====
   if (g_appState == APP_STATE_MAINT) {
@@ -663,9 +708,11 @@ void loop() {
       WiFi.mode(WIFI_AP_STA);
  // : disable WiFi power-save to keep STA stable during provisioning.
       WiFi.setSleep(false);
+      WiFi.setTxPower(WIFI_POWER_19_5dBm);  // V0.99t: Max TX power for better range
       WiFi.setAutoReconnect(true);
       WiFi.disconnect(false);  // disconnect STA only (keep radio on)
       delay(50);
+      setWifiHostname();  // V0.99t: Set hostname before connecting
       WiFi.begin(g_wifiSsid.c_str(), g_wifiPass.c_str());
       setLedBlue();
       drawWifiConnectingScreen(getShortVersion(), g_wifiSsid.c_str(), false);  // Partial refresh

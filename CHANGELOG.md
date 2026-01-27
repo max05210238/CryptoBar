@@ -7,6 +7,68 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [V0.99t] - 2026-01-27
+
+### ✨ Major Feature: Non-blocking Network Operations
+- **Settings menu no longer freezes during coin switching**:
+  - Background network task handles API requests asynchronously
+  - UI remains responsive while fetching new coin data
+  - Loading indicator shown during data fetch
+  - FreeRTOS task runs on Core 0 with dedicated stack (8KB)
+
+### Added - Automatic Coin Ordering by Market Cap
+- **Build-time Python script** (`scripts/update_coin_order.py`):
+  - Automatically sorts coins by market cap before each build
+  - Multi-API fallback: CoinGecko → CoinPaprika → CoinCap
+  - Merges data from multiple APIs to fill gaps
+  - Runs via PlatformIO pre-build hook
+- **Flare (FLR) cryptocurrency support**:
+  - Total supported coins: 20 → 21
+  - CoinGecko + CoinPaprika support for real-time price
+  - Historical chart via CoinGecko only
+
+### Added - WiFi Improvements
+- **Captive Portal auto-popup**:
+  - DNS server redirects all queries to ESP32's IP
+  - iOS/Android automatically show setup page when connecting to AP
+  - No need to manually navigate to 192.168.4.1
+- **WiFi hostname**:
+  - Devices now appear as "CryptoBar_XXXX" on router (last 4 MAC digits)
+  - Easier identification in network device list
+- **TX power optimization**:
+  - Set to maximum 19.5dBm for better WiFi range
+  - Helps in weak signal environments
+
+### Added - Documentation
+- Per-coin API support table in README
+- Shows real-time price and historical chart availability per coin
+- Documents which APIs support each cryptocurrency
+
+### Fixed
+- VFD interface `drawMainScreen()` signature mismatch
+- NULL mutex guard for WiFi provisioning mode (prevents crash)
+- PlatformIO environment `__file__` not defined error in coin order script
+- TON CoinGecko ID corrected (`toncoin` → `the-open-network`)
+
+### Technical Details
+- **New files**:
+  - `scripts/update_coin_order.py` - Build-time coin ordering
+  - `src/network_task.cpp` / `include/network_task.h` - Background network operations
+- **Files modified**: 12 files
+- **Total changes**: ~800 lines added
+- **PlatformIO integration**: `extra_scripts = pre:scripts/update_coin_order.py`
+
+### Per-Coin API Support (21 coins)
+
+| Coin | Real-time | Historical | Notes |
+|------|-----------|------------|-------|
+| BTC, ETH, XRP | ✅ | ✅ | Full support (all APIs) |
+| Most altcoins | ✅ | ✅ | CoinGecko + Binance |
+| XMR | ✅ | ⚠️ | CoinGecko only (no Binance) |
+| FLR | ✅ | ⚠️ | CoinGecko only (new coin) |
+
+---
+
 ## [V0.99s] - 2026-01-14
 
 ### ✨ Major Feature: VFD Display Support
@@ -779,12 +841,20 @@ Over the past week, CryptoBar received major improvements across six key areas:
 - **Settings**: Refresh mode now ONLY affects price updates (clearer behavior)
 - **Action**: Update firmware, enjoy smoother transitions and readable status messages
 
+### From V0.99s → V0.99t
+- **Non-blocking menu**: Coin switching no longer freezes UI (automatic)
+- **New coin**: FLR (Flare) added to supported list
+- **Coin ordering**: Automatic market cap sorting at build time
+- **Captive Portal**: WiFi setup page auto-opens on iOS/Android
+- **WiFi hostname**: Device shows as CryptoBar_XXXX on router
+- **Action**: Update firmware, enjoy responsive menus and easier WiFi setup
+
 ---
 
 ## Upgrade Recommendations
 
 ### From V0.97 or earlier
-**Strongly Recommended**: Upgrade to V0.99l for all improvements
+**Strongly Recommended**: Upgrade to V0.99t for all improvements
 
 **What you'll get**:
 - ✅ Working encoder (from broken)
@@ -794,11 +864,12 @@ Over the past week, CryptoBar received major improvements across six key areas:
 - ✅ Double precision (from float)
 - ✅ Aggregated market data (from single exchange)
 - ✅ 95% less screen flicker (smoother UX)
-- ✅ Readable status messages (proper timing)
-- ✅ 56% smaller main.cpp (better maintainability)
+- ✅ Non-blocking menu operations
+- ✅ 21 cryptocurrencies (including FLR)
+- ✅ Captive Portal auto-popup
 
 ### From V0.98
-**Strongly Recommended**: Upgrade to V0.99l
+**Strongly Recommended**: Upgrade to V0.99t
 
 **What you'll get**:
 - ✅ Encoder fixes (critical)
@@ -808,19 +879,28 @@ Over the past week, CryptoBar received major improvements across six key areas:
 - ✅ Double precision accuracy
 - ✅ Real market prices
 - ✅ Display refresh optimization
+- ✅ Non-blocking network operations
+- ✅ Captive Portal WiFi setup
 
-### From V0.99a-k
-**Recommended**: Upgrade to V0.99l for UX improvements
+### From V0.99a-s
+**Recommended**: Upgrade to V0.99t for UX improvements
 
 **What you'll get**:
-- ✅ 95% less screen flicker during navigation
-- ✅ Readable status messages (proper timing)
-- ✅ Smoother WiFi setup experience
-- ✅ Clearer refresh mode setting behavior
+- ✅ Non-blocking menu (responsive during coin switching)
+- ✅ Captive Portal auto-popup (easier WiFi setup)
+- ✅ WiFi hostname (CryptoBar_XXXX on router)
+- ✅ FLR (Flare) cryptocurrency support
+- ✅ Automatic coin ordering by market cap
 
 ---
 
 ## Known Issues
+
+### V0.99t
+- FLR historical chart only available via CoinGecko (may show empty if rate-limited)
+
+### V0.99s
+- None currently known
 
 ### V0.99l
 - None currently known
@@ -863,6 +943,6 @@ Over the past week, CryptoBar received major improvements across six key areas:
 
 ---
 
-**Last Updated**: 2026-01-19
-**Current Version**: V0.99s
-**Stable Version**: V0.99s
+**Last Updated**: 2026-01-27
+**Current Version**: V0.99t
+**Stable Version**: V0.99t

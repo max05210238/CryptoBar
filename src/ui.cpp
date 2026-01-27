@@ -12,6 +12,7 @@
 #include "app_state.h"
 #include "coins.h"
 #include "chart.h"
+#include "network_task.h"  // V0.99t: For loading state check
 #include "ui.h"
 
 // ===== Global objects and variables from main.cpp (extern declarations) =====
@@ -388,9 +389,40 @@ static int detectDecimalPlaces(double price, int maxDecimals) {
 }
 
 // V0.99f: Center price display with multi-currency support (number only)
+// V0.99t: Added loading state and price unavailable display
 static void drawPriceCenter(double priceUsd) {
   int panelLeft  = SYMBOL_PANEL_WIDTH;
   int panelWidth = display.width() - panelLeft;
+
+  // V0.99t: Show Loading state when fetching price
+  if (g_coinLoadingInProgress) {
+    display.setFont(&FreeSansBold12pt7b);
+    display.setTextColor(GxEPD_BLACK);
+    int16_t x1, y1;
+    uint16_t w, h;
+    const char* loadingText = "Loading...";
+    display.getTextBounds(loadingText, 0, 0, &x1, &y1, &w, &h);
+    int16_t xStart = panelLeft + (panelWidth - (int)w) / 2;
+    int16_t yBase  = 52 + largeContentYOffset();
+    display.setCursor(xStart, yBase);
+    display.print(loadingText);
+    return;
+  }
+
+  // V0.99t: Show "---" when price is unavailable
+  if (!g_lastPriceOk) {
+    display.setFont(&FreeSansBold18pt7b);
+    display.setTextColor(GxEPD_BLACK);
+    int16_t x1, y1;
+    uint16_t w, h;
+    const char* unavailText = "---.--";
+    display.getTextBounds(unavailText, 0, 0, &x1, &y1, &w, &h);
+    int16_t xStart = panelLeft + (panelWidth - (int)w) / 2;
+    int16_t yBase  = 52 + largeContentYOffset();
+    display.setCursor(xStart, yBase);
+    display.print(unavailText);
+    return;
+  }
 
   // Convert for display if needed
   double fx = 1.0;
